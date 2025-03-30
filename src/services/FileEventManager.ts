@@ -10,7 +10,9 @@ export class FileEventManager {
     ) {}
 
     async handleBookCreate(file: TFile | TFolder) {
-        if (file instanceof TFolder && file.path.startsWith(this.plugin.settings.defaultBookPath)) {
+        if (file instanceof TFolder && 
+            file.path.startsWith(this.plugin.settings.defaultBookPath) && 
+            file.parent?.path === this.plugin.settings.defaultBookPath) {  // 添加这个条件检查
             await new Promise(resolve => setTimeout(resolve, 500));
             const newBook = await this.plugin.bookManager.getBookConfig(file);
             if (newBook) {
