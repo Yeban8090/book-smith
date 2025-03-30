@@ -20,6 +20,15 @@ export class BookSmithSettingTab extends PluginSettingTab {
         
         // 写作工具箱设置
         this.renderWritingToolsSettings(containerEl);
+
+        // 添加应用按钮
+        new Setting(containerEl)
+            .addButton(button => button
+                .setButtonText('应用并重载插件')
+                .setCta()
+                .onClick(async () => {
+                    await this.plugin.reloadPlugin();
+                }));
     }
 
     private renderBasicSettings(containerEl: HTMLElement): void {
