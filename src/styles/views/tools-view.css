@@ -1,0 +1,133 @@
+/* 主容器样式 */
+.book-smith-tools-view {
+    font-family: var(--font-interface);
+    padding: 20px;
+}
+
+/* 面板头部样式 */
+.book-smith-panel-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.book-smith-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--h2-size);
+    font-weight: var(--h2-weight);
+    color: var(--h2-color, var(--text-normal));
+    line-height: var(--h2-line-height, 1.4);
+    font-family: var(--h2-font, var(--font-interface));
+    flex: 1;
+}
+
+.book-smith-panel-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.book-smith-panel-icon svg {
+    width: 20px;
+    height: 20px;
+    color: var(--interactive-accent);
+}
+
+/* 工具组样式 */
+.book-smith-tool-group {
+    margin-bottom: 25px;
+}
+
+.book-smith-group-title {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* 工具项基础样式 */
+.book-smith-tool-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 5px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.book-smith-tool-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* 工具图标样式 */
+.book-smith-tool-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.book-smith-tool-item:hover .book-smith-tool-icon {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* 工具图标颜色变体 */
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-target) .book-smith-tool-icon {
+    color: var(--interactive-accent);
+}
+
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-brain) .book-smith-tool-icon {
+    color: var(--color-purple);
+}
+
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-users) .book-smith-tool-icon {
+    color: var(--color-blue);
+}
+
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-message-circle) .book-smith-tool-icon {
+    color: var(--color-green);
+}
+
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-download) .book-smith-tool-icon,
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-book) .book-smith-tool-icon {
+    color: var(--color-cyan);
+}
+
+/* 进度条样式 */
+.book-smith-progress-bar {
+    height: 4px;
+    background-color: var(--background-modifier-border);
+    border-radius: 2px;
+    margin-left: auto;
+    width: 100px;
+}
+
+.book-smith-progress {
+    width: 20%;
+    height: 100%;
+    background-color: var(--interactive-accent);
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+/* 附加信息样式 */
+.book-smith-tool-item-extra {
+    margin-left: auto;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+/* 设置项样式 */
+.book-smith-tool-item.settings {
+    margin-top: 20px;
+}

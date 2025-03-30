@@ -1,0 +1,163 @@
+/* 章节树的基础样式 */
+.book-smith-chapter-tree {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+/* 树形结构基础样式 */
+.book-smith-file-tree,
+.book-smith-tree-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+/* 树节点基础样式 */
+.book-smith-tree-item,
+.book-smith-file-tree li {
+    padding: 2px 0;
+    position: relative;
+}
+
+/* 通用树节点样式 */
+.book-smith-tree-header,
+.book-smith-folder {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    user-select: none;
+    cursor: grab;
+}
+
+.book-smith-tree-header:hover,
+.book-smith-file-tree li:hover,
+.book-smith-folder:hover {
+    background-color: var(--interactive-hover);
+    color: var(--text-accent);
+}
+
+.book-smith-tree-header:active {
+    cursor: grabbing;
+}
+
+/* 图标和标题容器样式 */
+.book-smith-folder-toggle,
+.book-smith-tree-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.book-smith-tree-title-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+/* 标题样式 */
+.book-smith-tree-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+}
+
+.book-smith-tree-title.is-done::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: var(--color-green);
+    opacity: 0.6;
+    mask-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>');
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+}
+
+/* 文件链接样式 */
+.book-smith-file-link {
+    cursor: pointer;
+    color: var(--text-normal);
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.book-smith-file-link:hover {
+    background-color: var(--interactive-hover);
+}
+
+/* 子节点容器样式 */
+.book-smith-folder-children,
+.book-smith-tree-children {
+    margin-left: 24px;
+    border-left: 1px solid var(--background-modifier-border);
+    margin-top: 2px;
+    padding-left: 12px;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.2s ease;
+}
+
+.book-smith-tree-children.is-expanded {
+    height: auto;
+}
+
+/* 折叠按钮样式 */
+.book-smith-folder-toggle {
+    cursor: pointer;
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+}
+
+.book-smith-folder-toggle.is-expanded {
+    transform: rotate(90deg);
+}
+
+/* 拖拽相关样式 */
+.book-smith-dragging {
+    opacity: 0.5;
+}
+
+.book-smith-dragover {
+    background-color: var(--interactive-accent);
+}
+
+.book-smith-dragover-before {
+    border-top: 10px solid var(--interactive-accent);
+}
+
+.book-smith-dragover-after {
+    border-bottom: 10px solid var(--interactive-accent);
+}
+
+.book-smith-dragover-inside {
+    background-color: var(--interactive-accent);
+    opacity: 0.5;
+}
+
+/* 节点操作按钮样式 */
+.book-smith-node-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.book-smith-tree-header:hover .book-smith-node-actions {
+    opacity: 1;
+}

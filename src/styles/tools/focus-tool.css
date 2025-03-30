@@ -1,0 +1,277 @@
+/* 基础容器样式 */
+.book-smith-focus-tool {
+    padding: 20px;
+}
+
+/* 头部样式 */
+.focus-tool-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.focus-tool-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.focus-tool-header-icon svg {
+    width: 20px;
+    height: 20px;
+    color: var(--interactive-accent);
+}
+
+.focus-tool-title {
+    font-size: var(--h3-size);
+    font-weight: var(--h2-weight);
+    color: var(--h2-color, var(--text-normal));
+    line-height: var(--h2-line-height, 1.4);
+    font-family: var(--h2-font, var(--font-interface));
+}
+
+/* 计时器样式 */
+.focus-tool-timer-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 30px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.focus-tool-timer {
+    position: relative;
+    z-index: 1;
+    font-size: 2.8em;
+    font-weight: bold;
+    font-family: var(--font-monospace);
+    color: var(--text-accent);
+}
+
+/* 进度环样式 */
+.focus-tool-progress-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.focus-tool-progress-bg {
+    fill: none;
+    stroke: var(--background-modifier-border);
+    stroke-width: 4;
+}
+
+.focus-tool-progress-ring {
+    fill: none;
+    stroke: var(--interactive-accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 282.743px;
+    stroke-dashoffset: 282.743px;
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+/* 时间调节按钮样式 */
+.focus-tool-timer-adjust {
+    position: absolute;
+    width: 50px;
+    height: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+    background: var(--interactive-accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.focus-tool-timer-adjust.up {
+    top: 45px;
+}
+
+.focus-tool-timer-adjust.down {
+    bottom: 45px;
+}
+
+.focus-tool-timer-adjust::after {
+    font-size: 25px;
+    color: var(--text-on-accent);
+    opacity: 0.6;
+    line-height: 1;
+}
+
+.focus-tool-timer-adjust.up::after {
+    content: '+';
+}
+
+.focus-tool-timer-adjust.down::after {
+    content: '−';
+}
+
+.focus-tool-timer-container:hover .focus-tool-timer-adjust {
+    opacity: 0.15;
+}
+
+.focus-tool-timer-adjust:hover {
+    opacity: 0.3 !important;
+}
+
+.focus-tool-timer-adjust:hover::after {
+    opacity: 1;
+}
+
+/* 状态和控制按钮样式 */
+.focus-tool-status {
+    text-align: center;
+    color: var(--text-muted);
+    margin-bottom: 15px;
+}
+
+.focus-tool-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.focus-tool-btn {
+    width: 120px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 22px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.focus-tool-btn:hover {
+    opacity: 0.9;
+}
+
+.focus-tool-btn-outline {
+    background: transparent;
+    border: 1px solid var(--interactive-accent);
+    color: var(--interactive-accent);
+}
+
+.focus-tool-btn-solid {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+}
+
+/* 统计面板样式 */
+.focus-tool-stats-container {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 5px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    margin: 0 4px;
+}
+
+.focus-tool-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;  /* 添加相对定位 */
+}
+
+.focus-tool-stat-item span:first-child {
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+.focus-tool-stat-item span:last-child {
+    font-family: var(--font-monospace);
+    font-size: 1.4em;
+    font-weight: 500;
+}
+
+.focus-tool-stat-item:nth-child(-n+2) span:last-child {
+    color: var(--text-normal);
+}
+
+.focus-tool-stat-item:nth-child(n+3) span:last-child {
+    color: var(--text-accent);
+}
+
+/* 目标达成效果 */
+.focus-tool-stat-item.goal-reached span:last-child {
+    color: var(--color-red) !important;
+    font-weight: bold;
+    animation: goal-pulse 1.5s ease-in-out infinite;
+}
+
+.focus-tool-stat-item.goal-reached::after {
+    content: '🎯';
+    position: absolute;
+    top: 0;           /* 调整位置 */
+    right: -4px;      /* 调整位置 */
+    font-size: 14px;  /* 稍微调大一点 */
+    animation: goal-bounce 1s ease infinite;
+}
+
+@keyframes goal-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes goal-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* 庆祝动画样式 */
+.focus-celebration {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    pointer-events: none;
+}
+
+.celebration-text {
+    font-size: 1.2em;
+    color: var(--text-accent);
+    text-align: center;
+    animation: celebrate 2s ease-out forwards;
+    white-space: nowrap;
+}
+
+@keyframes celebrate {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(20px);
+    }
+    20% {
+        opacity: 1;
+        transform: scale(1.2) translateY(0);
+    }
+    80% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1) translateY(-20px);
+    }
+}

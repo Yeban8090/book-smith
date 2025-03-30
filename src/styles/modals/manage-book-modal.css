@@ -1,0 +1,129 @@
+.book-smith-manage-books-modal {
+    max-width: 600px;
+    width: 100%;
+}
+
+.book-smith-manage-search-container {
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.book-smith-manage-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.book-smith-manage-search-input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.book-smith-manage-divider {
+    margin: 20px 0;
+    height: 1px;
+    background-color: var(--background-modifier-border);
+}
+
+.book-smith-manage-book-list {
+    height: 400px;
+    overflow-y: auto;
+    padding: 0 10px;
+}
+
+.book-smith-manage-book-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.book-smith-manage-book-list::-webkit-scrollbar-track {
+    background: var(--background-primary-alt);
+    border-radius: 3px;
+}
+
+.book-smith-manage-book-list::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 3px;
+}
+
+.book-smith-manage-book-list::-webkit-scrollbar-thumb:hover {
+    background: var(--interactive-accent);
+}
+
+.book-smith-book-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: var(--background-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.book-smith-book-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.book-smith-book-cover {
+    flex-shrink: 0;
+    width: 100px;
+    height: 140px;
+    overflow: hidden;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    background-color: var(--background-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.book-smith-book-cover::before {
+    content: "暂无封面";
+    color: var(--text-muted);
+    font-size: 0.9em;
+    opacity: 0.6;
+}
+
+.book-smith-book-cover img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.book-smith-book-container .setting-item {
+    flex: 1;
+    border: none;
+    padding: 0;
+}
+
+.book-smith-book-container .setting-item-name {
+    font-size: 1.4em;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.book-smith-book-container .setting-item-name .subtitle {
+    display: block;
+    font-size: 0.8em;
+    font-weight: normal;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.book-smith-book-container .setting-item-description {
+    color: var(--text-muted);
+    white-space: pre-line;
+    line-height: 1.1;
+    margin-top: 8px;
+}

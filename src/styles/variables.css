@@ -1,0 +1,21 @@
+.theme-dark {
+    --book-smith-toolbar-bg: var(--background-modifier-hover);
+    --book-smith-content-bg: var(--background-primary);
+    --book-smith-stats-bg: var(--background-modifier-hover);
+    --book-smith-divider-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-light {
+    --book-smith-toolbar-bg: var(--background-modifier-hover);
+    --book-smith-content-bg: var(--background-primary);
+    --book-smith-stats-bg: var(--background-modifier-hover);
+    --book-smith-divider-color: rgba(0, 0, 0, 0.1);
+}
+
+:root {
+    --book-smith-padding: 10px 5px 10px 5px;
+    --book-smith-gap: 10px;
+    --book-smith-border-radius: 5px;
+    --book-smith-background: var(--interactive-normal);
+    --book-smith-accent: var(--text-accent);
+}

@@ -1,0 +1,19 @@
+.book-smith-create-book-modal {
+    max-width: 500px;
+    width: 100%;
+}
+
+.book-smith-create-book-modal .setting-item {
+    padding: 10px;
+}
+
+.book-smith-create-book-modal textarea {
+    min-height: 100px;
+}
+
+.book-smith-create-book-modal .setting-item:last-child {
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--background-modifier-border);
+}
