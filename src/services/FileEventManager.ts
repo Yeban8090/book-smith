@@ -73,31 +73,6 @@ export class FileEventManager {
                 await this.plugin.saveSettings();
                 return { type: 'deleted' };
             }
-            
-            // 如果删除的是章节文件
-            // if (file instanceof TFile) {
-            //     const updateNode = (nodes: ChapterNode[]): boolean => {
-            //         for (let i = 0; i < nodes.length; i++) {
-            //             const node = nodes[i];
-            //             if (node.type === 'file' && node.file) {
-            //                 const nodePath = `${bookPath}/${node.path}`;
-            //                 if (nodePath === file.path) {
-            //                     nodes.splice(i, 1);
-            //                     return true;
-            //                 }
-            //             }
-            //             if (node.type === 'group' && node.children) {
-            //                 if (updateNode(node.children)) return true;
-            //             }
-            //         }
-            //         return false;
-            //     };
-
-            //     if (updateNode(currentBook.structure.tree)) {
-            //         await this.plugin.bookManager.updateBook(currentBook.basic.uuid, currentBook);
-            //         return { type: 'updated', book: currentBook };
-            //     }
-            // }
         }
         return null;
     }
