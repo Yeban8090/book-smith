@@ -42,20 +42,7 @@ export class BookSmithView extends ItemView {
     }
 
     // === 文件事件监听 ===
-    private registerFileEvents() {
-        // 监听文件或文件夹的创建
-        this.registerEvent(
-            this.app.vault.on('create', async (file: TAbstractFile) => {
-                if (file instanceof TFile || file instanceof TFolder) {
-                    const newBook = await this.fileEventManager.handleBookCreate(file);
-                    if (newBook) {
-                        await this.refreshView();
-                        new Notice(`已切换到《${newBook.basic.title}》`);
-                    }
-                }
-            })
-        );
-
+    private registerFileEvents() {        
         // 监听文件内容修改
         this.registerEvent(
             this.app.vault.on('modify', async (file: TAbstractFile) => {
@@ -83,22 +70,6 @@ export class BookSmithView extends ItemView {
                     }
                 }
                 this.isRenamingFile = false;
-            })
-        );
-
-        // 监听文件或文件夹删除
-        this.registerEvent(
-            this.app.vault.on('delete', async (file: TAbstractFile) => {
-                if ((file instanceof TFile || file instanceof TFolder) && this.currentBook) {
-                    const result = await this.fileEventManager.handleBookDeletion(file, this.currentBook);
-                    if (result?.type === 'deleted') {
-                        this.currentBook = null;
-                        await this.refreshView();
-                        new Notice('当前书籍已被删除');
-                    } else if (result?.type === 'updated') {
-                        await this.refreshView();
-                    }
-                }
             })
         );
     }
@@ -146,7 +117,14 @@ export class BookSmithView extends ItemView {
         setIcon(newBookBtn, 'create-new');
         newBookBtn.appendChild(createSpan({ text: ' 新建书籍' }));
         newBookBtn.addEventListener('click', () => {
-            new CreateBookModal(this.app, this.plugin).open();
+            new CreateBookModal(this.app, this.plugin, async (newBook) => {
+                if (newBook) {
+                    this.plugin.settings.lastBookId = newBook.basic.uuid;
+                    await this.plugin.saveSettings();
+                    await this.refreshView();
+                    new Notice(`已切换到《${newBook.basic.title}》`);
+                }
+            }).open();
         });
 
         const switchBookBtn = toolbar.createEl('button', { cls: 'book-smith-toolbar-btn' });
@@ -160,9 +138,17 @@ export class BookSmithView extends ItemView {
         setIcon(manageBookBtn, 'library');
         manageBookBtn.appendChild(createSpan({ text: ' 管理' }));
         manageBookBtn.addEventListener('click', async () => {
-            new ManageBooksModal(this.app, this.plugin, async (editedBookId) => {
-                if (editedBookId === this.currentBook?.basic.uuid) {
-                    await this.refreshView();
+            new ManageBooksModal(this.app, this.plugin, async (result) => {
+                if (result.bookId === this.currentBook?.basic.uuid) {
+                    if (result.type === 'deleted') {
+                        this.plugin.settings.lastBookId = undefined;
+                        await this.plugin.saveSettings();
+                        this.currentBook = null;
+                        await this.refreshView();
+                        new Notice('当前书籍已被删除');
+                    } else if (result.type === 'edited') {
+                        await this.refreshView();
+                    }
                 }
             }).open();
         });

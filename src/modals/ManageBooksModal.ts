@@ -7,7 +7,7 @@ export class ManageBooksModal extends Modal {
     constructor(
         app: App,
         private plugin: BookSmithPlugin,
-        private onBookEdited?: (bookId: string) => void
+        private onBookChange?: (result: { type: 'deleted' | 'edited', bookId: string }) => void
     ) {
         super(app);
     }
@@ -105,6 +105,7 @@ export class ManageBooksModal extends Modal {
                                 try {
                                     await this.plugin.bookManager.deleteBook(book.basic.uuid);
                                     new Notice('删除成功');
+                                    this.onBookChange?.({ type: 'deleted', bookId: book.basic.uuid });
                                     this.onOpen();
                                 } catch (error) {
                                     new Notice(`删除失败: ${error.message}`);
@@ -119,9 +120,9 @@ export class ManageBooksModal extends Modal {
                                 book,
                                 this.plugin.bookManager,
                                 this.plugin,
-                                (bookId) => {
+                                () => {
                                     this.onOpen();
-                                    this.onBookEdited?.(bookId);
+                                    this.onBookChange?.({ type: 'edited', bookId: book.basic.uuid });
                                 }
                             ).open();
                         }));

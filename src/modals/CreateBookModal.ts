@@ -1,5 +1,5 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import { BookBasicInfo } from '../types/book';
+import { BookBasicInfo, Book } from '../types/book';
 import BookSmithPlugin from '../main';
 
 export class CreateBookModal extends Modal {
@@ -9,7 +9,11 @@ export class CreateBookModal extends Modal {
     private selectedTemplate: string = 'default';
     private targetTotalWords: number = 10000;  // 默认1万字
 
-    constructor(app: App, private plugin: BookSmithPlugin) {
+    constructor(
+        app: App, 
+        private plugin: BookSmithPlugin,
+        private onBookCreated?: (book: Book) => void
+    ) {
         super(app);
     }
 
@@ -124,12 +128,15 @@ export class CreateBookModal extends Modal {
                         return;
                     }
                     try {
-                        await this.plugin.bookManager.createBook(
+                        const newBook = await this.plugin.bookManager.createBook(
                             this.bookInfo as Omit<BookBasicInfo, 'uuid'>,
                             this.selectedTemplate,
-                            this.targetTotalWords  // 添加目标字数参数
+                            this.targetTotalWords
                         );
                         new Notice('书籍创建成功');
+                        if (this.onBookCreated) {
+                            this.onBookCreated(newBook);
+                        }
                         this.close();
                     } catch (error) {
                         new Notice(`创建失败: ${error.message}`);

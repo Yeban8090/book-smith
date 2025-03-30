@@ -9,21 +9,6 @@ export class FileEventManager {
         private plugin: BookSmithPlugin
     ) {}
 
-    async handleBookCreate(file: TFile | TFolder) {
-        if (file instanceof TFolder && 
-            file.path.startsWith(this.plugin.settings.defaultBookPath) && 
-            file.parent?.path === this.plugin.settings.defaultBookPath) {  // 添加这个条件检查
-            await new Promise(resolve => setTimeout(resolve, 500));
-            const newBook = await this.plugin.bookManager.getBookConfig(file);
-            if (newBook) {
-                this.plugin.settings.lastBookId = newBook.basic.uuid;
-                await this.plugin.saveSettings();
-                return newBook;
-            }
-        }
-        return null;
-    }
-
     async handleBookModify(file: TFile | TFolder, currentBook: Book, oldPath?: string) {
         const bookPath = `${this.plugin.settings.defaultBookPath}/${currentBook.basic.title}`;
         if (file.path.startsWith(bookPath)) {
@@ -59,19 +44,6 @@ export class FileEventManager {
             if (updateNode(currentBook.structure.tree)) {
                 await this.plugin.bookManager.updateBook(currentBook.basic.uuid, currentBook);
                 return currentBook;
-            }
-        }
-        return null;
-    }
-
-    async handleBookDeletion(file: TFile | TFolder, currentBook: Book) {
-        const bookPath = `${this.plugin.settings.defaultBookPath}/${currentBook.basic.title}`;
-        if (file.path.startsWith(bookPath)) {
-            // 如果删除的是整个书籍文件夹
-            if (file instanceof TFolder && file.path === bookPath) {
-                this.plugin.settings.lastBookId = undefined;
-                await this.plugin.saveSettings();
-                return { type: 'deleted' };
             }
         }
         return null;

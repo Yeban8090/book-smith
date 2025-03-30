@@ -11,11 +11,11 @@ export class EditBookModal extends Modal {
         private book: Book,
         private bookManager: BookManager,
         private plugin: BookSmithPlugin,
-        private onSaved?: (bookId: string) => void
+        private onSaved?: (result: { type: 'edited', bookId: string }) => void
     ) {
         super(app);
         this.bookInfo = { ...book.basic };
-        this.targetTotalWords = book.stats.target_total_words || 10000;  // 默认1万字
+        this.targetTotalWords = book.stats.target_total_words || 10000;
     }
 
     onOpen() {
@@ -121,7 +121,7 @@ export class EditBookModal extends Modal {
                         });
                         new Notice('保存成功');
                         this.close();
-                        this.onSaved?.(this.book.basic.uuid);
+                        this.onSaved?.({ type: 'edited', bookId: this.book.basic.uuid });
                     } catch (error) {
                         new Notice(`保存失败: ${error.message}`);
                     }
