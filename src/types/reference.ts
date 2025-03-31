@@ -9,6 +9,7 @@ export interface Reference {
 export interface ChapterReferences {
     chapterId: string;    // 章节ID
     chapterTitle: string; // 章节标题
+    orderPath: number[];  // 章节的排序路径，例如 [1,2] 表示第一章第二节
     references: Reference[];
 }
 
