@@ -46,7 +46,17 @@ export class ChapterTree {
         const list = this.container.createEl('ul', { cls: 'book-smith-tree-list' });
         this.book.structure.tree.forEach(node => this.renderNode(list, node));
     }
-
+    // 在类的开头添加一个工具方法
+    private updateNodesOrder(nodes: ChapterNode[], startOrder: number = 1): number {
+        let currentOrder = startOrder;
+        nodes.forEach(node => {
+            node.order = currentOrder++;
+            if (node.type === 'group' && node.children?.length) {
+                currentOrder = this.updateNodesOrder(node.children, currentOrder);
+            }
+        });
+        return currentOrder;
+    }
     private renderNode(parent: HTMLElement, node: ChapterNode) {
         const item = parent.createEl('li', { cls: 'book-smith-tree-item' });
         const header = item.createDiv({ cls: 'book-smith-tree-header' });
@@ -559,6 +569,9 @@ export class ChapterTree {
         draggedNode.path = relativePath;
         draggedNode.last_modified = new Date().toISOString();
         insertNode(this.book.structure.tree, position);
+
+        // 更新所有节点的顺序
+        this.updateNodesOrder(this.book.structure.tree);
     }
 
     // === 节点操作相关 ===
@@ -583,7 +596,7 @@ export class ChapterTree {
             }
 
             const newNode: ChapterNode = {
-                order: this.book.structure.tree.length + 1,
+                order: 0,  // 临时值，将在插入后更新
                 id: crypto.randomUUID(),
                 title: name,
                 type: type,
@@ -599,8 +612,10 @@ export class ChapterTree {
             if (parentNode) {
                 parentNode.children = parentNode.children || [];
                 parentNode.children.push(newNode);
+                this.updateNodesOrder(parentNode.children);
             } else {
                 this.book.structure.tree.push(newNode);
+                this.updateNodesOrder(this.book.structure.tree);
             }
 
             await this.bookManager.updateBook(this.book.basic.uuid, {
@@ -668,7 +683,7 @@ export class ChapterTree {
                 title: node.title,
                 type: node.type,
                 path: newPath,
-                order: node.order,
+                order: 0,  // 临时值，将在插入后更新
                 default_status: node.default_status,
                 created_at: new Date().toISOString(),
                 last_modified: new Date().toISOString(),

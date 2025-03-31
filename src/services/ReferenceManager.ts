@@ -5,13 +5,13 @@ import { Reference, ReferenceData, ChapterReferences } from '../types/reference'
 import { ReferenceModal } from '../modals/ReferenceModal';
 
 export class ReferenceManager {
+    // === 1. 初始化 ===
     constructor(
         private app: App,
         private plugin: BookSmithPlugin,
         private getCurrentBook: () => Book | null
     ) { }
 
-    // 1. 初始化和注册
     registerEditorMenu() {
         this.plugin.registerEvent(
             this.app.workspace.on("editor-menu", async (menu, editor, view) => {
@@ -23,7 +23,7 @@ export class ReferenceManager {
         );
     }
 
-    // 2. 路径和节点处理
+    // === 2. 路径和上下文验证 ===
     private getBookPath(): string | null {
         const currentBook = this.getCurrentBook();
         return currentBook
@@ -38,6 +38,17 @@ export class ReferenceManager {
         return file.path.startsWith(bookPath);
     }
 
+    private checkReferenceFile(bookPath: string): boolean {
+        const referencePath = `${bookPath}/引用书目.md`;
+        const file = this.app.vault.getAbstractFileByPath(referencePath);
+        if (!file) {
+            new Notice('请先在书籍目录下创建"引用书目.md"文件');
+            return false;
+        }
+        return true;
+    }
+
+    // === 3. 节点查找和路径处理 ===
     private findCurrentNode(file: TFile | null): ChapterNode | null {
         const currentBook = this.getCurrentBook();
         if (!file || !currentBook) return null;
@@ -77,7 +88,7 @@ export class ReferenceManager {
         return findPath(currentBook.structure.tree);
     }
 
-    // 3. 引用数据处理
+    // === 4. 引用数据管理 ===
     private generateRandomId(): string {
         return Math.random().toString(36).substring(2, 15);
     }
@@ -87,12 +98,44 @@ export class ReferenceManager {
         try {
             if (await this.app.vault.adapter.exists(referenceConfigPath)) {
                 const data = await this.app.vault.adapter.read(referenceConfigPath);
-                return JSON.parse(data);
+                const references = JSON.parse(data);
+                await this.syncChaptersInfo(references);
+                return references;
             }
         } catch (error) {
             console.error('读取引用配置失败:', error);
         }
         return { chapters: [] };
+    }
+
+    private async syncChaptersInfo(references: ReferenceData) {
+        const currentBook = this.getCurrentBook();
+        if (!currentBook) return;
+
+        const chaptersMap = new Map();
+        const traverse = (nodes: ChapterNode[]) => {
+            for (const node of nodes) {
+                const orderPath = this.findNodePath(node.id);
+                chaptersMap.set(node.id, {
+                    title: node.title,
+                    orderPath
+                });
+                if (node.children) {
+                    traverse(node.children);
+                }
+            }
+        };
+        traverse(currentBook.structure.tree);
+
+        references.chapters = references.chapters.filter(chapter => {
+            const latestInfo = chaptersMap.get(chapter.chapterId);
+            if (latestInfo) {
+                chapter.chapterTitle = latestInfo.title;
+                chapter.orderPath = latestInfo.orderPath;
+                return true;
+            }
+            return false;
+        });
     }
 
     private findReferenceById(references: ReferenceData, refId: string): { ref: Reference, chapter: ChapterReferences, order: number } | null {
@@ -133,18 +176,7 @@ export class ReferenceManager {
         return chapter;
     }
 
-    private checkReferenceFile(bookPath: string): boolean {
-        const referencePath = `${bookPath}/引用书目.md`;
-        const file = this.app.vault.getAbstractFileByPath(referencePath);
-        if (!file) {
-            new Notice('请先在书籍目录下创建"引用书目.md"文件');
-            return false;
-        }
-        return true;
-    }
-
     private async updateReferenceFiles(bookPath: string, references: ReferenceData) {
-        // 更新配置文件
         const referenceConfigPath = `${bookPath}/.references.json`;
         await this.app.vault.adapter.write(
             referenceConfigPath,
@@ -153,26 +185,20 @@ export class ReferenceManager {
 
         if (!this.checkReferenceFile(bookPath)) return;
 
-        // 更新引用文件
         const referencePath = `${bookPath}/引用书目.md`;
         const file = this.app.vault.getAbstractFileByPath(referencePath) as TFile;
 
-        // 按章节顺序排序
         references.chapters.sort((a, b) => {
             const pathA = a.orderPath;
             const pathB = b.orderPath;
-
-            // 逐层比较顺序
             for (let i = 0; i < Math.min(pathA.length, pathB.length); i++) {
                 if (pathA[i] !== pathB[i]) {
                     return pathA[i] - pathB[i];
                 }
             }
-            // 如果前面的层级都相同，更短的路径排在前面
             return pathA.length - pathB.length;
         });
 
-        // 生成新的内容
         let content = '';
         for (const chapter of references.chapters) {
             content += `#### ${chapter.chapterTitle}\n`;
@@ -186,20 +212,19 @@ export class ReferenceManager {
         await this.app.vault.modify(file, content);
     }
 
-    // 4. 工具方法
+    // === 5. 工具方法 ===
     private toSuperscript(num: number): string {
         const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
         return num.toString().split('').map(d => superscripts[parseInt(d)]).join('');
     }
 
-    // 5. 菜单处理
+    // === 6. 菜单处理 ===
     private async handleEditorMenu(menu: Menu, editor: Editor, bookPath: string, file: TFile | null) {
         const cursor = editor.getCursor();
         const line = editor.getLine(cursor.line);
         const selectedText = editor.getSelection().trim();
         const pattern = /(\[\[.*?#\^(.*?)\|.*?\]\])([\^⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g;     
 
-        // 找到当前行所有的引用
         let match;
         let currentRef = null;
         while ((match = pattern.exec(line)) !== null) {
@@ -280,7 +305,7 @@ export class ReferenceManager {
         });
     }
 
-    // 6. 引用操作处理
+    // === 7. 引用操作处理 ===
     private async handleReferenceInsertion(editor: Editor, file: TFile | null) {
         const selectedText = editor.getSelection().trim();
         if (!selectedText || selectedText.length === 0) {
