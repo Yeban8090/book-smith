@@ -65,20 +65,28 @@ export class ReferenceManager {
     }
 
     // 3. 菜单处理
+    // 添加上标数字转换方法
+    private toSuperscript(num: number): string {
+        const superscripts = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+        return num.toString().split('').map(d => superscripts[parseInt(d)]).join('');
+    }
+
+    // 在 handleEditorMenu 中修改匹配模式
     private async handleEditorMenu(menu: Menu, editor: Editor, bookPath: string, file: TFile | null) {
         const cursor = editor.getCursor();
         const line = editor.getLine(cursor.line);
-        const pattern = /\^(\d+)/;
+        const pattern = /\[\[.*#\^(.*?)\|.*?\]\]\^(\d+)/;
         const match = line.match(pattern);
         
         if (match) {
-            this.addEditReferenceMenuItem(menu, editor, bookPath, parseInt(match[1]));
+            console.log("Match found:", match[1]);
+            this.addEditReferenceMenuItem(menu, editor, bookPath, match[1]);
         } else {
             this.addNewReferenceMenuItem(menu, editor, file);
         }
     }
 
-    private addEditReferenceMenuItem(menu: Menu, editor: Editor, bookPath: string, refId: number) {
+    private addEditReferenceMenuItem(menu: Menu, editor: Editor, bookPath: string, refId: string) {
         menu.addItem((item) => {
             item
                 .setTitle("编辑当前引用")
@@ -136,6 +144,10 @@ export class ReferenceManager {
     }
 
     // 5. 数据操作
+    private generateRandomId(): string {
+        return Math.random().toString(36).substring(2, 15);
+    }
+
     private async getReferenceData(bookPath: string): Promise<ReferenceData> {
         const referenceConfigPath = `${bookPath}/.references.json`;
         try {
@@ -146,10 +158,10 @@ export class ReferenceManager {
         } catch (error) {
             console.error('读取引用配置失败:', error);
         }
-        return { nextId: 1, chapters: [] };
+        return { chapters: [] };
     }
 
-    private findReferenceById(references: ReferenceData, refId: number): { ref: Reference, chapter: ChapterReferences, order: number } | null {
+    private findReferenceById(references: ReferenceData, refId: string): { ref: Reference, chapter: ChapterReferences, order: number } | null {
         for (const chapter of references.chapters) {
             const index = chapter.references.findIndex(r => r.id === refId);
             if (index !== -1) {
@@ -161,91 +173,6 @@ export class ReferenceManager {
             }
         }
         return null;
-    }
-
-    private async updateReferenceFiles(bookPath: string, references: ReferenceData) {
-        // 更新配置文件
-        const referenceConfigPath = `${bookPath}/.references.json`;
-        await this.app.vault.adapter.write(
-            referenceConfigPath, 
-            JSON.stringify(references, null, 2)
-        );
-
-        if (!this.checkReferenceFile(bookPath)) return;
-
-        // 更新引用文件
-        const referencePath = `${bookPath}/引用书目.md`;
-        const file = this.app.vault.getAbstractFileByPath(referencePath) as TFile;
-        
-        // 生成新的内容
-        let content = '引用书目\n\n';
-        for (const chapter of references.chapters) {
-            content += `##### ${chapter.chapterTitle}\n`;
-            chapter.references.forEach((ref, index) => {
-                ref.order = index + 1; // 更新 order
-                content += `${ref.order}. ${ref.content} ^${ref.id}\n`;
-            });
-            content += '\n';
-        }
-
-        await this.app.vault.modify(file, content);
-    }
-
-    private openReferenceEditModal(
-        ref: Reference, 
-        references: ReferenceData, 
-        bookPath: string,
-        editor?: Editor,
-        selectedText?: string
-    ) {
-        new ReferenceModal(this.app, async (referenceContent) => {
-            if (!referenceContent) return;
-            ref.content = referenceContent;
-            ref.createTime = new Date().toISOString();
-            await this.updateReferenceFiles(bookPath, references);
-
-            if (editor && selectedText) {
-                const found = this.findReferenceById(references, ref.id);
-                if (found) {
-                    const referenceLink = `[[${bookPath}/引用书目#^${ref.id}|${selectedText}]]^${found.order}`;
-                    editor.replaceSelection(referenceLink);
-                }
-            }
-        }, ref.content).open();
-    }
-
-    private openReferenceCreateModal(
-        references: ReferenceData,
-        bookPath: string,
-        editor: Editor,
-        selectedText: string,
-        file: TFile | null
-    ) {
-        new ReferenceModal(this.app, async (referenceContent) => {
-            if (!referenceContent) return;
-
-            const currentNode = this.findCurrentNode(file);
-            if (!currentNode) {
-                new Notice("无法获取当前章节信息");
-                return;
-            }
-
-            const chapter = this.findChapterByNode(references, currentNode);
-            const refId = references.nextId++;
-            const newRef: Reference = {
-                id: refId,
-                text: selectedText,
-                content: referenceContent,
-                createTime: new Date().toISOString(),
-                order: chapter.references.length + 1
-            };
-            
-            chapter.references.push(newRef);
-            await this.updateReferenceFiles(bookPath, references);
-
-            const referenceLink = `[[${bookPath}/引用书目#^${refId}|${selectedText}]]^${newRef.order}`;
-            editor.replaceSelection(referenceLink);
-        }).open();
     }
 
     private findReferenceByText(references: ReferenceData, text: string): { ref: Reference, chapter: ChapterReferences } | null {
@@ -269,5 +196,90 @@ export class ReferenceManager {
             references.chapters.push(chapter);
         }
         return chapter;
+    }
+
+    private async updateReferenceFiles(bookPath: string, references: ReferenceData) {
+        // 更新配置文件
+        const referenceConfigPath = `${bookPath}/.references.json`;
+        await this.app.vault.adapter.write(
+            referenceConfigPath, 
+            JSON.stringify(references, null, 2)
+        );
+
+        if (!this.checkReferenceFile(bookPath)) return;
+
+        // 更新引用文件
+        const referencePath = `${bookPath}/引用书目.md`;
+        const file = this.app.vault.getAbstractFileByPath(referencePath) as TFile;
+        
+        // 生成新的内容
+        let content = '';
+        for (const chapter of references.chapters) {
+            content += `#### ${chapter.chapterTitle}\n`;
+            chapter.references.forEach((ref, index) => {
+                ref.order = index + 1;
+                content += `${ref.order}. ${ref.content} ^${ref.id}\n`;
+            });
+            content += '\n';
+        }
+
+        await this.app.vault.modify(file, content);
+    }
+
+    // 6. 模态框处理
+    private openReferenceEditModal(
+        ref: Reference, 
+        references: ReferenceData, 
+        bookPath: string,
+        editor?: Editor,
+        selectedText?: string
+    ) {
+        new ReferenceModal(this.app, async (referenceContent) => {
+            if (!referenceContent) return;
+            ref.content = referenceContent;
+            ref.createTime = new Date().toISOString();
+            await this.updateReferenceFiles(bookPath, references);
+
+            if (editor && selectedText) {
+                const found = this.findReferenceById(references, ref.id);
+                if (found) {
+                    const referenceLink = `[[${bookPath}/引用书目#^${ref.id}|${selectedText}]]${this.toSuperscript(found.order)}`;
+                    editor.replaceSelection(referenceLink);
+                }
+            }
+        }, ref.content).open();
+    }
+
+    private openReferenceCreateModal(
+        references: ReferenceData,
+        bookPath: string,
+        editor: Editor,
+        selectedText: string,
+        file: TFile | null
+    ) {
+        new ReferenceModal(this.app, async (referenceContent) => {
+            if (!referenceContent) return;
+
+            const currentNode = this.findCurrentNode(file);
+            if (!currentNode) {
+                new Notice("无法获取当前章节信息");
+                return;
+            }
+
+            const chapter = this.findChapterByNode(references, currentNode);
+            const newRef: Reference = {
+                id: this.generateRandomId(),
+                text: selectedText,
+                content: referenceContent,
+                createTime: new Date().toISOString(),
+                order: chapter.references.length + 1
+            };
+            
+            chapter.references.push(newRef);
+            await this.updateReferenceFiles(bookPath, references);
+
+            const referenceLink = `[[${bookPath}/引用书目#^${newRef.id}|${selectedText}]]${this.toSuperscript(newRef.order)}`;
+            editor.replaceSelection(referenceLink);
+        }).open();
     }
 }
