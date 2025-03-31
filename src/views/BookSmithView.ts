@@ -7,12 +7,14 @@ import { ManageBooksModal } from '../modals/ManageBooksModal';
 import { SwitchBookModal } from '../modals/SwitchBookModal';
 import { ChapterTree } from '../components/ChapterTree';
 import { FileEventManager } from '../services/FileEventManager';
+import { ReferenceManager } from '../services/ReferenceManager';
 
 // === 视图类定义 ===
 export class BookSmithView extends ItemView {
     // === 属性定义 ===
     private currentBook: Book | null = null;
     private fileEventManager: FileEventManager;
+    private referenceManager: ReferenceManager;
     private isRenamingFile: boolean = false;
 
     constructor(
@@ -21,7 +23,14 @@ export class BookSmithView extends ItemView {
     ) {
         super(leaf);
         this.fileEventManager = new FileEventManager(this.app, this.plugin);
+        this.referenceManager = new ReferenceManager(
+            this.app, 
+            this.plugin, 
+            () => this.currentBook
+        );
+        
         this.registerFileEvents();
+        this.referenceManager.registerEditorMenu();  // 注册右键菜单
         // 注册统计变化监听
         this.registerEvent(
             this.plugin.statsManager.onStatsChange(() => {

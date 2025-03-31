@@ -56,11 +56,21 @@ export const defaultTemplate: ChapterTree = {
             ]
         },
         {
+            id: 'reference',
+            title: '引用书目',
+            type: 'file',
+            path: '引用书目.md',
+            order: 3,
+            default_status: 'draft',
+            created_at: new Date().toISOString(),
+            last_modified: new Date().toISOString()
+        },
+        {
             id: 'afterword',
             title: '后记',
             type: 'file',
             path: '后记.md',
-            order: 3,
+            order: 4,
             default_status: 'draft',
             created_at: new Date().toISOString(),
             last_modified: new Date().toISOString()

@@ -12,10 +12,6 @@ export class FileEventManager {
     async handleBookModify(file: TFile | TFolder, currentBook: Book, oldPath?: string) {
         const bookPath = `${this.plugin.settings.defaultBookPath}/${currentBook.basic.title}`;
         if (file.path.startsWith(bookPath)) {
-            if (file instanceof TFile && file.name === '.book-config.md') {
-                return await this.plugin.bookManager.getBookById(currentBook.basic.uuid);
-            }
-
             const updateNode = (nodes: ChapterNode[]): boolean => {
                 for (const node of nodes) {
                     if (node.type === 'file' && file instanceof TFile) {
