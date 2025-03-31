@@ -94,7 +94,7 @@ export class ReferenceManager {
     }
 
     private async getReferenceData(bookPath: string): Promise<ReferenceData> {
-        const referenceConfigPath = `${bookPath}/.references.json`;
+        const referenceConfigPath = `${bookPath}/.references.md`;
         try {
             if (await this.app.vault.adapter.exists(referenceConfigPath)) {
                 const data = await this.app.vault.adapter.read(referenceConfigPath);
@@ -177,7 +177,7 @@ export class ReferenceManager {
     }
 
     private async updateReferenceFiles(bookPath: string, references: ReferenceData) {
-        const referenceConfigPath = `${bookPath}/.references.json`;
+        const referenceConfigPath = `${bookPath}/.references.md`;
         await this.app.vault.adapter.write(
             referenceConfigPath,
             JSON.stringify(references, null, 2)
