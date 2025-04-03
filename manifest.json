@@ -3,7 +3,7 @@
 	"name": "Book Smith",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "一个用于书籍写作管理的写书插件",
+	"description": "一个用于写作管理的写书插件",
 	"author": "Yeban",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

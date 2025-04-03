@@ -148,7 +148,13 @@ export class BookSmithView extends ItemView {
         manageBookBtn.appendChild(createSpan({ text: ' 管理' }));
         manageBookBtn.addEventListener('click', async () => {
             new ManageBooksModal(this.app, this.plugin, async (result) => {
-                if (result.bookId === this.currentBook?.basic.uuid) {
+                if (result.type === 'imported' && result.bookId) {
+                    // 处理导入书籍的情况
+                    this.plugin.settings.lastBookId = result.bookId;
+                    await this.plugin.saveSettings();
+                    await this.refreshView();
+                    new Notice(`已导入并切换到新书籍`);
+                } else if (result.bookId === this.currentBook?.basic.uuid) {
                     if (result.type === 'deleted') {
                         this.plugin.settings.lastBookId = undefined;
                         await this.plugin.saveSettings();

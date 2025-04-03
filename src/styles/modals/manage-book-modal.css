@@ -3,9 +3,18 @@
     width: 100%;
 }
 
-.book-smith-manage-search-container {
-    margin-bottom: 20px;
+/* 顶部容器样式 */
+.book-smith-manage-top-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 0 10px;
+    margin-bottom: 20px;
+}
+
+.book-smith-manage-search-container {
+    flex: 1;
+    margin-right: 12px;
 }
 
 .book-smith-manage-search-input {
@@ -15,6 +24,35 @@
     border: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
     color: var(--text-normal);
+}
+
+/* 导入按钮样式 */
+.book-smith-import-button {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    border: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.book-smith-import-button:hover {
+    background-color: var(--interactive-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.book-smith-import-button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .book-smith-manage-search-input:focus {

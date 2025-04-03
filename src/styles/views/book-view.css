@@ -63,7 +63,7 @@
     flex-direction: column;
     flex: 1;
     padding: 0;
-    height: calc(100% - 140px);
+    height: calc(100% - 180px); /* 增加减去的高度，为底部统计栏留出更多空间 */
     overflow-y: auto;
 }
 
@@ -219,6 +219,7 @@
     padding: 12px 16px;
     background: var(--background-primary);
     border-top: 1px solid var(--background-modifier-border);
+    z-index: 10; /* 确保统计栏始终在顶层 */
 }
 
 .book-smith-stat-item {

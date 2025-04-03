@@ -277,4 +277,113 @@ export: ${JSON.stringify(book.export)}
             await createNode(node);
         }
     }
+
+    // 在 BookManager 类中添加这个方法
+    
+    async importBookFromFolder(folderName: string): Promise<Book> {
+        try {
+            // 获取文件夹内的文件结构
+            const folderPath = `${this.settings.defaultBookPath}/${folderName}`;
+            
+            // 创建书籍结构
+            const structure = await this.buildFolderStructure(folderPath, '');
+            
+            // 创建新书籍对象，确保符合 Book 接口定义
+            const newBook: Book = {
+                basic: {
+                    uuid: uuidv4(),
+                    title: folderName,
+                    author: this.settings.defaultAuthor ? [this.settings.defaultAuthor] : ['未知作者'],
+                    created_at: new Date().toISOString()
+                },
+                structure: {
+                    tree: structure
+                },
+                stats: {
+                    total_words: 0,
+                    target_total_words: 100000,
+                    progress_by_words: 0,
+                    progress_by_chapter: 0,
+                    daily_words: {},
+                    writing_days: 0,
+                    average_daily_words: 0,
+                    last_writing_date: new Date().toISOString(),
+                    last_modified: new Date().toISOString()
+                },
+                export: {
+                    default_format: 'pdf',
+                    template: 'default',
+                    include_cover: true
+                }
+            };
+            
+            // 保存书籍配置
+            const bookFolder = this.app.vault.getAbstractFileByPath(folderPath);
+            if (!(bookFolder instanceof TFolder)) {
+                throw new Error('书籍文件夹不存在');
+            }
+            
+            await this.saveBookConfig(bookFolder, newBook);
+            return newBook;
+        } catch (error) {
+            console.error('导入书籍失败:', error);
+            throw error;
+        }
+    }
+    
+    // 构建文件夹结构的辅助方法
+    private async buildFolderStructure(folderPath: string, parentPath: string = ''): Promise<ChapterNode[]> {
+        const structure: ChapterNode[] = [];
+        let order = 0;
+        
+        const folderContents = await this.app.vault.adapter.list(folderPath);
+        
+        // 处理文件
+        for (const filePath of folderContents.files) {
+            // 只处理markdown文件
+            if (!filePath.endsWith('.md')) continue;
+            
+            const fileName = filePath.split('/').pop() || '';
+            const title = fileName.replace('.md', '');
+            const relativePath = parentPath ? `${parentPath}/${fileName}` : fileName;
+            
+            structure.push({
+                id: uuidv4(),
+                title: title,
+                type: 'file',
+                path: relativePath,
+                order: order++,
+                default_status: 'draft',
+                created_at: new Date().toISOString(),
+                last_modified: new Date().toISOString()
+            });
+        }
+        
+        // 处理文件夹
+        for (const subFolderPath of folderContents.folders) {
+            const folderName = subFolderPath.split('/').pop() || '';
+            const relativePath = parentPath ? `${parentPath}/${folderName}` : folderName;
+            
+            // 递归获取子文件夹内容
+            const children = await this.buildFolderStructure(
+                subFolderPath, 
+                relativePath
+            );
+            
+            structure.push({
+                id: uuidv4(),
+                title: folderName,
+                type: 'group',
+                path: relativePath,
+                order: order++,
+                default_status: 'draft',
+                created_at: new Date().toISOString(),
+                last_modified: new Date().toISOString(),
+                children: children,
+                is_expanded: true
+            });
+        }
+        
+        return structure;
+    }
 }
