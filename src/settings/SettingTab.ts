@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
 import BookSmithPlugin from '../main';
 import { TemplateEditModal } from '../modals/TemplateEditModal';
+import { ConfirmModal } from '../modals/ConfirmModal';
 
 export class BookSmithSettingTab extends PluginSettingTab {
     plugin: BookSmithPlugin;
@@ -119,14 +120,21 @@ export class BookSmithSettingTab extends PluginSettingTab {
                     .addButton(btn => btn
                         .setIcon('trash')
                         .setTooltip('删除模板')
-                        .onClick(async () => {
-                            // 如果删除的是当前默认模板，则将默认模板设置为 'default'
-                            if (key === this.plugin.settings.templates.default) {
-                                this.plugin.settings.templates.default = 'default';
-                            }
-                            delete this.plugin.settings.templates.custom[key];
-                            await this.plugin.saveSettings();
-                            this.display();
+                        .onClick(() => {
+                            new ConfirmModal(
+                                this.app,
+                                '删除模板',
+                                '确定要删除此模板吗？删除后无法恢复。',
+                                async () => {
+                                    // 如果删除的是当前默认模板，则将默认模板设置为 'default'
+                                    if (key === this.plugin.settings.templates.default) {
+                                        this.plugin.settings.templates.default = 'default';
+                                    }
+                                    delete this.plugin.settings.templates.custom[key];
+                                    await this.plugin.saveSettings();
+                                    this.display();
+                                }
+                            ).open();
                         }));
             });
 
