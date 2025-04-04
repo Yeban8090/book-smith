@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from 'obsidian';
+import { App, Modal } from 'obsidian';
 
 export class UnimportedBooksModal extends Modal {
     private result: string | null = null;
