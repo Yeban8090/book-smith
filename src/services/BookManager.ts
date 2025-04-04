@@ -344,6 +344,9 @@ export: ${JSON.stringify(book.export)}
             if (!filePath.endsWith('.md')) continue;
             
             const fileName = filePath.split('/').pop() || '';
+            // 过滤掉隐藏文件和配置文件
+            if (fileName.startsWith('.')) continue;
+            
             const title = fileName.replace('.md', '');
             const relativePath = parentPath ? `${parentPath}/${fileName}` : fileName;
             
@@ -362,6 +365,12 @@ export: ${JSON.stringify(book.export)}
         // 处理文件夹
         for (const subFolderPath of folderContents.folders) {
             const folderName = subFolderPath.split('/').pop() || '';
+            
+            // 过滤掉隐藏文件夹和特殊系统文件夹
+            if (folderName.startsWith('.') || 
+                folderName === '__MACOSX' || 
+                folderName === 'node_modules') continue;
+            
             const relativePath = parentPath ? `${parentPath}/${folderName}` : folderName;
             
             // 递归获取子文件夹内容
