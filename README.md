@@ -1,6 +1,6 @@
 # Book Smith
 
-Book Smith 是一个专为 Obsidian 设计的书籍写作管理插件。它能帮助作者更好地组织和管理他们的写作项目。
+Book Smith 是一个专为 Obsidian 设计的写作管理插件。它能帮助作者更好地组织和管理他们的写作项目。
 
 ## 功能特点
 

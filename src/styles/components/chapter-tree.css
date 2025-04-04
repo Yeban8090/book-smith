@@ -161,3 +161,26 @@
 .book-smith-tree-header:hover .book-smith-node-actions {
     opacity: 1;
 }
+
+
+/* 排除在统计外的文件样式 */
+.book-smith-tree-title.exclude-from-stats {
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+.book-smith-tree-title.exclude-from-stats::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: var(--text-muted);
+    opacity: 0.6;
+    mask-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-minus-circle"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>');
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+}

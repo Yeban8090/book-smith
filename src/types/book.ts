@@ -18,6 +18,7 @@ export interface ChapterNode {
     order: number;               // 排序序号
     children?: ChapterNode[];    // 子节点（仅文件夹类型有）
     default_status: 'draft' | 'editing' | 'done';  // 新建章节默认状态
+    exclude?: boolean;           // 是否排除此节点（统计、导出等）
     is_expanded?: boolean;       // 文件夹展开状态
     created_at: string;          // 创建时间
     last_modified: string;       // 最后修改时间
