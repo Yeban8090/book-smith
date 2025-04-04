@@ -1,4 +1,4 @@
-import { App, Modal, Setting, Notice } from 'obsidian';
+import { App, Modal, Setting, Notice, TFolder } from 'obsidian';
 import { EditBookModal } from './EditBookModal';
 import { ConfirmModal } from './ConfirmModal';
 import { UnimportedBooksModal } from './UnimportedBooksModal'; // 添加导入
@@ -149,24 +149,27 @@ export class ManageBooksModal extends Modal {
         try {
             // 获取书籍根目录下的所有文件夹
             const booksPath = this.plugin.settings.defaultBookPath;
-            const bookFolders = await this.app.vault.adapter.list(booksPath);
+            const rootFolder = this.app.vault.getAbstractFileByPath(booksPath);
 
+            if (!(rootFolder instanceof TFolder)) {
+                new Notice('书籍根目录不存在或无法访问');
+                return;
+            }
+            
             // 筛选出没有配置文件的文件夹，并跳过 covers 文件夹
             const unimportedBooks: string[] = [];
 
-            for (const folder of bookFolders.folders) {
-                const folderName = folder.split('/').pop();
-                if (!folderName || folderName === 'covers') continue; // 跳过 covers 文件夹
-
-                // 检查是否已经有配置文件
-                const configPath = `${folder}/.book-config.md`;
-                const hasConfig = await this.app.vault.adapter.exists(configPath);
-
-                if (!hasConfig) {
-                    unimportedBooks.push(folderName);
+            for (const child of rootFolder.children) {
+                if (child instanceof TFolder && child.name !== 'covers') {
+                    // 检查是否已经有配置文件
+                    const configPath = `${child.path}/book-config.json`;
+                    const configFile = this.app.vault.getAbstractFileByPath(configPath);
+                    
+                    if (!configFile) {
+                        unimportedBooks.push(child.name);
+                    }
                 }
             }
-
             if (unimportedBooks.length === 0) {
                 new Notice('没有找到未导入的书籍目录');
                 return;

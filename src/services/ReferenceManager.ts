@@ -93,11 +93,13 @@ export class ReferenceManager {
         return Math.random().toString(36).substring(2, 15);
     }
 
+    // === 4. 引用数据管理 ===
     private async getReferenceData(bookPath: string): Promise<ReferenceData> {
-        const referenceConfigPath = `${bookPath}/.references.md`;
+        const referenceConfigPath = `${bookPath}/references.json`;
         try {
-            if (await this.app.vault.adapter.exists(referenceConfigPath)) {
-                const data = await this.app.vault.adapter.read(referenceConfigPath);
+            const configFile = this.app.vault.getAbstractFileByPath(referenceConfigPath);
+            if (configFile instanceof TFile) {
+                const data = await this.app.vault.read(configFile);
                 const references = JSON.parse(data);
                 await this.syncChaptersInfo(references);
                 return references;
@@ -177,11 +179,15 @@ export class ReferenceManager {
     }
 
     private async updateReferenceFiles(bookPath: string, references: ReferenceData) {
-        const referenceConfigPath = `${bookPath}/.references.md`;
-        await this.app.vault.adapter.write(
-            referenceConfigPath,
-            JSON.stringify(references, null, 2)
-        );
+        const referenceConfigPath = `${bookPath}/references.json`;
+        const configFile = this.app.vault.getAbstractFileByPath(referenceConfigPath);
+        const jsonContent = JSON.stringify(references, null, 2);
+        
+        if (configFile instanceof TFile) {
+            await this.app.vault.modify(configFile, jsonContent);
+        } else {
+            await this.app.vault.create(referenceConfigPath, jsonContent);
+        }
 
         if (!this.checkReferenceFile(bookPath)) return;
 

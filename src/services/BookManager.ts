@@ -1,4 +1,4 @@
-import { App, TFolder } from 'obsidian';
+import { App, TFolder, TFile } from 'obsidian';
 import { Book, BookBasicInfo, ChapterTree, ChapterNode } from '../types/book';
 import { v4 as uuidv4 } from 'uuid';
 import { TemplateManager } from './TemplateManager';
@@ -70,7 +70,7 @@ export class BookManager {
         }
     }
 
-    // 新增：确保目录结构存在
+    // 确保目录结构存在
     private async ensureDirectoryStructure(basicInfo: Omit<BookBasicInfo, 'uuid' | 'created_at'>): Promise<void> {
         // 检查书籍是否已存在
         const existingFolder = this.app.vault.getAbstractFileByPath(
@@ -81,14 +81,16 @@ export class BookManager {
         }
 
         // 确保根目录存在
-        if (!await this.app.vault.adapter.exists(this.rootPath)) {
+        const rootFolder = this.app.vault.getAbstractFileByPath(this.rootPath);
+        if (!rootFolder) {
             await this.app.vault.createFolder(this.rootPath);
         }
 
         // 如果有封面，确保 covers 目录存在
         if (basicInfo.cover) {
             const coversPath = `${this.rootPath}/covers`;
-            if (!await this.app.vault.adapter.exists(coversPath)) {
+            const coversFolder = this.app.vault.getAbstractFileByPath(coversPath);
+            if (!coversFolder) {
                 await this.app.vault.createFolder(coversPath);
             }
         }
@@ -100,8 +102,9 @@ export class BookManager {
         if (rootFolder instanceof TFolder) {
             for (const folder of rootFolder.children) {
                 if (folder instanceof TFolder) {
-                    const configPath = `${folder.path}/.book-config.md`;
-                    if (await this.app.vault.adapter.exists(configPath)) {
+                    const configPath = `${folder.path}/book-config.json`;
+                    const configFile = this.app.vault.getAbstractFileByPath(configPath);
+                    if (configFile) {
                         const config = await this.getBookConfig(folder);
                         if (config) {
                             books.push(config);
@@ -186,10 +189,13 @@ export class BookManager {
 
     async getBookConfig(folder: TFolder): Promise<Book | null> {
         try {
-            const configPath = `${folder.path}/.book-config.md`;
-            // 直接使用 adapter.read 读取文件内容
-            const content = await this.app.vault.adapter.read(configPath);
-            return this.parseBookConfig(content);
+            const configPath = `${folder.path}/book-config.json`;
+            const configFile = this.app.vault.getAbstractFileByPath(configPath);
+            if (configFile instanceof TFile) {
+                const content = await this.app.vault.read(configFile);
+                return JSON.parse(content) as Book;
+            }
+            return null;
         } catch (error) {
             console.error('获取书籍配置时发生错误:', error);
             return null;
@@ -197,56 +203,21 @@ export class BookManager {
     }
 
     private async saveBookConfig(folder: TFolder, book: Book): Promise<void> {
-        const configContent = `---
-basic: ${JSON.stringify(book.basic)}
-structure: ${JSON.stringify(book.structure)}
-stats: ${JSON.stringify(book.stats)}
-export: ${JSON.stringify(book.export)}
----`;
-
-        const configPath = `${folder.path}/.book-config.md`;
+        const configPath = `${folder.path}/book-config.json`;
         try {
-            await this.app.vault.adapter.write(configPath, configContent);
+            const configFile = this.app.vault.getAbstractFileByPath(configPath);
+            const jsonContent = JSON.stringify(book, null, 2);
+            
+            if (configFile) {
+                // 如果文件已存在，使用 modify 方法
+                await this.app.vault.modify(configFile as TFile, jsonContent);
+            } else {
+                // 如果文件不存在，使用 create 方法
+                await this.app.vault.create(configPath, jsonContent);
+            }
         } catch (error) {
             console.error('保存配置文件时发生错误:', error);
             throw new Error('保存配置文件失败');
-        }
-    }
-
-    private parseBookConfig(content: string): Book {
-        try {
-            const match = content.match(/^---\n([\s\S]*?)\n---/);
-            if (!match) {
-                throw new Error('配置文件格式错误：缺少 frontmatter 标记');
-            }
-
-            const yamlContent = match[1];
-            const config: any = {};
-
-            // 修改正则表达式以匹配多行内容
-            const basicMatch = yamlContent.match(/basic:\s*({[\s\S]*?})\s*(?=\n\w|$)/);
-            const structureMatch = yamlContent.match(/structure:\s*({[\s\S]*?})\s*(?=\n\w|$)/);
-            const statsMatch = yamlContent.match(/stats:\s*({[\s\S]*?})\s*(?=\n\w|$)/);
-            const exportMatch = yamlContent.match(/export:\s*({[\s\S]*?})\s*(?=\n\w|$)/);
-
-            if (!basicMatch || !structureMatch || !statsMatch || !exportMatch) {
-                console.error('解析失败的内容:', yamlContent);
-                throw new Error('配置文件格式错误：缺少必要的配置项');
-            }
-
-            try {
-                config.basic = JSON.parse(basicMatch[1]);
-                config.structure = JSON.parse(structureMatch[1]);
-                config.stats = JSON.parse(statsMatch[1]);
-                config.export = JSON.parse(exportMatch[1]);
-            } catch (e) {
-                console.error('JSON 解析失败:', e);
-                throw new Error('配置项解析失败：JSON 格式错误');
-            }
-            return config as Book;
-        } catch (error) {
-            console.error('解析配置文件失败:', error);
-            throw error;
         }
     }
 
@@ -260,7 +231,8 @@ export: ${JSON.stringify(book.export)}
                 const filePath = `${folder.path}/${node.path}`;
                 // 确保父目录存在
                 const parentPath = filePath.substring(0, filePath.lastIndexOf('/'));
-                if (!await this.app.vault.adapter.exists(parentPath)) {
+                const parentFolder = this.app.vault.getAbstractFileByPath(parentPath);
+                if (!parentFolder) {
                     await this.app.vault.createFolder(parentPath);
                 }
                 await this.app.vault.create(filePath, '');
