@@ -18,7 +18,6 @@ export default class BookSmithPlugin extends Plugin {
         await this.loadSettings();
         
         // 初始化所有管理器
-        this.templateManager = new TemplateManager();
         this.bookManager = new BookManager(this.app, this.settings);
         this.statsManager = new BookStatsManager(this.app, this, this.bookManager);
 

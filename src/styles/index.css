@@ -5,5 +5,7 @@
 @import './modals/switch-book-modal.css';
 @import './modals/manage-book-modal.css';
 @import './modals/unimported-books-modal.css';
+@import './modals/template-modal.css';
 @import './views/tools-view.css';
 @import './tools/focus-tool.css';
+@import './settings/settings-tab.css';

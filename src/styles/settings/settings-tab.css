@@ -1,0 +1,108 @@
+/* 整体容器 */
+.book-smith-settings {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 10px 20px;
+}
+
+/* 标题样式 */
+.book-smith-settings h2 {
+    margin: 20px 5px;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--background-modifier-border);
+    font-size: 1.4em;
+}
+
+/* 通用设置区块样式 */
+.book-smith-settings .settings-section {
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.book-smith-settings .settings-section-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 1rem;
+    background-color: var(--background-secondary);
+    transition: background-color 0.2s ease;
+}
+
+.book-smith-settings .settings-section-header:hover {
+    background-color: var(--background-secondary-alt);
+}
+
+.book-smith-settings .settings-section-header h4 {
+    margin: 0;
+    flex: 1;
+}
+
+.book-smith-settings .settings-section-toggle {
+    margin-right: 0.5rem;
+}
+
+.book-smith-settings .settings-section-content {
+    display: none;
+    padding: 1rem;
+    padding: 0 40px;
+    background-color: var(--background-primary);
+}
+
+.book-smith-settings .settings-section.is-expanded .settings-section-content {
+    display: block;
+}
+
+/* 模板设置特有样式 */
+.book-smith-settings .template-list {
+    padding: 10px 0;
+}
+
+.book-smith-settings .template-list h4 {
+    margin: 0 0 1rem;
+    color: var(--text-normal);
+}
+
+.book-smith-settings .template-item {
+    margin-bottom: 0.5rem;
+    padding: 0.8rem;
+    border-radius: 6px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    transition: all 0.2s ease;
+}
+
+.book-smith-settings .template-item:hover {
+    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+}
+
+.book-smith-settings .template-item .setting-item {
+    border: none;
+    padding: 10px;
+}
+
+.book-smith-settings .template-item .setting-item-info {
+    margin-right: 1rem;
+}
+
+.book-smith-settings .template-item .setting-item-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.book-smith-settings .template-item .setting-item-description {
+    color: var(--text-muted);
+}
+
+.book-smith-settings .template-item .setting-item-control .clickable-icon {
+    padding: 4px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.book-smith-settings .template-item .setting-item-control .clickable-icon:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+}

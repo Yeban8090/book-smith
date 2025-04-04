@@ -1,25 +1,64 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
 import BookSmithPlugin from '../main';
+import { TemplateEditModal } from '../modals/TemplateEditModal';
 
 export class BookSmithSettingTab extends PluginSettingTab {
     plugin: BookSmithPlugin;
+    private expandedSections: Set<string> = new Set();
 
     constructor(app: App, plugin: BookSmithPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }
 
+    private createSection(containerEl: HTMLElement, title: string, renderContent: (contentEl: HTMLElement) => void) {
+        const section = containerEl.createDiv('settings-section');
+        const header = section.createDiv('settings-section-header');
+        
+        const toggle = header.createSpan('settings-section-toggle');
+        setIcon(toggle, 'chevron-right');
+        
+        header.createEl('h4', { text: title });
+        
+        const content = section.createDiv('settings-section-content');
+        renderContent(content);
+        
+        header.addEventListener('click', () => {
+            const isExpanded = !section.hasClass('is-expanded');
+            section.toggleClass('is-expanded', isExpanded);
+            setIcon(toggle, isExpanded ? 'chevron-down' : 'chevron-right');
+            if (isExpanded) {
+                this.expandedSections.add(title);
+            } else {
+                this.expandedSections.delete(title);
+            }
+        });
+        
+        // 根据保存的状态或默认第一个展开
+        if (this.expandedSections.has(title) || (!containerEl.querySelector('.settings-section'))) {
+            section.addClass('is-expanded');
+            setIcon(toggle, 'chevron-down');
+            this.expandedSections.add(title);
+        }
+        
+        return section;
+    }
+
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
+        containerEl.addClass('book-smith-settings');
 
         containerEl.createEl('h2', { text: 'Book Smith设置' });
 
         // 基本设置
-        this.renderBasicSettings(containerEl);
+        this.createSection(containerEl, '基本设置', el => this.renderBasicSettings(el));
+        
+        // 模板设置
+        this.createSection(containerEl, '模板设置', el => this.renderTemplateSettings(el));
         
         // 写作工具箱设置
-        this.renderWritingToolsSettings(containerEl);
+        this.createSection(containerEl, '写作工具箱设置', el => this.renderWritingToolsSettings(el));
 
         // 添加应用按钮
         new Setting(containerEl)
@@ -31,8 +70,82 @@ export class BookSmithSettingTab extends PluginSettingTab {
                 }));
     }
 
+    // 添加新的模板设置渲染方法
+    private renderTemplateSettings(containerEl: HTMLElement): void {
+
+        // 默认模板选择
+        new Setting(containerEl)
+            .setName('默认模板')
+            .setDesc('创建新书籍时使用的默认模板')
+            .addDropdown(dropdown => {
+                const templates = this.plugin.settings.templates.custom;
+                Object.keys(templates).forEach(key => {
+                    dropdown.addOption(key, templates[key].name);
+                });
+                dropdown.setValue(this.plugin.settings.templates.default)
+                    .onChange(async (value) => {
+                        this.plugin.settings.templates.default = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // 模板列表
+        const templateList = containerEl.createDiv('template-list');
+        templateList.createEl('h4', { text: '书籍模板' });
+
+        // 先渲染默认模板（内置模板）
+        const defaultTemplate = this.plugin.settings.templates.custom['default'];
+        if (defaultTemplate) {
+            const templateDiv = templateList.createDiv('template-item');
+            new Setting(templateDiv)
+                .setName(defaultTemplate.name)
+                .setDesc(defaultTemplate.description);
+        }
+
+        // 渲染其他自定义模板
+        Object.entries(this.plugin.settings.templates.custom)
+            .filter(([key]) => key !== 'default')
+            .forEach(([key, template]) => {
+                const templateDiv = templateList.createDiv('template-item');
+                new Setting(templateDiv)
+                    .setName(template.name)
+                    .setDesc(template.description)
+                    .addButton(btn => btn
+                        .setIcon('pencil')
+                        .setTooltip('编辑模板')
+                        .onClick(() => {
+                            new TemplateEditModal(this.app, this.plugin, key, () => this.display()).open();
+                        }))
+                    .addButton(btn => btn
+                        .setIcon('trash')
+                        .setTooltip('删除模板')
+                        .onClick(async () => {
+                            // 如果删除的是当前默认模板，则将默认模板设置为 'default'
+                            if (key === this.plugin.settings.templates.default) {
+                                this.plugin.settings.templates.default = 'default';
+                            }
+                            delete this.plugin.settings.templates.custom[key];
+                            await this.plugin.saveSettings();
+                            this.display();
+                        }));
+            });
+
+        // 添加新模板按钮
+        new Setting(containerEl)
+            .addButton(btn => btn
+                .setButtonText('添加新模板')
+                .setCta()
+                .onClick(() => {
+                    new TemplateEditModal(
+                        this.app, 
+                        this.plugin,
+                        undefined,
+                        () => this.display()  // 添加回调函数
+                    ).open();
+                }));
+    }
+
     private renderBasicSettings(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: '基本设置' });
 
         new Setting(containerEl)
             .setName('默认作者')
@@ -58,7 +171,6 @@ export class BookSmithSettingTab extends PluginSettingTab {
     }
 
     private renderWritingToolsSettings(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: '写作工具箱设置' });
         
         // 专注模式设置
         const focusSection = containerEl.createDiv();

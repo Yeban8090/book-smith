@@ -1,6 +1,7 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
 import { BookBasicInfo, Book } from '../types/book';
 import BookSmithPlugin from '../main';
+import { TemplateManager } from '../services/TemplateManager';
 
 export class CreateBookModal extends Modal {
     private bookInfo: Partial<BookBasicInfo> = {
@@ -8,6 +9,7 @@ export class CreateBookModal extends Modal {
     };
     private selectedTemplate: string = 'default';
     private targetTotalWords: number = 10000;  // 默认1万字
+    private templateManager: TemplateManager;
 
     constructor(
         app: App, 
@@ -15,6 +17,7 @@ export class CreateBookModal extends Modal {
         private onBookCreated?: (book: Book) => void
     ) {
         super(app);
+        this.templateManager = new TemplateManager(this.plugin.settings);
     }
 
     onOpen() {
@@ -27,9 +30,13 @@ export class CreateBookModal extends Modal {
             .setName('模板')
             .setDesc('请选择书籍模板')
             .addDropdown(dropdown => {
-                const templates = this.plugin.templateManager.getAllTemplateTypes();
+                const templates = this.templateManager.getAllTemplateTypes();
                 templates.forEach(template => {
-                    dropdown.addOption(template, template);
+                    dropdown.addOption(template.key, template.name);
+                    // 设置默认选中的模板
+                    if (template.key === this.plugin.settings.templates.default) {
+                        this.selectedTemplate = template.key;
+                    }
                 });
                 dropdown.setValue(this.selectedTemplate)
                     .onChange(value => this.selectedTemplate = value);

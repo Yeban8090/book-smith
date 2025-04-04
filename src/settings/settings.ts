@@ -1,8 +1,23 @@
+import { defaultTemplate } from '../templates/default';
+import { ChapterTree } from '../types/book';
 export interface BookSmithSettings {
     // 基础配置
     defaultAuthor: string;
     defaultBookPath: string;
     lastBookId?: string;
+
+    // 模板配置
+    templates: {
+        default: string;
+        custom: {
+            [name: string]: {
+                name: string;
+                description: string;
+                structure: ChapterTree;
+                isBuiltin?: boolean;
+            }
+        }
+    };
 
     // 工具显示配置
     tools: {
@@ -32,6 +47,17 @@ export const DEFAULT_SETTINGS: BookSmithSettings = {
     defaultAuthor: '夜半',
     defaultBookPath: 'books',
     lastBookId: '',
+    templates: {
+        default: 'default',  // 修改为使用 standard 作为默认模板
+        custom: {
+            'default': {
+                name: '默认模板',
+                description: '包含前言、大纲、正文卷章和后记的标准结构',
+                structure: defaultTemplate,
+                isBuiltin: true
+            }
+        }
+    },
     tools: {
         assistant: true,
         export: true,

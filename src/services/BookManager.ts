@@ -9,7 +9,7 @@ export class BookManager {
     private rootPath: string;
 
     constructor(private app: App, private settings: BookSmithSettings) {
-        this.templateManager = new TemplateManager();
+        this.templateManager = new TemplateManager(settings);
         this.rootPath = this.settings.defaultBookPath;
     }
 
