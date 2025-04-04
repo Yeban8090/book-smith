@@ -178,7 +178,7 @@ export class BookManager {
         const folder = this.app.vault.getAbstractFileByPath(bookPath);
 
         if (folder) {
-            await this.app.vault.delete(folder, true);
+            await this.app.vault.trash(folder, true);
         } else {
             throw new Error('书籍文件夹不存在');
         }
