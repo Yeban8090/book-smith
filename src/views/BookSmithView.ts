@@ -261,6 +261,17 @@ export class BookSmithView extends ItemView {
         const statsContainer = container.createDiv({ cls: 'book-smith-stats' });
         if (!this.currentBook) return;
 
+        // 当日字数
+        const today = new Date().toISOString().split('T')[0];  // 获取今天的日期 (YYYY-MM-DD)
+        const todayWords = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
+        const todayWordsLabel = todayWords.createSpan();
+        setIcon(todayWordsLabel, 'pencil');
+        todayWordsLabel.appendChild(createSpan({ text: ' 今日字数' }));
+        todayWords.createEl('span', {
+            cls: 'book-smith-stat-value',
+            text: `${this.currentBook.stats.daily_words[today] || 0}字`
+        });
+
         // 总字数统计
         const wordCount = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const wordCountLabel = wordCount.createSpan();
