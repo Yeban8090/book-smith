@@ -42,9 +42,11 @@ export class EbookModal extends BaseModal {
         const formatField = this.createFormField(form, '格式', 'format', 'select');
         const formatSelect = formatField.querySelector('select');
         if (formatSelect) {
-            this.createSelectOption(formatSelect, 'epub', 'EPUB');
-            this.createSelectOption(formatSelect, 'mobi', 'MOBI (Kindle)');
             this.createSelectOption(formatSelect, 'pdf', 'PDF');
+            this.createSelectOption(formatSelect, 'txt', 'TXT');
+            this.createSelectOption(formatSelect, 'epub', 'EPUB');
+            this.createSelectOption(formatSelect, 'mobi', 'MOBI');
+            
         }
         
         // 生成按钮

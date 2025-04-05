@@ -63,7 +63,7 @@
     flex-direction: column;
     flex: 1;
     padding: 0;
-    height: calc(100% - 180px); /* 增加减去的高度，为底部统计栏留出更多空间 */
+    height: calc(100% - 205px); /* 增加减去的高度，为底部统计栏留出更多空间 */
     overflow-y: auto;
 }
 

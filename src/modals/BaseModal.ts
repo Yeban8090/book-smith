@@ -31,8 +31,7 @@ export class BaseModal {
     }
 
     protected showNotice(message: string, duration: number = 3000) {
-        const notice = new Notice(message, duration);
-        notice.noticeEl.addClass('book-smith-notice');
+        new Notice(message, duration);
     }
 
     close() {

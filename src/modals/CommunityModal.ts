@@ -26,7 +26,7 @@ export class CommunityModal extends BaseModal {
         joinSection.createEl('h3', { text: '加入方式' });
         
         const joinInfo = joinSection.createDiv({ cls: 'join-info' });
-        joinInfo.createEl('p', { text: '复制二维码，搜索关注公众号' });
+        joinInfo.createEl('p', { text: '复制下方公众号，搜索关注' });
     
         
         joinInfo.createEl('p', { text: '公众号：BilionWrites', cls: 'account-name' });
