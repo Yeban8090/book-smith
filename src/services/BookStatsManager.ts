@@ -1,4 +1,4 @@
-import { App, TFile, debounce } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { Book, ChapterNode, BookStats } from '../types/book';
 import BookSmithPlugin from '../main';
 import { BookManager } from './BookManager';
@@ -10,35 +10,25 @@ export class BookStatsManager {
         private app: App,
         private plugin: BookSmithPlugin,
         private bookManager: BookManager
-    ) {
-        this.registerEvents();
-    }
+    ) {}
 
-    private registerEvents() {
-        // 使用防抖处理文件修改事件
-        const handleModify = debounce(async (file: TFile) => {
-            if (!this.currentBook) return;
-            
-            const bookPath = `${this.plugin.settings.defaultBookPath}/${this.currentBook.basic.title}`;
-            if (!file.path.startsWith(bookPath)) return;
-
-            await this.updateFileStats(file);
-        }, 2000, true);
-
-        this.plugin.registerEvent(
-            this.app.vault.on('modify', handleModify)
-        );
-    }
-
-    private async updateFileStats(file: TFile) {
+    // 统计更新入口
+    async updateStatsForFile() {
         if (!this.currentBook) return;
         
-        // 计算所有文件节点的总字数
+        // 1. 计算总字数
         const totalWordCount = await this.calculateTotalWordCount(this.currentBook.structure.tree);
+        
+        // 2. 更新统计数据
         const stats = await this.updateStats(this.currentBook.stats, totalWordCount);
         
+        // 3. 更新当前book
         this.currentBook.stats = stats;
+        
+        // 4. 保存到配置文件
         await this.bookManager.updateBook(this.currentBook.basic.uuid, this.currentBook);
+        
+        // 5. 通知UI更新
         this.notifyStatsChange();
     }
 
@@ -92,7 +82,6 @@ export class BookStatsManager {
     private async updateStats(stats: BookStats, totalWordCount: number): Promise<BookStats> {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
-        const lastDate = stats.last_writing_date.split('T')[0];
         
         // 计算今日新增字数
         const todayDelta = totalWordCount - stats.total_words;

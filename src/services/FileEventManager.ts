@@ -36,9 +36,10 @@ export class FileEventManager {
                 }
                 return false;
             };
-            
             if (updateNode(currentBook.structure.tree)) {
                 await this.plugin.bookManager.updateBook(currentBook.basic.uuid, currentBook);
+                // 更新完配置后再更新统计
+                await this.plugin.statsManager.updateStatsForFile();
                 return currentBook;
             }
         }

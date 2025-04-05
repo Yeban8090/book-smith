@@ -34,6 +34,7 @@ export class BookSmithView extends ItemView {
         // 注册统计变化监听
         this.registerEvent(
             this.plugin.statsManager.onStatsChange(() => {
+                console.log('Stats changed!');
                 this.renderStats(this.containerEl.children[1] as HTMLElement);
             })
         );
@@ -57,6 +58,8 @@ export class BookSmithView extends ItemView {
             this.app.vault.on('modify', async (file: TAbstractFile) => {
                 if (this.isRenamingFile) return; // 避免重命名时触发
                 if (file instanceof TFile && this.currentBook) {
+                    // 跳过配置文件的监听
+                    if (file.path.endsWith('book-config.json')) return;
                     const bookPath = `${this.plugin.settings.defaultBookPath}/${this.currentBook.basic.title}`;
                     if (file.path.startsWith(bookPath)) {
                         const result = await this.fileEventManager.handleBookModify(file, this.currentBook);
