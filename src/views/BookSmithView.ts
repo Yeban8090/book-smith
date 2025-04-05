@@ -34,7 +34,6 @@ export class BookSmithView extends ItemView {
         // 注册统计变化监听
         this.registerEvent(
             this.plugin.statsManager.onStatsChange(() => {
-                console.log('Stats changed!');
                 this.renderStats(this.containerEl.children[1] as HTMLElement);
             })
         );
