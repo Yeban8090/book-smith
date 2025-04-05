@@ -1,0 +1,61 @@
+/* 灵感内容区域 */
+.inspiration-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 灵感卡片容器 */
+.inspiration-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 灵感卡片 */
+.inspiration-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.inspiration-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+    background: var(--background-modifier-border);
+}
+
+.card-icon {
+    font-size: 18px;
+    margin-right: 12px;
+    margin-top: 2px;
+}
+
+.card-text {
+    flex: 1;
+    font-size: 0.95em;
+    color: var(--text-normal);
+    line-height: 1.5;
+}
+
+/* 刷新按钮 */
+.refresh-btn {
+    background: var(--text-accent);
+    color: var(--text-on-accent);
+    padding: 10px 0;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    background: var(--text-accent-hover, var(--text-accent));
+    opacity: 0.9;
+    transform: translateY(-2px);
+}

@@ -1,0 +1,110 @@
+/* 社区内容区域 */
+.community-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 社区介绍 */
+.community-intro {
+    text-align: center;
+    color: var(--text-normal);
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin-bottom: 5px;
+}
+
+/* 功能卡片区域 */
+.community-features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 5px 0 15px;
+}
+
+.feature-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+}
+
+.feature-icon {
+    font-size: 20px;
+    margin-right: 15px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.feature-content {
+    flex: 1;
+}
+
+.feature-title {
+    font-weight: 500;
+    color: var(--text-normal);
+    margin-bottom: 4px;
+}
+
+.feature-desc {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+/* 加入方式区域 */
+.join-section {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.join-section h3 {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    color: var(--text-normal);
+}
+
+.join-info {
+    margin: 15px 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.qr-code-img {
+    width: 150px;
+    height: 150px;
+    margin: 15px auto;
+    display: block;
+    border-radius: 8px;
+}
+
+.account-name {
+    margin-top: 8px;
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+/* 加入按钮 */
+.join-btn {
+    background: var(--text-accent);
+    color: var(--text-on-accent);
+    padding: 12px 0;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.join-btn:hover {
+    background: var(--text-accent-hover, var(--text-accent));
+    opacity: 0.9;
+    transform: translateY(-2px);
+}

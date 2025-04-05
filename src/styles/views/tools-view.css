@@ -94,11 +94,15 @@
     color: var(--color-blue);
 }
 
-.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-message-circle) .book-smith-tool-icon {
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-message-square) .book-smith-tool-icon {
+    color: var(--color-orange);
+}
+
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-heart) .book-smith-tool-icon {
     color: var(--color-green);
 }
 
-.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-download) .book-smith-tool-icon,
+.book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-clock) .book-smith-tool-icon,
 .book-smith-tool-item:has(.book-smith-tool-icon svg.lucide-book) .book-smith-tool-icon {
     color: var(--color-cyan);
 }

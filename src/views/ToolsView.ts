@@ -1,5 +1,10 @@
 import { ItemView, WorkspaceLeaf, setIcon, Menu, Notice } from 'obsidian';
 import { FocusToolView } from '../components/FocusToolView';
+import { DonateModal } from '../modals/DonateModal';
+import { InspirationModal } from '../modals/InspirationModal';
+import { EbookModal } from '../modals/EbookModal';
+import { CommunityModal } from '../modals/CommunityModal';
+import { ContactModal } from '../modals/ContactModal';
 import BookSmithPlugin from '../main';
 interface ToolItem {
     icon: string;
@@ -15,6 +20,14 @@ export class ToolView extends ItemView {
 
     constructor(leaf: WorkspaceLeaf, private plugin: BookSmithPlugin) {
         super(leaf);
+    }
+
+    onload(): void {
+        // 修改为监听 document 上的事件，而不是 containerEl
+        document.addEventListener('open-donate-modal', () => {
+            console.log('Received open-donate-modal event');
+            new DonateModal(this.containerEl).open();
+        });
     }
 
     // 视图基础配置
@@ -78,7 +91,21 @@ export class ToolView extends ItemView {
                 {
                     icon: 'brain',
                     text: '创作灵感',
-                    onClick: () => new Notice('创作灵感功能开发中...')
+                    onClick: () => new InspirationModal(this.containerEl).open()
+                },
+                {
+                    icon: 'file-text',
+                    text: '人物档案',
+                    onClick: () => {
+                        new Notice('人物档案功能即将上线');
+                    }
+                },
+                {
+                    icon: 'map',
+                    text: '世界构建',
+                    onClick: () => {
+                        new Notice('世界构建功能即将上线');
+                    }
                 }
             ]);
         }
@@ -87,14 +114,23 @@ export class ToolView extends ItemView {
         if (this.plugin.settings.tools.export) {
             this.createToolGroup(container, '导出发布', [
                 { 
-                    icon: 'download', 
-                    text: '导出为 PDF',
-                    onClick: () => new Notice('PDF导出功能开发中...')
+                    icon: 'edit-3', 
+                    text: '设计排版',
+                    onClick: () => {
+                        new Notice('书籍设计排版功能即将上线');
+                    }
                 },
                 { 
                     icon: 'book', 
                     text: '生成电子书',
-                    onClick: () => new Notice('电子书生成功能开发中...')
+                    onClick: () => new EbookModal(this.containerEl).open()
+                },
+                { 
+                    icon: 'clock', 
+                    text: '更多功能...',
+                    onClick: () => {
+                        new Notice('更多功能等你一起共创');
+                    }
                 }
             ]);
         }
@@ -106,12 +142,17 @@ export class ToolView extends ItemView {
                     icon: 'users', 
                     text: '创作社区', 
                     extra: '',
-                    onClick: () => new Notice('欢迎加入创作社区，关注公众号：BilionWrites', 3000)
+                    onClick: () => new CommunityModal(this.containerEl).open()
                 },
                 { 
-                    icon: 'message-circle', 
+                    icon: 'message-square', 
                     text: '联系作者',
-                    onClick: () => new Notice('欢迎关注公众号：夜半', 3000)
+                    onClick: () => new ContactModal(this.containerEl).open()
+                },
+                { 
+                    icon: 'heart', 
+                    text: '赞助捐赠',
+                    onClick: () => new DonateModal(this.containerEl).open()
                 }
             ]);
         }
@@ -160,7 +201,6 @@ export class ToolView extends ItemView {
             // 添加工具显隐选项
             this.addToolVisibilityMenuItem(menu, 'assistant', 'target', '写作助手');
             this.addToolVisibilityMenuItem(menu, 'export', 'download', '导出发布');
-            this.addToolVisibilityMenuItem(menu, 'community', 'calendar', '写作圈子');
 
             menu.showAtMouseEvent(event);
         });

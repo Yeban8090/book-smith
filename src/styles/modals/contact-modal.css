@@ -1,0 +1,146 @@
+/* 联系作者内容区域 */
+.contact-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: var(--background-primary);
+    border-radius: 12px;
+    padding: 0 0 8px 0;
+}
+
+/* 作者介绍区域 */
+.author-intro {
+    background-color: var(--background-secondary-alt);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--text-normal);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.author-intro p {
+    margin: 8px 0;
+}
+
+/* 文本强调样式 */
+.text-accent {
+    color: var(--text-accent);
+    font-weight: 500;
+}
+
+/* 分隔线 */
+.contact-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--background-modifier-border);
+    margin: 4px 0;
+}
+
+/* 信息卡片通用样式 */
+.info-card {
+    background-color: var(--background-secondary-alt);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 4px 0;
+}
+
+/* 赞赏区域样式 */
+.donate-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.donate-text {
+    color: var(--text-normal);
+    font-size: 14px;
+}
+
+/* 赞赏按钮样式 */
+.donate-button {
+    background-color: var(--text-accent);
+    color: var(--text-on-accent);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.donate-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* 更多信息区域 */
+.more-info-section {
+    color: var(--text-normal);
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px;
+}
+
+.more-info-section p {
+    margin: 0;
+}
+
+/* 联系方式标题 */
+.contact-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-accent);
+    margin: 8px 0 4px 4px;
+}
+
+/* 联系方式卡片区域 */
+.contact-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.contact-card {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background-color: var(--background-secondary-alt);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.contact-card:hover {
+    background-color: var(--background-modifier-hover);
+    transform: translateY(-1px);
+}
+
+/* 图标容器 */
+.contact-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-right: 16px;
+    color: var(--text-accent);
+}
+
+/* 联系信息 */
+.contact-info {
+    flex: 1;
+}
+
+.contact-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-normal);
+    margin-bottom: 2px;
+}
+
+.contact-value {
+    font-size: 13px;
+    color: var(--text-muted);
+}

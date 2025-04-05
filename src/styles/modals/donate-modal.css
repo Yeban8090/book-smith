@@ -1,0 +1,159 @@
+/* 社区数据区域 */
+.book-smith-community-stats {
+    margin: 15px 0;
+}
+
+.stats-card {
+    background: var(--background-secondary);
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.stats-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.stats-icon {
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.stats-title {
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stats-item {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+/* 金额选择区域 */
+.book-smith-amount-panel {
+    margin: 15px 0;
+}
+
+.amount-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.amount-btn {
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--background-modifier-form-field);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.amount-btn:hover {
+    transform: translateY(-2px);
+    background: var(--background-modifier-border);
+}
+
+.amount-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.amount-icon {
+    font-size: 16px;
+    margin-right: 12px;
+}
+
+.amount-label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-normal);
+}
+
+.amount-value {
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.amount-btn.selected {
+    background: var(--text-accent);
+    border-color: var(--text-accent-hover, var(--text-accent));
+    transform: translateY(-2px);
+}
+
+.amount-btn.selected .amount-label,
+.amount-btn.selected .amount-value,
+.amount-btn.selected .amount-icon {
+    color: var(--text-on-accent);
+}
+
+/* 支付渠道区域 */
+.payment-channels {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.payment-tab {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.payment-tab:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-border);
+}
+
+.payment-tab.active {
+    color: var(--text-normal);
+    background: var(--background-modifier-border);
+}
+
+.qrcode-container {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    height: 300px;
+}
+
+.qrcode-item {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    visibility: hidden;
+}
+
+.qrcode-item.active {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.qrcode-item img {
+    width: 230px;
+    border-radius: 8px;
+}

@@ -8,4 +8,10 @@
 @import './modals/template-modal.css';
 @import './views/tools-view.css';
 @import './tools/focus-tool.css';
+@import './modals/base-modal.css';
+@import './modals/community-modal.css';
+@import './modals/donate-modal.css';
+@import './modals/ebook-modal.css';
+@import './modals/inspiration-modal.css';
+@import './modals/contact-modal.css';
 @import './settings/settings-tab.css';
