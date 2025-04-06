@@ -15,7 +15,7 @@ export class ChapterTree {
         private bookPath: string,
         private bookManager: BookManager,
         private onDragComplete?: () => Promise<void>
-    ) {}
+    ) { }
 
     // === 核心渲染方法 ===
     render(book: Book) {
@@ -133,7 +133,7 @@ export class ChapterTree {
                 }
             });
         }
-        
+
         // 添加排除的视觉指示
         if ((node.type === 'file' && node.exclude) ||
             (node.type === 'group' && this.isFolderExcluded(node))) {
@@ -365,7 +365,11 @@ export class ChapterTree {
                     item.setTitle("重命名");
                     item.setIcon("pencil");
                     item.onClick(async () => {
-                        const newName = await this.promptForName("请输入新名称");
+                        // 获取当前文件名（不含扩展名）
+                        const currentName = node.type === 'file'
+                            ? node.title.replace(/\.md$/, '')
+                            : node.title;
+                        const newName = await this.promptForName("请输入新名称", currentName);
                         if (!newName) return;
 
                         try {
@@ -771,11 +775,11 @@ export class ChapterTree {
         removeFromArray(this.book.structure.tree);
     }
 
-    private async promptForName(placeholder: string): Promise<string | null> {
+    private async promptForName(placeholder: string, defaultValue?: string): Promise<string | null> {
         return new Promise((resolve) => {
             const modal = new NamePromptModal(this.app, placeholder, (result) => {
                 resolve(result);
-            });
+            }, defaultValue);
             modal.open();
         });
     }
