@@ -72,14 +72,6 @@ export default class BookSmithPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
 
-    async reloadPlugin() {
-        // 卸载插件
-        await (this.app as any).plugins.disablePlugin(this.manifest.id);
-        // 重新加载插件
-        await (this.app as any).plugins.enablePlugin(this.manifest.id);
-        new Notice('插件已重新加载');
-    }
-
     async saveSettings() {
         await this.saveData(this.settings);
     }

@@ -18,6 +18,11 @@
     gap: 6px;
 }
 
+/* 文件输入框隐藏 */
+.form-field input[type="file"] {
+    display: none;
+}
+
 .field-label {
     font-size: 0.9em;
     color: var(--text-normal);

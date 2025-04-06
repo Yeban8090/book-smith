@@ -35,14 +35,13 @@ export class BookStatsManager {
     private async calculateTotalWordCount(nodes: ChapterNode[]): Promise<number> {
         let totalCount = 0;
         for (const node of nodes) {
-            // 如果节点被标记为排除，则跳过该节点
             if (node.exclude) continue;
             
             if (node.type === 'file') {
                 const fullPath = `${this.plugin.settings.defaultBookPath}/${this.currentBook?.basic.title}/${node.path}`;
-                const file = this.app.vault.getAbstractFileByPath(fullPath) as TFile;
-                if (file) {
-                    const content = await this.app.vault.read(file);
+                const abstractFile = this.app.vault.getAbstractFileByPath(fullPath);
+                if (abstractFile instanceof TFile) {
+                    const content = await this.app.vault.read(abstractFile);
                     totalCount += this.calculateWordCount(content);
                 }
             } else if (node.children) {

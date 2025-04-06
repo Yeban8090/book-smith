@@ -177,7 +177,7 @@ export class FocusToolView {
     private updateProgress(progress: number) {
         const circumference = 2 * Math.PI * 45;
         const offset = circumference * (1 - progress);
-        this.progressEl.style.strokeDashoffset = offset.toString();
+        this.progressEl.style.setProperty('--progress-offset', `${offset}px`);
     }
 
     private updateStatus(text: string) {
@@ -252,7 +252,7 @@ export class FocusToolView {
     private updateTimerAdjustButtons(state: FocusState) {
         const adjustButtons = this.container.querySelectorAll('.focus-tool-timer-adjust');
         adjustButtons.forEach(button => {
-            (button as HTMLElement).style.display = state === FocusState.IDLE ? 'flex' : 'none';
+            button.classList.toggle('hidden', state !== FocusState.IDLE);
         });
     }
 

@@ -18,18 +18,24 @@ export class ContactModal extends BaseModal {
         
         // 使用HTML元素添加带有强调样式的文本
         const p1 = intro.createEl('p');
-        p1.innerHTML = '这款插件是<span class="text-accent">我为了帮助在Obsidian中进行长篇创作的作者而开发的工具</span>，希望能<span class="text-accent">让你的写作过程更流畅，创作体验更愉悦</span>。';
         
+        p1.createSpan({ text: '这款插件是' });
+        p1.createSpan({ text: '我为了帮助在Obsidian中进行长篇创作的作者而开发的工具', cls: 'text-accent' });
+        p1.createSpan({ text: '，希望能' });
+        p1.createSpan({ text: '让你的写作过程更流畅，创作体验更愉悦', cls: 'text-accent' });
+        p1.createSpan({ text: '。' });
+
         const p2 = intro.createEl('p');
-        p2.innerHTML = '<span class="text-accent">如果这款插件对你的写作有所帮助，或者你愿意支持我的独立开发与创作，欢迎请我喝咖啡☕。</span>';
-        
+        p2.createSpan({ text: '如果这款插件对你的写作有所帮助，或者你愿意支持我的独立开发与创作，欢迎请我喝咖啡☕。', cls: 'text-accent' });
+
         const p3 = intro.createEl('p');
-        p3.innerHTML = '<span class="text-accent">你的支持意义重大</span>，它能让我更专注地开发更多实用工具，助力你的创作之旅。';
+        p3.createSpan({ text: '你的支持意义重大', cls: 'text-accent' });
+        p3.createSpan({ text: '，它能让我更专注地开发更多实用工具，助力你的创作之旅。' });
         
         
         // 赞赏支持区域 - 改为卡片式设计
         const donateSection = content.createDiv({ cls: 'info-card donate-section' });
-        const donateText = donateSection.createSpan({ cls: 'donate-text', text: '如需支持作者：' });
+        donateSection.createSpan({ cls: 'donate-text', text: '如需支持作者：' });
         const donateBtn = donateSection.createDiv({ cls: 'donate-button', text: '赞赏支持' });
         donateBtn.addEventListener('click', () => {
             this.close();

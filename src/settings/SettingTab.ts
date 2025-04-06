@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon, Notice } from 'obsidian';
 import BookSmithPlugin from '../main';
 import { TemplateEditModal } from '../modals/TemplateEditModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
@@ -60,15 +60,6 @@ export class BookSmithSettingTab extends PluginSettingTab {
         
         // 写作工具箱设置
         this.createSection(containerEl, '写作工具箱设置', el => this.renderWritingToolsSettings(el));
-
-        // 添加应用按钮
-        new Setting(containerEl)
-            .addButton(button => button
-                .setButtonText('应用并重载插件')
-                .setCta()
-                .onClick(async () => {
-                    await this.plugin.reloadPlugin();
-                }));
     }
 
     // 添加新的模板设置渲染方法
@@ -175,6 +166,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.defaultBookPath = value;
                     await this.plugin.saveSettings();
+                    new Notice('存储路径已更改，请重启 Obsidian 或重新加载以使更改生效');
                 }));
     }
 

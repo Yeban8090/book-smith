@@ -192,7 +192,10 @@ export class ReferenceManager {
         if (!this.checkReferenceFile(bookPath)) return;
 
         const referencePath = `${bookPath}/引用书目.md`;
-        const file = this.app.vault.getAbstractFileByPath(referencePath) as TFile;
+        const file = this.app.vault.getAbstractFileByPath(referencePath);
+        if (!(file instanceof TFile)) {
+            throw new Error('引用书目文件不存在或类型错误');
+        }
 
         references.chapters.sort((a, b) => {
             const pathA = a.orderPath;

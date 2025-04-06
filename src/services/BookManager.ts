@@ -64,7 +64,7 @@ export class BookManager {
         } catch (error) {
             // 清理失败的创建
             if (bookFolder) {
-                await this.app.vault.delete(bookFolder, true);
+                await this.app.fileManager.trashFile(bookFolder);
             }
             throw error;
         }
@@ -208,9 +208,9 @@ export class BookManager {
             const configFile = this.app.vault.getAbstractFileByPath(configPath);
             const jsonContent = JSON.stringify(book, null, 2);
             
-            if (configFile) {
+            if (configFile instanceof TFile) {
                 // 如果文件已存在，使用 modify 方法
-                await this.app.vault.modify(configFile as TFile, jsonContent);
+                await this.app.vault.modify(configFile, jsonContent);
             } else {
                 // 如果文件不存在，使用 create 方法
                 await this.app.vault.create(configPath, jsonContent);

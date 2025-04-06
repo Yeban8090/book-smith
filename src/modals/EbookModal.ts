@@ -28,7 +28,6 @@ export class EbookModal extends BaseModal {
                 fileInput.click();
             });
             
-            fileInput.style.display = 'none';
             fileInput.addEventListener('change', () => {
                 if (fileInput.files && fileInput.files.length > 0) {
                     fileLabel.setText(fileInput.files[0].name);

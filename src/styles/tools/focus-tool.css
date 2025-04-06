@@ -73,6 +73,8 @@
     stroke-dasharray: 282.743px;
     stroke-dashoffset: 282.743px;
     transition: stroke-dashoffset 0.3s ease;
+    --progress-offset: 0;
+    stroke-dashoffset: var(--progress-offset);
 }
 
 /* 时间调节按钮样式 */
@@ -126,6 +128,10 @@
 
 .focus-tool-timer-adjust:hover::after {
     opacity: 1;
+}
+
+.focus-tool-timer-adjust.hidden {
+    display: none;
 }
 
 /* 状态和控制按钮样式 */
