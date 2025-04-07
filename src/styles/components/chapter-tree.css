@@ -131,23 +131,55 @@
 /* 拖拽相关样式 */
 .book-smith-dragging {
     opacity: 0.5;
+    position: relative;
+    z-index: 1000; /* 确保拖拽元素在最上层 */
+    transform: translateZ(0); /* 启用硬件加速 */
+    transition: none; /* 移除可能导致晃动的过渡效果 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 添加轻微阴影提升视觉效果 */
+    will-change: transform; /* 提示浏览器元素将会变化，优化性能 */
 }
 
 .book-smith-dragover {
-    background-color: var(--interactive-accent);
+    background-color: var(--interactive-accent-hover);
+    transition: background-color 0.1s ease; /* 平滑过渡 */
 }
 
 .book-smith-dragover-before {
-    border-top: 10px solid var(--interactive-accent);
+    position: relative;
+    transition: all 0.1s ease;
+}
+
+.book-smith-dragover-before::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--interactive-accent);
+    box-shadow: 0 0 3px var(--interactive-accent);
 }
 
 .book-smith-dragover-after {
-    border-bottom: 10px solid var(--interactive-accent);
+    position: relative;
+    transition: all 0.1s ease;
+}
+
+.book-smith-dragover-after::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--interactive-accent);
+    box-shadow: 0 0 3px var(--interactive-accent);
 }
 
 .book-smith-dragover-inside {
-    background-color: var(--interactive-accent);
+    background-color: var(--interactive-accent-hover);
     opacity: 0.5;
+    transition: all 0.1s ease;
 }
 
 /* 节点操作按钮样式 */
