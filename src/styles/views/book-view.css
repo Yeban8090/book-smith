@@ -248,3 +248,56 @@
     color: var(--text-normal);
     font-weight: 500;
 }
+
+/* 帮助按钮和提示样式 */
+.book-smith-help-container {
+    position: relative;
+}
+
+.book-smith-help-tooltip {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    width: 290px;
+    padding: 14px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-size: 0.8em;
+    line-height: 1.5;
+    color: var(--text-normal);
+    white-space: pre-line;
+    display: none;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.book-smith-help-container:hover .book-smith-help-tooltip {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 添加小箭头 */
+.book-smith-help-tooltip::before,
+.book-smith-help-tooltip::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    border-style: solid;
+}
+
+.book-smith-help-tooltip::before {
+    top: -8px;
+    border-width: 0 8px 8px;
+    border-color: transparent transparent var(--background-modifier-border);
+}
+
+.book-smith-help-tooltip::after {
+    top: -7px;
+    border-width: 0 7px 7px;
+    border-color: transparent transparent var(--background-primary);
+}

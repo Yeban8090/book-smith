@@ -126,7 +126,7 @@ export class BookSmithView extends ItemView {
 
         const newBookBtn = toolbar.createEl('button', { cls: 'book-smith-toolbar-btn' });
         setIcon(newBookBtn, 'create-new');
-        newBookBtn.appendChild(createSpan({ text: ' 新建书籍' }));
+        newBookBtn.appendChild(createSpan({ text: ' 新建' }));
         newBookBtn.addEventListener('click', () => {
             new CreateBookModal(this.app, this.plugin, async (newBook) => {
                 if (newBook) {
@@ -169,6 +169,47 @@ export class BookSmithView extends ItemView {
                 }
             }).open();
         });
+
+        // 添加帮助按钮和提示
+        const helpBtnContainer = toolbar.createDiv({ cls: 'book-smith-help-container' });
+        const helpBtn = helpBtnContainer.createEl('button', { cls: 'book-smith-toolbar-btn' });
+        setIcon(helpBtn, 'help-circle');
+
+        helpBtnContainer.createEl('div', {
+            cls: 'book-smith-help-tooltip',
+            text: `👋 欢迎使用 BookSmith
+
+                    开始使用
+                    • 打开右侧【写作工具箱】，激活创作辅助功能
+                    • 专注模式、创作灵感等工具一键可得
+
+                    创作管理
+                    • 新建：选择模板创建书籍项目
+                    • 切换：在不同作品间自由切换
+                    • 管理：导入、编辑您的作品集
+                    • 模板：自定义专属写作框架
+
+                    章节编排
+                    • 树形结构：直观展现层次结构
+                    • 拖拽排序：灵活调整章节顺序
+                    • 状态标记：追踪创作进度
+                    • 右键菜单：便捷的章节操作
+
+                    创作助手
+                    • 实时统计：字数、进度实时更新
+                    • 数据分析：写作习惯深度统计
+                    • 专注模式：提升写作效率
+
+                    小贴士
+                    • 支持自定义多种写作模板
+                    • 可通过拖拽快速调整章节
+                    • 右键点击可进行更多操作
+
+                    ✨ 愿 BookSmith 能让您享受创作的美好时光。
+
+                    💝 赞赏支持
+                    如果 BookSmith 为您带来帮助，请前往右侧写作工具箱【赞赏捐赠】，支持我继续创作优雅工具。`
+        });
     }
 
     private async renderContent(container: HTMLElement) {
@@ -189,7 +230,7 @@ export class BookSmithView extends ItemView {
         // 添加封面
         const coverContainer = titleSection.createDiv({ cls: 'book-smith-header-cover' });
         if (this.currentBook.basic.cover) {
-            const coverImg = coverContainer.createEl('img', {
+            coverContainer.createEl('img', {
                 attr: {
                     src: this.app.vault.adapter.getResourcePath(this.currentBook.basic.cover)
                 }
