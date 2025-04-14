@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: BookSmithSettings = {
         default: 'default',  // 修改为使用 standard 作为默认模板
         custom: {
             'default': {
-                name: '默认模板',
+                name: 'default',
                 description: '包含前言、大纲、正文卷章和后记的标准结构',
                 structure: defaultTemplate,
                 isBuiltin: true

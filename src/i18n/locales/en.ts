@@ -103,7 +103,7 @@ the developer via the "Donate" button in the Writing Toolbox.`,
 
     // 空状态提示
     WELCOME_MESSAGE: '👋 Welcome to BookSmith',
-    EMPTY_STATE_HINT: 'Click "New Book" above to create a work, or use the "Switch" button to select an existing book'
+    EMPTY_STATE_HINT: 'Click "New" above to create a work, or use the "Switch" button to select an existing book'
 };
 
 // 工具箱视图翻译

@@ -102,7 +102,7 @@ const bookSmithViewTranslation: BookSmithViewTranslation = {
 
     // 空状态提示
     WELCOME_MESSAGE: '👋 欢迎使用 BookSmith',
-    EMPTY_STATE_HINT: '点击上方的"新建书籍"创建作品，或使用"切换"按钮选择已有书籍'
+    EMPTY_STATE_HINT: '点击上方的"新建"创建作品，或使用"切换"按钮选择已有书籍'
 };
 
 // 工具箱视图翻译
