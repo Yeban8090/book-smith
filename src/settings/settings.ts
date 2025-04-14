@@ -47,7 +47,7 @@ export interface BookSmithSettings {
 
 export const DEFAULT_SETTINGS: BookSmithSettings = {
     language: 'zh-CN', // 默认中文
-    defaultAuthor: '夜半',
+    defaultAuthor: 'Yeban',
     defaultBookPath: 'books',
     lastBookId: '',
     templates: {

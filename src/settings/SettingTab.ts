@@ -125,16 +125,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
         // 模板列表
         const templateList = containerEl.createDiv('template-list');
         templateList.createEl('h4', { text: i18n.t('BOOK_TEMPLATES') });
-    
-        // 先渲染默认模板（内置模板）
-        const defaultTemplate = this.plugin.settings.templates.custom['default'];
-        if (defaultTemplate) {
-            const templateDiv = templateList.createDiv('template-item');
-            new Setting(templateDiv)
-                .setName(defaultTemplate.name)
-                .setDesc(defaultTemplate.description);
-        }
-    
+        
         // 渲染其他自定义模板
         Object.entries(this.plugin.settings.templates.custom)
             .filter(([key]) => key !== 'default')
@@ -145,18 +136,18 @@ export class BookSmithSettingTab extends PluginSettingTab {
                     .setDesc(template.description)
                     .addButton(btn => btn
                         .setIcon('pencil')
-                        .setTooltip('编辑模板')
+                        .setTooltip(i18n.t('EDIT_TEMPLATE'))
                         .onClick(() => {
                             new TemplateEditModal(this.app, this.plugin, key, () => this.display()).open();
                         }))
                     .addButton(btn => btn
                         .setIcon('trash')
-                        .setTooltip('删除模板')
+                        .setTooltip(i18n.t('DELETE_TEMPLATE'))
                         .onClick(() => {
                             new ConfirmModal(
                                 this.app,
-                                '删除模板',
-                                '确定要删除此模板吗？删除后无法恢复。',
+                                i18n.t('DELETE_TEMPLATE'),
+                                i18n.t('DELETE_TEMPLATE_DESC'),
                                 async () => {
                                     // 如果删除的是当前默认模板，则将默认模板设置为 'default'
                                     if (key === this.plugin.settings.templates.default) {

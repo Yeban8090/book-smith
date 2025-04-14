@@ -89,7 +89,7 @@ export class TemplateEditModal extends Modal {
         const buttonContainer = contentEl.createDiv('modal-button-container');
         new Setting(buttonContainer)
             .addButton(btn => btn
-                .setButtonText('保存')
+                .setButtonText(this.isEdit? i18n.t('SAVE') : i18n.t('CREATE'))
                 .setCta()
                 .onClick(async () => {
                     const saved = await this.saveTemplate();
@@ -98,7 +98,7 @@ export class TemplateEditModal extends Modal {
                     }
                 }))
             .addButton(btn => btn
-                .setButtonText('取消')
+                .setButtonText(i18n.t('CANCEL'))
                 .onClick(() => this.close()));
     }
 
