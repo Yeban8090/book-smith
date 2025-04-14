@@ -2,7 +2,7 @@
 
 Book Smith 是一个专为 Obsidian 设计的写作管理插件。它能帮助作者更好地组织和管理他们的写作项目。
 
-![downloads](https://img.shields.io/badge/downloads-500-brightgreen) ![version](https://img.shields.io/badge/version-1.0.0-blue) ![license](https://img.shields.io/badge/license-MIT-green) [![donate](https://img.shields.io/badge/打赏-支持作者-orange)](https://github.com/YeBan/book-smith#支持作者)
+![downloads](https://img.shields.io/badge/downloads-500-brightgreen) ![version](https://img.shields.io/badge/version-1.0.0-blue) ![license](https://img.shields.io/badge/license-MIT-green)  [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-支持作者-yellow)](https://ko-fi.com/bruceyeban)
 
 ## 功能特点
 
@@ -113,7 +113,7 @@ Book Smith 是一个专为 Obsidian 设计的写作管理插件。它能帮助�
 如果这个插件对你有所帮助，可以考虑请作者喝杯咖啡 ☕：
 - 微信支付
 - 支付宝
-- Buy Me a Coffee
+- [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-支持作者-yellow)](https://ko-fi.com/bruceyeban)
 
 您的支持是我持续改进这个插件的动力！
 
