@@ -4,6 +4,7 @@ import { ConfirmModal } from './ConfirmModal';
 import { UnimportedBooksModal } from './UnimportedBooksModal'; // 添加导入
 import BookSmithPlugin from '../main';
 import { Book } from '../types/book';
+import { i18n } from '../i18n/i18n';
 
 export class ManageBooksModal extends Modal {
     constructor(
@@ -22,7 +23,7 @@ export class ManageBooksModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('book-smith-manage-books-modal');
-        contentEl.createEl('h2', { text: '管理书籍' });
+        contentEl.createEl('h2', { text: i18n.t('MANAGE_BOOKS_TITLE') });
 
         // 添加搜索框和导入按钮的容器
         const topContainer = contentEl.createDiv({ cls: 'book-smith-manage-top-container' });
@@ -31,17 +32,13 @@ export class ManageBooksModal extends Modal {
         const searchContainer = topContainer.createDiv({ cls: 'book-smith-manage-search-container' });
         this.searchInput = searchContainer.createEl('input', {
             type: 'text',
-            placeholder: '搜索书籍...',
+            placeholder: i18n.t('SEARCH_BOOKS_PLACEHOLDER'),
             cls: 'book-smith-manage-search-input'
-        });
-
-        this.searchInput.addEventListener('input', () => {
-            this.renderBooks(this.filterBooks());
         });
 
         // 添加导入按钮
         const importButton = topContainer.createEl('button', {
-            text: '导入书籍',
+            text: i18n.t('IMPORT_BOOK'),
             cls: 'book-smith-import-button'
         });
 
@@ -60,18 +57,6 @@ export class ManageBooksModal extends Modal {
         this.renderBooks(this.books);
     }
 
-    private filterBooks(): Book[] {
-        const searchTerm = this.searchInput.value.toLowerCase();
-        if (!searchTerm) return this.books;
-
-        return this.books.filter(book =>
-            book.basic.title.toLowerCase().includes(searchTerm) ||
-            (book.basic.subtitle?.toLowerCase().includes(searchTerm)) ||
-            book.basic.author.some(author => author.toLowerCase().includes(searchTerm)) ||
-            (book.basic.desc?.toLowerCase().includes(searchTerm))
-        );
-    }
-
     private renderBooks(books: Book[]) {
         this.bookList.empty();
 
@@ -81,7 +66,7 @@ export class ManageBooksModal extends Modal {
             // 添加封面
             const coverContainer = bookContainer.createDiv({ cls: 'book-smith-book-cover' });
             if (book.basic.cover) {
-                const coverImg = coverContainer.createEl('img', {
+                coverContainer.createEl('img', {
                     attr: {
                         src: this.app.vault.adapter.getResourcePath(book.basic.cover),
                         alt: book.basic.title
@@ -100,35 +85,35 @@ export class ManageBooksModal extends Modal {
                     }
                 }))
                 .setDesc(
-                    `作者：${book.basic.author.join('、')}
-                    ${book.basic.desc ? `\n简介：${book.basic.desc}` : ''}
-                    \n创作轨迹：${book.stats.total_words}${book.stats.target_total_words
+                    `${i18n.t('BOOK_AUTHOR_PREFIX')}${book.basic.author.join('、')}
+                    ${book.basic.desc ? `${i18n.t('BOOK_DESC_PREFIX')}${book.basic.desc}` : ''}
+                    ${i18n.t('BOOK_PROGRESS_PREFIX')}${book.stats.total_words}${book.stats.target_total_words
                         ? ` / ${(book.stats.target_total_words / 10000).toFixed(1)}万`
                         : ' / 0万'
                     }`
                 );
 
             setting.addButton(btn => btn
-                .setButtonText('删除')
+                .setButtonText(i18n.t('DELETE_BOOK'))
                 .setWarning()
                 .onClick(() => {
                     new ConfirmModal(
                         this.app,
-                        "删除书籍",
-                        `确定要删除《${book.basic.title}》吗？\n此操作不可恢复。`,
+                        i18n.t('DELETE_BOOK_TITLE'),
+                        i18n.t('DELETE_BOOK_DESC', { title: book.basic.title }),
                         async () => {
                             try {
                                 await this.plugin.bookManager.deleteBook(book.basic.uuid);
-                                new Notice('删除成功');
+                                new Notice(i18n.t('DELETE_SUCCESS'));
                                 this.onBookChange?.({ type: 'deleted', bookId: book.basic.uuid });
                                 this.onOpen();
                             } catch (error) {
-                                new Notice(`删除失败: ${error.message}`);
+                                new Notice(i18n.t('DELETE_FAILED') + error.message);
                             }
                         }
                     ).open();
                 })).addButton(btn => btn
-                    .setButtonText('编辑')
+                    .setButtonText(i18n.t('EDIT_BOOK'))
                     .onClick(() => {
                         new EditBookModal(
                             this.app,
@@ -152,7 +137,7 @@ export class ManageBooksModal extends Modal {
             const rootFolder = this.app.vault.getAbstractFileByPath(booksPath);
 
             if (!(rootFolder instanceof TFolder)) {
-                new Notice('书籍根目录不存在或无法访问');
+                new Notice(i18n.t('BOOKS_ROOT_NOT_FOUND'));
                 return;
             }
             
@@ -171,7 +156,7 @@ export class ManageBooksModal extends Modal {
                 }
             }
             if (unimportedBooks.length === 0) {
-                new Notice('没有找到未导入的书籍目录');
+                new Notice(i18n.t('NO_UNIMPORTED_BOOKS'));
                 return;
             }
 
@@ -188,7 +173,7 @@ export class ManageBooksModal extends Modal {
             ).open();
 
         } catch (error) {
-            new Notice(`检测未导入书籍失败: ${error.message}`);
+            new Notice(i18n.t('DETECT_UNIMPORTED_FAILED') + error.message);
         }
     }
 
@@ -209,10 +194,10 @@ export class ManageBooksModal extends Modal {
                 bookId: newBook.basic.uuid
             });
 
-            new Notice(`成功导入书籍《${newBook.basic.title}》`);
+            new Notice(i18n.t('IMPORT_SUCCESS', { title: newBook.basic.title }));
 
         } catch (error) {
-            new Notice(`创建书籍配置失败: ${error.message}`);
+            new Notice(i18n.t('IMPORT_FAILED') + error.message);
         }
     }
 }

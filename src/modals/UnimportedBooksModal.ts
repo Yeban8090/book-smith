@@ -1,4 +1,5 @@
 import { App, Modal, setIcon } from 'obsidian';
+import { i18n } from '../i18n/i18n';
 
 export class UnimportedBooksModal extends Modal {
     private result: string | null = null;
@@ -17,18 +18,17 @@ export class UnimportedBooksModal extends Modal {
         contentEl.empty();
         contentEl.addClass('book-smith-unimported-books-modal');
         
-        contentEl.createEl('h2', { text: '选择要导入的书籍目录' });
+        contentEl.createEl('h2', { text: i18n.t('UNIMPORTED_BOOKS_TITLE') });
         
         if (this.folders.length === 0) {
             contentEl.createEl('p', { 
                 cls: 'book-smith-unimported-empty-message',
-                text: '没有找到未导入的书籍目录' 
+                text: i18n.t('NO_UNIMPORTED_FOLDERS')
             });
             
-            // 添加关闭按钮
             const buttonContainer = contentEl.createEl('div', { cls: 'book-smith-unimported-buttons' });
             const closeButton = buttonContainer.createEl('button', {
-                text: '关闭',
+                text: i18n.t('CLOSE'),
                 cls: 'book-smith-unimported-button-cancel'
             });
             
@@ -40,24 +40,22 @@ export class UnimportedBooksModal extends Modal {
             return;
         }
         
-        // 添加搜索框
         const searchContainer = contentEl.createEl('div', { cls: 'book-smith-unimported-search-container' });
         const searchInput = searchContainer.createEl('input', {
             type: 'text',
-            placeholder: '搜索目录...',
+            placeholder: i18n.t('SEARCH_FOLDERS_PLACEHOLDER'),
             cls: 'book-smith-unimported-search-input'
         });
         
         const listEl = contentEl.createEl('div', { cls: 'book-smith-unimported-list' });
         
-        // 渲染文件夹列表
         const renderFolders = (folders: string[]) => {
             listEl.empty();
             
             if (folders.length === 0) {
                 listEl.createEl('div', { 
                     cls: 'book-smith-unimported-empty-result',
-                    text: '没有匹配的目录' 
+                    text: i18n.t('NO_MATCHING_FOLDERS')
                 });
                 return;
             }
@@ -87,10 +85,8 @@ export class UnimportedBooksModal extends Modal {
             }
         };
         
-        // 初始渲染
         renderFolders(this.folders);
         
-        // 搜索功能
         searchInput.addEventListener('input', () => {
             const searchTerm = searchInput.value.toLowerCase();
             if (!searchTerm) {
@@ -108,12 +104,12 @@ export class UnimportedBooksModal extends Modal {
         const buttonContainer = contentEl.createEl('div', { cls: 'book-smith-unimported-buttons' });
         
         const cancelButton = buttonContainer.createEl('button', {
-            text: '取消',
+            text: i18n.t('CANCEL'),
             cls: 'book-smith-unimported-button-cancel'
         });
         
         const importButton = buttonContainer.createEl('button', {
-            text: '导入',
+            text: i18n.t('IMPORT'),
             cls: 'book-smith-unimported-button-import'
         });
         
@@ -124,13 +120,11 @@ export class UnimportedBooksModal extends Modal {
         
         importButton.addEventListener('click', () => {
             if (!this.result) {
-                // 如果没有选择，显示提示
                 const notice = contentEl.createEl('div', {
                     cls: 'book-smith-unimported-notice',
-                    text: '请先选择一个目录'
+                    text: i18n.t('SELECT_FOLDER_FIRST')
                 });
                 
-                // 2秒后自动消失
                 setTimeout(() => {
                     notice.remove();
                 }, 2000);

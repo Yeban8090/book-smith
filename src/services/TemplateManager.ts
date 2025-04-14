@@ -1,5 +1,6 @@
 import { ChapterTree } from '../types/book';
 import { BookSmithSettings } from '../settings/settings';
+import { i18n } from '../i18n/i18n';
 
 export class TemplateManager {
     constructor(private settings: BookSmithSettings) {}
@@ -7,7 +8,7 @@ export class TemplateManager {
     getTemplate(templateType: string): ChapterTree {
         const template = this.settings.templates.custom[templateType];
         if (!template) {
-            throw new Error(`模板 "${templateType}" 不存在`);
+            throw new Error(i18n.t('TEMPLATE_TYPE_NOT_FOUND', { type: templateType }));
         }
         return JSON.parse(JSON.stringify(template.structure));
     }

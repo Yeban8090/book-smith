@@ -1,13 +1,8 @@
-import { setIcon, App, Notice } from 'obsidian';
+import { setIcon, App } from 'obsidian';
 import { ConfirmModal } from '../modals/ConfirmModal';
 import { FocusManager, FocusState } from '../services/FocusManager';
 import BookSmithPlugin from '../main';
-
-interface FocusStats {
-    completedSessions: number;
-    interruptions: number;
-    totalWords: number;
-}
+import { i18n } from '../i18n/i18n';
 
 export class FocusToolView {
     // ================ 属性定义 ================
@@ -51,7 +46,7 @@ export class FocusToolView {
     private createHeader() {
         const header = this.container.createDiv({ cls: 'focus-tool-header' });
         setIcon(header.createSpan({ cls: 'focus-tool-header-icon' }), 'target');
-        header.createSpan({ text: '专注模式', cls: 'focus-tool-title' });
+        header.createSpan({ text: i18n.t('FOCUS_MODE'), cls: 'focus-tool-title' });
     }
 
     private createTimerSection() {
@@ -107,7 +102,7 @@ export class FocusToolView {
 
     private createStatusSection() {
         this.statusEl = this.container.createDiv({ cls: 'focus-tool-status' });
-        this.statusEl.setText('准备开始');
+        this.statusEl.setText(i18n.t('READY_TO_START'));
     }
 
     private createControlSection() {
@@ -116,23 +111,23 @@ export class FocusToolView {
     }
 
     private createInitialControls(controls: HTMLElement) {
-        this.createButton(controls, '开始专注', true, () => {
+        this.createButton(controls, i18n.t('START_FOCUS'), true, () => {
             this.focusManager.startFocus();
             controls.empty();
             this.createControlButtons(controls);
         });
-        this.createButton(controls, '退出', false, () => this.handleExit());
+        this.createButton(controls, i18n.t('EXIT'), false, () => this.handleExit());
     }
 
     private createStatsSection() {
         const statsContainer = this.container.createDiv({ cls: 'focus-tool-stats-container' });
         const stats = this.focusManager.getStats();
         
-        this.completedEl = this.createStatItem(statsContainer, '专注次数', stats.completedSessions.toString());
-        this.interruptedEl = this.createStatItem(statsContainer, '中断次数', stats.interruptions.toString());
-        this.wordCountEl = this.createStatItem(statsContainer, '当前字数', '0');
-        this.wordGoalEl = this.createStatItem(statsContainer, '目标字数', this.plugin.settings.focus.wordGoal.toString());
-        this.totalWordsEl = this.createStatItem(statsContainer, '专注总字数', stats.totalWords.toString());
+        this.completedEl = this.createStatItem(statsContainer, i18n.t('FOCUS_SESSIONS'), stats.completedSessions.toString());
+        this.interruptedEl = this.createStatItem(statsContainer, i18n.t('INTERRUPTIONS'), stats.interruptions.toString());
+        this.wordCountEl = this.createStatItem(statsContainer, i18n.t('CURRENT_WORDS'), '0');
+        this.wordGoalEl = this.createStatItem(statsContainer, i18n.t('WORD_GOAL'), this.plugin.settings.focus.wordGoal.toString());
+        this.totalWordsEl = this.createStatItem(statsContainer, i18n.t('TOTAL_FOCUS_WORDS'), stats.totalWords.toString());
     }
 
     private createControlButtons(controls: HTMLElement) {
@@ -140,13 +135,13 @@ export class FocusToolView {
         const state = this.focusManager.getState();
 
         if (state === FocusState.WORKING) {
-            this.createButton(controls, '暂停', false, () => this.focusManager.pauseFocus());
+            this.createButton(controls, i18n.t('PAUSE'), false, () => this.focusManager.pauseFocus());
         } else if (state === FocusState.PAUSED) {
-            this.createButton(controls, '继续', true, () => this.focusManager.resumeFocus());
-            this.createButton(controls, '结束', false, () => this.showEndConfirmation());
+            this.createButton(controls, i18n.t('RESUME'), true, () => this.focusManager.resumeFocus());
+            this.createButton(controls, i18n.t('END'), false, () => this.showEndConfirmation());
         }
 
-        this.createButton(controls, '退出', false, () => this.handleExit());
+        this.createButton(controls, i18n.t('EXIT'), false, () => this.handleExit());
     }
 
     private createButton(container: HTMLElement, text: string, solid: boolean, onClick: () => void) {
@@ -311,8 +306,8 @@ export class FocusToolView {
         if (state === FocusState.WORKING || state === FocusState.PAUSED) {
             new ConfirmModal(
                 this.app,
-                '退出专注',
-                '确定要退出专注吗？当前专注进度将会丢失。',
+                i18n.t('EXIT_FOCUS'),
+                i18n.t('EXIT_FOCUS_DESC'),
                 () => {
                     this.focusManager.endFocus();
                     this.onExit();
@@ -329,8 +324,8 @@ export class FocusToolView {
     private showEndConfirmation() {
         new ConfirmModal(
             this.app,
-            '结束专注',
-            '确定要结束专注吗？这将计入中断次数。',
+            i18n.t('END_FOCUS'),
+            i18n.t('END_FOCUS_DESC'),
             () => {
                 this.focusManager.endFocus();
                 this.onExit();
@@ -341,10 +336,10 @@ export class FocusToolView {
     // ================ 工具方法 ================
     private getStatusText(state: FocusState): string {
         switch (state) {
-            case FocusState.WORKING: return '专注中';
-            case FocusState.PAUSED: return '已暂停';
-            case FocusState.BREAK: return '休息时间';
-            default: return '准备开始';
+            case FocusState.WORKING: return i18n.t('FOCUSING');
+            case FocusState.PAUSED: return i18n.t('PAUSED');
+            case FocusState.BREAK: return i18n.t('BREAK_TIME');
+            default: return i18n.t('READY_TO_START');
         }
     }
 

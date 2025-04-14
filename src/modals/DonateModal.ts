@@ -2,17 +2,18 @@ import { Notice } from "obsidian";
 import { BaseModal } from "./BaseModal";
 import { WechatQRCode } from '../assets/wechat-qrcode';
 import { AlipayQRCode } from '../assets/alipay-qrcode';
+import { i18n } from '../i18n/i18n';
 
 export class DonateModal extends BaseModal {
     private selectedAmount: number = 6;
     private amounts = [
-        { value: 6, label: '暖心咖啡', icon: '☕️', feedback: '感谢您的咖啡赞助！' },
-        { value: 18, label: '章节赞助', icon: '📖', feedback: '给您一次新功能投票权' },
-        { value: 66, label: '功能共建', icon: '🎨', feedback: '邀请您加入内测社群，公众号链接我' }
+        { value: 6, label: i18n.t('DONATE_AMOUNT_COFFEE'), icon: '☕️', feedback: i18n.t('DONATE_FEEDBACK_COFFEE') },
+        { value: 18, label: i18n.t('DONATE_AMOUNT_CHAPTER'), icon: '📖', feedback: i18n.t('DONATE_FEEDBACK_CHAPTER') },
+        { value: 66, label: i18n.t('DONATE_AMOUNT_FEATURE'), icon: '🎨', feedback: i18n.t('DONATE_FEEDBACK_FEATURE') }
     ];
 
     constructor(container: HTMLElement) {
-        super(container, '笔墨有情');
+        super(container, i18n.t('DONATE_MODAL_TITLE'));
     }
 
     protected createContent() {
@@ -23,38 +24,33 @@ export class DonateModal extends BaseModal {
 
     private createCommunityStats() {
         const communityStats = this.element.createDiv({ cls: 'book-smith-community-stats' });
-        
-        // 社区数据卡片
         const statsCard = communityStats.createDiv({ cls: 'stats-card' });
         
-        // 图标和标题
         const header = statsCard.createDiv({ cls: 'stats-header' });
         header.createSpan({ text: '📊', cls: 'stats-icon' });
-        header.createSpan({ text: '社区数据', cls: 'stats-title' });
+        header.createSpan({ text: i18n.t('COMMUNITY_STATS_TITLE'), cls: 'stats-title' });
         
-        // 数据列表
         const statsList = statsCard.createDiv({ cls: 'stats-list' });
         statsList.createEl('p', { 
-            text: '已有 1200+ 用户，32位支持者',
+            text: i18n.t('COMMUNITY_STATS_USERS'),
             cls: 'stats-item'
         });
         statsList.createEl('p', { 
-            text: '平均每天创作 5000+ 字',
+            text: i18n.t('COMMUNITY_STATS_WORDS'),
             cls: 'stats-item'
         });
     }
 
     private createAmountPanel() {
         const panel = this.element.createDiv({ cls: 'book-smith-amount-panel' });
-        
-        // 预设金额
         const presets = panel.createDiv({ cls: 'amount-presets' });
+        
         this.amounts.forEach(amount => {
             const btn = presets.createDiv({ cls: 'amount-btn' });
             const content = btn.createDiv({ cls: 'amount-content' });
             content.createSpan({ cls: 'amount-icon', text: amount.icon });
             content.createSpan({ cls: 'amount-label', text: amount.label });
-            content.createSpan({ cls: 'amount-value', text: `${amount.value}元` });
+            content.createSpan({ cls: 'amount-value', text: `${amount.value}${i18n.t('CURRENCY_UNIT')}` });
             
             if (amount.value === this.selectedAmount) {
                 btn.addClass('selected');
@@ -71,15 +67,18 @@ export class DonateModal extends BaseModal {
     private createPaymentChannels() {
         const channels = this.element.createDiv({ cls: 'payment-channels' });
         
-        // 支付方式选项卡
         const tabs = channels.createDiv({ cls: 'payment-tabs' });
         const wechatTab = tabs.createDiv({ 
             cls: 'payment-tab active', 
-            text: '微信赞赏' 
+            text: i18n.t('PAYMENT_WECHAT')
         });
         const alipayTab = tabs.createDiv({ 
             cls: 'payment-tab', 
-            text: '支付宝赞赏' 
+            text: i18n.t('PAYMENT_ALIPAY')
+        });
+        const kofiTab = tabs.createDiv({ 
+            cls: 'payment-tab', 
+            text: i18n.t('PAYMENT_KOFI')
         });
         
         // 二维码展示区
@@ -88,7 +87,7 @@ export class DonateModal extends BaseModal {
         wechatQR.createEl('img', {
             attr: {
                 src: WechatQRCode,
-                alt: '微信支付'
+                alt: i18n.t('PAYMENT_WECHAT')
             }
         });
         
@@ -96,24 +95,43 @@ export class DonateModal extends BaseModal {
         alipayQR.createEl('img', {
             attr: {
                 src: AlipayQRCode,
-                alt: '支付宝'
+                alt: i18n.t('PAYMENT_ALIPAY')
+            }
+        });
+
+        const kofiQR = qrcodeContainer.createDiv({ cls: 'qrcode-item' });
+        const kofiLink = kofiQR.createEl('a', {
+            cls: 'kofi-link',
+            href: 'https://ko-fi.com/bruceyeban',
+            attr: { target: '_blank' }
+        });
+        kofiLink.createEl('img', {
+            attr: {
+                src: 'https://storage.ko-fi.com/cdn/kofi3.png?v=3',
+                alt: i18n.t('PAYMENT_KOFI'),
+                style: 'height: 50px;'
             }
         });
         
         // 切换逻辑
         wechatTab.addEventListener('click', () => {
-            wechatTab.addClass('active');
-            alipayTab.removeClass('active');
-            wechatQR.addClass('active');
-            alipayQR.removeClass('active');
+            this.activateTab(wechatTab, wechatQR, [alipayTab, kofiTab], [alipayQR, kofiQR]);
         });
         
         alipayTab.addEventListener('click', () => {
-            alipayTab.addClass('active');
-            wechatTab.removeClass('active');
-            alipayQR.addClass('active');
-            wechatQR.removeClass('active');
+            this.activateTab(alipayTab, alipayQR, [wechatTab, kofiTab], [wechatQR, kofiQR]);
         });
+
+        kofiTab.addEventListener('click', () => {
+            this.activateTab(kofiTab, kofiQR, [wechatTab, alipayTab], [wechatQR, alipayQR]);
+        });
+    }
+
+    private activateTab(activeTab: HTMLElement, activeContent: HTMLElement, inactiveTabs: HTMLElement[], inactiveContents: HTMLElement[]) {
+        activeTab.addClass('active');
+        activeContent.addClass('active');
+        inactiveTabs.forEach(tab => tab.removeClass('active'));
+        inactiveContents.forEach(content => content.removeClass('active'));
     }
 
     private selectAmount(amount: number) {

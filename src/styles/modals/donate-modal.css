@@ -110,7 +110,7 @@
 .payment-tabs {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 1px;
     margin-bottom: 15px;
 }
 

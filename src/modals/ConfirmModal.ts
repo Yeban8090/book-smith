@@ -1,4 +1,5 @@
 import { App, Modal } from 'obsidian';
+import { i18n } from '../i18n/i18n';
 
 export class ConfirmModal extends Modal {
     private confirmed = false;
@@ -25,13 +26,13 @@ export class ConfirmModal extends Modal {
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
         
         // 取消按钮
-        buttonContainer.createEl('button', { text: '取消' })
+        buttonContainer.createEl('button', { text: i18n.t('CANCEL') })
             .addEventListener('click', () => this.close());
             
         // 确认按钮
         const confirmButton = buttonContainer.createEl('button', {
             cls: 'mod-cta',
-            text: '确认'
+            text: i18n.t('CONFIRM')
         });
         confirmButton.addEventListener('click', () => {
             this.confirmed = true;

@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { i18n } from '../i18n/i18n';
 
 export class ReferenceModal extends Modal {
     private result: string;
@@ -16,11 +17,11 @@ export class ReferenceModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl('h3', { text: '添加引用内容' });
+        contentEl.createEl('h3', { text: i18n.t('REFERENCE_MODAL_TITLE') });
 
         new Setting(contentEl)
-            .setName('引用内容')
-            .setDesc('请输入引用内容的详细信息')
+            .setName(i18n.t('REFERENCE_CONTENT'))
+            .setDesc(i18n.t('REFERENCE_CONTENT_DESC'))
             .addTextArea((text) => {
                 text
                     .setValue(this.result)
@@ -32,7 +33,7 @@ export class ReferenceModal extends Modal {
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
-                    .setButtonText('确定')
+                    .setButtonText(i18n.t('CONFIRM'))
                     .setCta()
                     .onClick(() => {
                         this.onSubmit(this.result);

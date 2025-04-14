@@ -8,6 +8,7 @@ import { SwitchBookModal } from '../modals/SwitchBookModal';
 import { ChapterTree } from '../components/ChapterTree';
 import { FileEventManager } from '../services/FileEventManager';
 import { ReferenceManager } from '../services/ReferenceManager';
+import { i18n } from '../i18n/i18n';
 
 // === 视图类定义 ===
 export class BookSmithView extends ItemView {
@@ -103,7 +104,7 @@ export class BookSmithView extends ItemView {
     }
 
     getDisplayText() {
-        return '书籍管理';
+        return i18n.t('BOOK_MANAGER');
     }
 
     getIcon() {
@@ -126,28 +127,28 @@ export class BookSmithView extends ItemView {
 
         const newBookBtn = toolbar.createEl('button', { cls: 'book-smith-toolbar-btn' });
         setIcon(newBookBtn, 'create-new');
-        newBookBtn.appendChild(createSpan({ text: ' 新建' }));
+        newBookBtn.appendChild(createSpan({ text: ` ${i18n.t('NEW_BOOK')}` }));
         newBookBtn.addEventListener('click', () => {
             new CreateBookModal(this.app, this.plugin, async (newBook) => {
                 if (newBook) {
                     this.plugin.settings.lastBookId = newBook.basic.uuid;
                     await this.plugin.saveSettings();
                     await this.refreshView();
-                    new Notice(`已切换到《${newBook.basic.title}》`);
+                    new Notice(i18n.t('SWITCHED_TO_BOOK', { title: newBook.basic.title }));
                 }
             }).open();
         });
 
         const switchBookBtn = toolbar.createEl('button', { cls: 'book-smith-toolbar-btn' });
         setIcon(switchBookBtn, 'switch');
-        switchBookBtn.appendChild(createSpan({ text: ' 切换' }));
+        switchBookBtn.appendChild(createSpan({ text: ` ${i18n.t('SWITCH_BOOK')}` }));
         switchBookBtn.addEventListener('click', () => {
             this.switchBook();
         });
 
         const manageBookBtn = toolbar.createEl('button', { cls: 'book-smith-toolbar-btn' });
         setIcon(manageBookBtn, 'library');
-        manageBookBtn.appendChild(createSpan({ text: ' 管理' }));
+        manageBookBtn.appendChild(createSpan({ text: ` ${i18n.t('MANAGE_BOOK')}` }));
         manageBookBtn.addEventListener('click', async () => {
             new ManageBooksModal(this.app, this.plugin, async (result) => {
                 if (result.type === 'imported' && result.bookId) {
@@ -155,14 +156,14 @@ export class BookSmithView extends ItemView {
                     this.plugin.settings.lastBookId = result.bookId;
                     await this.plugin.saveSettings();
                     await this.refreshView();
-                    new Notice(`已导入并切换到新书籍`);
+                    new Notice(i18n.t('IMPORTED_AND_SWITCHED'));
                 } else if (result.bookId === this.currentBook?.basic.uuid) {
                     if (result.type === 'deleted') {
                         this.plugin.settings.lastBookId = undefined;
                         await this.plugin.saveSettings();
                         this.currentBook = null;
                         await this.refreshView();
-                        new Notice('当前书籍已被删除');
+                        new Notice(i18n.t('CURRENT_BOOK_DELETED'));
                     } else if (result.type === 'edited') {
                         await this.refreshView();
                     }
@@ -177,38 +178,7 @@ export class BookSmithView extends ItemView {
 
         helpBtnContainer.createEl('div', {
             cls: 'book-smith-help-tooltip',
-            text: `👋 欢迎使用 BookSmith
-
-                    开始使用
-                    • 打开右侧【写作工具箱】，激活创作辅助功能
-                    • 专注模式、创作灵感等工具一键可得
-
-                    创作管理
-                    • 新建：选择模板创建书籍项目
-                    • 切换：在不同作品间自由切换
-                    • 管理：导入、编辑您的作品集
-                    • 模板：自定义专属写作框架
-
-                    章节编排
-                    • 树形结构：直观展现层次结构
-                    • 拖拽排序：灵活调整章节顺序
-                    • 状态标记：追踪创作进度
-                    • 右键菜单：便捷的章节操作
-
-                    创作助手
-                    • 实时统计：字数、进度实时更新
-                    • 数据分析：写作习惯深度统计
-                    • 专注模式：提升写作效率
-
-                    小贴士
-                    • 支持自定义多种写作模板
-                    • 可通过拖拽快速调整章节
-                    • 右键点击可进行更多操作
-
-                    ✨ 愿 BookSmith 能让您享受创作的美好时光。
-
-                    💝 赞赏支持
-                    如果 BookSmith 为您带来帮助，请前往右侧写作工具箱【赞赏捐赠】，支持我继续创作优雅工具。`
+            text: i18n.t('HELP_TOOLTIP')
         });
     }
 
@@ -252,14 +222,14 @@ export class BookSmithView extends ItemView {
         // 渲染书籍信息
         const infoSection = bookContent.createDiv({ cls: 'book-smith-book-info' });
         const authorRow = infoSection.createDiv({ cls: 'book-smith-info-row' });
-        authorRow.createSpan({ text: '作者', cls: 'book-smith-info-label' });
+        authorRow.createSpan({ text: i18n.t('BOOK_AUTHOR'), cls: 'book-smith-info-label' });
         authorRow.createSpan({
             text: this.currentBook.basic.author.join(', '),
             cls: 'book-smith-info-value'
         });
-
+    
         const descRow = infoSection.createDiv({ cls: 'book-smith-info-row' });
-        descRow.createSpan({ text: '简介', cls: 'book-smith-info-label' });
+        descRow.createSpan({ text: i18n.t('BOOK_DESCRIPTION'), cls: 'book-smith-info-label' });
         descRow.createSpan({
             text: this.currentBook.basic.desc || '',
             cls: 'book-smith-info-value description'
@@ -291,11 +261,11 @@ export class BookSmithView extends ItemView {
     private renderEmptyState(container: HTMLElement) {
         const emptyState = container.createDiv({ cls: 'book-smith-empty-state' });
         emptyState.createEl('p', {
-            text: '👋 欢迎使用 BookSmith',
+            text: i18n.t('WELCOME_MESSAGE'),
             cls: 'book-smith-empty-title'
         });
         emptyState.createEl('p', {
-            text: '点击上方的"新建书籍"创建作品，或使用"切换"按钮选择已有书籍',
+            text: i18n.t('EMPTY_STATE_HINT'),
             cls: 'book-smith-empty-desc'
         });
     }
@@ -309,21 +279,21 @@ export class BookSmithView extends ItemView {
         const todayWords = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const todayWordsLabel = todayWords.createSpan();
         setIcon(todayWordsLabel, 'pencil');
-        todayWordsLabel.appendChild(createSpan({ text: ' 今日字数' }));
+        todayWordsLabel.appendChild(createSpan({ text: ` ${i18n.t('TODAY_WORDS')}` }));
         todayWords.createEl('span', {
             cls: 'book-smith-stat-value',
-            text: `${this.currentBook.stats.daily_words[today] || 0}字`
+            text: `${this.currentBook.stats.daily_words[today] || 0}${i18n.t('WORD_UNIT')}`
         });
 
         // 总字数统计
         const wordCount = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const wordCountLabel = wordCount.createSpan();
         setIcon(wordCountLabel, 'document');
-        wordCountLabel.appendChild(createSpan({ text: ' 字数统计' }));
+        wordCountLabel.appendChild(createSpan({ text: ` ${i18n.t('TOTAL_WORDS')}` }));
         wordCount.createEl('span', {
             cls: 'book-smith-stat-value',
             text: `${this.currentBook.stats.total_words}${this.currentBook.stats.target_total_words
-                ? ` / ${(this.currentBook.stats.target_total_words / 10000).toFixed(1)}万`
+                ? ` / ${(this.currentBook.stats.target_total_words / 10000).toFixed(1)}${i18n.t('TEN_THOUSAND')}`
                 : ''
                 }`
         });
@@ -332,7 +302,7 @@ export class BookSmithView extends ItemView {
         const progress = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const progressLabel = progress.createSpan();
         setIcon(progressLabel, 'target');
-        progressLabel.appendChild(createSpan({ text: ' 章节完成' }));
+        progressLabel.appendChild(createSpan({ text: ` ${i18n.t('CHAPTER_COMPLETION')}` }));
         progress.createEl('span', {
             cls: 'book-smith-stat-value',
             text: `${Math.round(this.currentBook.stats.progress_by_chapter * 100)}%`
@@ -342,20 +312,20 @@ export class BookSmithView extends ItemView {
         const duration = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const durationLabel = duration.createSpan();
         setIcon(durationLabel, 'clock');
-        durationLabel.appendChild(createSpan({ text: ' 写作天数' }));
+        durationLabel.appendChild(createSpan({ text: ` ${i18n.t('WRITING_DAYS')}` }));
         duration.createEl('span', {
             cls: 'book-smith-stat-value',
-            text: `${this.currentBook.stats.writing_days}天`
+            text: `${this.currentBook.stats.writing_days}${i18n.t('DAY_UNIT')}`
         });
 
         // 日均字数
         const average = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const averageLabel = average.createSpan();
         setIcon(averageLabel, 'calendar-clock');
-        averageLabel.appendChild(createSpan({ text: ' 日均字数' }));
+        averageLabel.appendChild(createSpan({ text: ` ${i18n.t('AVERAGE_DAILY_WORDS')}` }));
         average.createEl('span', {
             cls: 'book-smith-stat-value',
-            text: `${Math.round(this.currentBook.stats.average_daily_words)}字`
+            text: `${Math.round(this.currentBook.stats.average_daily_words)}${i18n.t('WORD_UNIT')}`
         });
     }
 
@@ -363,7 +333,7 @@ export class BookSmithView extends ItemView {
     private async switchBook() {
         const books = await this.plugin.bookManager.getAllBooks();
         if (books.length === 0) {
-            new Notice('暂无可切换的书籍');
+            new Notice(i18n.t('NO_BOOKS_TO_SWITCH'));
             return;
         }
 
@@ -371,7 +341,7 @@ export class BookSmithView extends ItemView {
             this.plugin.settings.lastBookId = selectedBook.basic.uuid;
             await this.plugin.saveSettings();
             await this.refreshView();
-            new Notice(`已切换到《${selectedBook.basic.title}》`);
+            new Notice(i18n.t('SWITCHED_TO_BOOK', { title: selectedBook.basic.title }));
         }).open();
     }
 }

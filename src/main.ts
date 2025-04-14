@@ -7,6 +7,7 @@ import { activateView } from './utils/viewUtils';
 import { BookManager } from './services/BookManager';
 import { TemplateManager } from './services/TemplateManager';
 import { BookStatsManager } from './services/BookStatsManager';
+import { i18n, Locale } from './i18n/i18n';
 
 export default class BookSmithPlugin extends Plugin {
     settings: BookSmithSettings;
@@ -16,6 +17,7 @@ export default class BookSmithPlugin extends Plugin {
 
     async onload() {
         await this.loadSettings();
+        i18n.setLocale(this.settings.language);
         
         // 初始化所有管理器
         this.bookManager = new BookManager(this.app, this.settings);

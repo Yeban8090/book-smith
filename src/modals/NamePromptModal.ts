@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from 'obsidian';
+import { i18n } from '../i18n/i18n';
 
 export class NamePromptModal extends Modal {
     private result: string;
@@ -21,7 +22,7 @@ export class NamePromptModal extends Modal {
         contentEl.createEl('h2', { text: this.placeholder });
 
         new Setting(contentEl)
-            .setName('名称')
+            .setName(i18n.t('NAME_LABEL'))
             .addText((text) => {
                 text.setValue(this.defaultValue || '')
                     .onChange((value) => {
@@ -39,7 +40,7 @@ export class NamePromptModal extends Modal {
         new Setting(contentEl)
             .addButton((btn) =>
                 btn
-                    .setButtonText('确定')
+                    .setButtonText(i18n.t('CONFIRM'))
                     .setCta()
                     .onClick(() => {
                         this.close();
@@ -47,7 +48,7 @@ export class NamePromptModal extends Modal {
                     }))
             .addButton((btn) =>
                 btn
-                    .setButtonText('取消')
+                    .setButtonText(i18n.t('CANCEL'))
                     .onClick(() => {
                         this.close();
                         this.onSubmit(null);
