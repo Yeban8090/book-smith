@@ -17,16 +17,20 @@ const commonTranslation: CommonTranslation = {
     SAVE: 'Save',
     CANCEL: 'Cancel',
     HIDE: 'Hide',
-    SHOW: 'Show'
+    SHOW: 'Show',
+
+    OPEN_BOOK_PANEL: 'Open Book Panel',
+    OPEN_TOOL_PANEL: 'Open Tool Panel',
+    OPEN_ALL_PANELS: 'Open All Panels',
 };
 
 // 书籍管理视图翻译
 const bookSmithViewTranslation: BookSmithViewTranslation = {
     // 主界面
     BOOK_MANAGER: 'Book Manager',
-    NEW_BOOK: 'New Book',
-    SWITCH_BOOK: 'Switch Book',
-    MANAGE_BOOK: 'Manage Book',
+    NEW_BOOK: 'New',
+    SWITCH_BOOK: 'Switch',
+    MANAGE_BOOK: 'Manage',
 
     // 书籍相关
     BOOK_TITLE: 'Title',

@@ -7,4 +7,8 @@ export interface CommonTranslation {
     CANCEL: string;
     HIDE: string;
     SHOW: string;
+
+    OPEN_BOOK_PANEL: string;
+    OPEN_TOOL_PANEL: string;
+    OPEN_ALL_PANELS: string;
 }

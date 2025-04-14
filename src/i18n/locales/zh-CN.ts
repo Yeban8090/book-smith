@@ -17,16 +17,19 @@ const commonTranslation: CommonTranslation = {
     SAVE: '保存',
     CANCEL: '取消',
     HIDE: '隐藏',
-    SHOW: '显示'
+    SHOW: '显示',
+    OPEN_BOOK_PANEL: '打开书籍管理面板',
+    OPEN_TOOL_PANEL: '打开工具面板',
+    OPEN_ALL_PANELS: '打开所有面板',
 };
 
 // 书籍管理视图翻译
 const bookSmithViewTranslation: BookSmithViewTranslation = {
     // 主界面
     BOOK_MANAGER: '书籍管理',
-    NEW_BOOK: '新建书籍',
-    SWITCH_BOOK: '切换书籍',
-    MANAGE_BOOK: '管理书籍',
+    NEW_BOOK: '新建',
+    SWITCH_BOOK: '切换',
+    MANAGE_BOOK: '管理',
 
     // 书籍相关
     BOOK_TITLE: '书名',

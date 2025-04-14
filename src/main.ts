@@ -7,7 +7,7 @@ import { activateView } from './utils/viewUtils';
 import { BookManager } from './services/BookManager';
 import { TemplateManager } from './services/TemplateManager';
 import { BookStatsManager } from './services/BookStatsManager';
-import { i18n, Locale } from './i18n/i18n';
+import { i18n } from './i18n/i18n';
 
 export default class BookSmithPlugin extends Plugin {
     settings: BookSmithSettings;
@@ -36,14 +36,14 @@ export default class BookSmithPlugin extends Plugin {
         // 添加命令
         this.addCommand({
             id: 'open-book-view',
-            name: '打开书籍管理面板',
+            name: i18n.t('OPEN_BOOK_PANEL'),
             callback: () => {
                 activateView(this.app, 'book-smith-view', 'left');
             }
         });
         this.addCommand({
             id: 'open-tool-view',
-            name: '打开工具面板',
+            name: i18n.t('OPEN_TOOL_PANEL'),
             callback: () => {
                 activateView(this.app, 'book-smith-tool', 'right');
             }
@@ -52,7 +52,7 @@ export default class BookSmithPlugin extends Plugin {
         // 添加一个命令用于同时打开两个视图
         this.addCommand({
             id: 'open-all-views',
-            name: '打开所有面板',
+            name: i18n.t('OPEN_ALL_PANELS'),
             callback: () => {
                 activateView(this.app, 'book-smith-view', 'left');
                 activateView(this.app, 'book-smith-tool', 'right');
@@ -60,7 +60,7 @@ export default class BookSmithPlugin extends Plugin {
         });
 
         // 添加一个功能按钮用于打开所有面板
-        this.addRibbonIcon('book-open', '打开书籍管理面板', () => {
+        this.addRibbonIcon('book-open', i18n.t('OPEN_BOOK_PANEL'), () => {
             activateView(this.app, 'book-smith-view', 'left');
             activateView(this.app, 'book-smith-tool', 'right');
         });
