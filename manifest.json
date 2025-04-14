@@ -1,7 +1,7 @@
 {
 	"id": "book-smith",
 	"name": "Book Smith",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "A writing plugin for book management",
 	"author": "Yeban",

@@ -1,6 +1,6 @@
 {
   "name": "book-smith",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "一个用于书籍写作管理的 Obsidian 插件",
   "main": "main.js",
   "scripts": {
