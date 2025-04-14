@@ -3,6 +3,7 @@ import { Book, BookBasicInfo, ChapterTree, ChapterNode } from '../types/book';
 import { v4 as uuidv4 } from 'uuid';
 import { TemplateManager } from './TemplateManager';
 import { BookSmithSettings } from '../settings/settings';
+import { i18n } from '../i18n/i18n';
 
 export class BookManager {
     private templateManager: TemplateManager;
@@ -72,12 +73,11 @@ export class BookManager {
 
     // 确保目录结构存在
     private async ensureDirectoryStructure(basicInfo: Omit<BookBasicInfo, 'uuid' | 'created_at'>): Promise<void> {
-        // 检查书籍是否已存在
         const existingFolder = this.app.vault.getAbstractFileByPath(
             `${this.rootPath}/${basicInfo.title}`
         );
         if (existingFolder) {
-            throw new Error('书籍已存在');
+            throw new Error(i18n.t('BOOK_EXISTS'));
         }
 
         // 确保根目录存在
@@ -126,14 +126,14 @@ export class BookManager {
     async updateBook(uuid: string, updates: Partial<Book>): Promise<Book> {
         const book = await this.getBookById(uuid);
         if (!book) {
-            throw new Error('书籍不存在');
+            throw new Error(i18n.t('BOOK_NOT_FOUND'));
         }
 
         const oldBookPath = `${this.settings.defaultBookPath}/${book.basic.title}`;
         const folder = this.app.vault.getAbstractFileByPath(oldBookPath);
 
         if (!(folder instanceof TFolder)) {
-            throw new Error('书籍文件夹不存在');
+            throw new Error(i18n.t('BOOK_FOLDER_NOT_FOUND'));
         }
 
         const updatedBook = {
@@ -160,9 +160,8 @@ export class BookManager {
         // 如果书名改变了，需要重命名文件夹
         if (updates.basic?.title && updates.basic.title !== book.basic.title) {
             const newBookPath = `${this.settings.defaultBookPath}/${updates.basic.title}`;
-            // 检查新路径是否已存在
             if (this.app.vault.getAbstractFileByPath(newBookPath)) {
-                throw new Error('书籍已存在');
+                throw new Error(i18n.t('BOOK_EXISTS'));
             }
             await this.app.vault.rename(folder, newBookPath);
         }
@@ -174,7 +173,7 @@ export class BookManager {
     async deleteBook(uuid: string): Promise<void> {
         const book = await this.getBookById(uuid);
         if (!book) {
-            throw new Error('书籍不存在');
+            throw new Error(i18n.t('BOOK_NOT_FOUND'));
         }
 
         const bookPath = `${this.settings.defaultBookPath}/${book.basic.title}`;
@@ -183,7 +182,7 @@ export class BookManager {
         if (folder) {
             await this.app.vault.trash(folder, true);
         } else {
-            throw new Error('书籍文件夹不存在');
+            throw new Error(i18n.t('BOOK_FOLDER_NOT_FOUND'));
         }
     }
 
@@ -217,7 +216,7 @@ export class BookManager {
             }
         } catch (error) {
             console.error('保存配置文件时发生错误:', error);
-            throw new Error('保存配置文件失败');
+            throw new Error(i18n.t('SAVE_CONFIG_FAILED'));
         }
     }
 
@@ -265,7 +264,7 @@ export class BookManager {
                 basic: {
                     uuid: uuidv4(),
                     title: folderName,
-                    author: this.settings.defaultAuthor ? [this.settings.defaultAuthor] : ['未知作者'],
+                    author: this.settings.defaultAuthor ? [this.settings.defaultAuthor] : [i18n.t('UNKNOWN_AUTHOR')],
                     created_at: new Date().toISOString()
                 },
                 structure: {
@@ -292,14 +291,14 @@ export class BookManager {
             // 保存书籍配置
             const bookFolder = this.app.vault.getAbstractFileByPath(folderPath);
             if (!(bookFolder instanceof TFolder)) {
-                throw new Error('书籍文件夹不存在');
+                throw new Error(i18n.t('BOOK_FOLDER_NOT_FOUND'));
             }
             
             await this.saveBookConfig(bookFolder, newBook);
             return newBook;
         } catch (error) {
             console.error('导入书籍失败:', error);
-            throw error;
+            throw new Error(i18n.t('IMPORT_BOOK_FAILED'));
         }
     }
     

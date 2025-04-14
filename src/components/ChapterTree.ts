@@ -3,6 +3,7 @@ import { Book, ChapterNode } from '../types/book';
 import { BookManager } from '../services/BookManager';
 import { NamePromptModal } from '../modals/NamePromptModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
+import { i18n } from '../i18n/i18n';
 
 export class ChapterTree {
     // === 属性 ===
@@ -28,13 +29,13 @@ export class ChapterTree {
                 const menu = new Menu();
 
                 menu.addItem((item) => {
-                    item.setTitle("新建文件");
+                    item.setTitle(i18n.t('NEW_FILE'));
                     item.setIcon("file-plus");
                     item.onClick(() => this.createNode('file'));
                 });
 
                 menu.addItem((item) => {
-                    item.setTitle("新建文件夹");
+                    item.setTitle(i18n.t('NEW_FOLDER'));
                     item.setIcon("folder-plus");
                     item.onClick(() => this.createNode('group'));
                 });
@@ -215,7 +216,7 @@ export class ChapterTree {
                 // 为文件夹类型添加创建选项
                 if (node.type === 'group') {
                     menu.addItem((item) => {
-                        item.setTitle("新建文件");
+                        item.setTitle(i18n.t('NEW_FILE'));
                         item.setIcon("file-plus");
                         item.onClick(() => {
                             this.createNode('file', node.path, node);
@@ -223,7 +224,7 @@ export class ChapterTree {
                     });
 
                     menu.addItem((item) => {
-                        item.setTitle("新建文件夹");
+                        item.setTitle(i18n.t('NEW_FOLDER'));
                         item.setIcon("folder-plus");
                         item.onClick(() => {
                             this.createNode('group', node.path, node);
@@ -235,7 +236,7 @@ export class ChapterTree {
 
                 if (node.type === 'file') {
                     menu.addItem((item) => {
-                        item.setTitle("在新标签页中打开");
+                        item.setTitle(i18n.t('OPEN_IN_NEW_TAB'));
                         item.setIcon("file-plus");
                         item.onClick(() => {
                             if (file instanceof TFile) {
@@ -245,7 +246,7 @@ export class ChapterTree {
                     });
 
                     menu.addItem((item) => {
-                        item.setTitle("在新标签组中打开");
+                        item.setTitle(i18n.t('OPEN_IN_NEW_PANE'));
                         item.setIcon("files");
                         item.onClick(() => {
                             if (file instanceof TFile) {
@@ -259,7 +260,9 @@ export class ChapterTree {
                     // 只有当文件不排除之外时，才显示"标记完成章节"选项
                     if (!node.exclude) {
                         menu.addItem((item) => {
-                            item.setTitle(node.default_status === 'done' ? "标记重新创作" : "标记完成章节");
+                            item.setTitle(node.default_status === 'done' ? 
+                                i18n.t('MARK_AS_DRAFT') : 
+                                i18n.t('MARK_AS_COMPLETE'));
                             item.setIcon(node.default_status === 'done' ? "x-circle" : "check-circle");
                             item.onClick(async () => {
                                 node.default_status = node.default_status === 'done' ? 'draft' : 'done';
@@ -281,7 +284,9 @@ export class ChapterTree {
 
                     // 添加排除选项
                     menu.addItem((item) => {
-                        item.setTitle(node.exclude ? "包含在统计与导出中" : "排除在统计与导出外");
+                        item.setTitle(node.exclude ? 
+                            i18n.t('INCLUDE_IN_STATS') : 
+                            i18n.t('EXCLUDE_FROM_STATS'));
                         item.setIcon(node.exclude ? "plus-circle" : "minus-circle");
                         item.onClick(async () => {
                             node.exclude = !node.exclude;
@@ -301,8 +306,8 @@ export class ChapterTree {
                             });
                             await this.onDragComplete?.();
                             new Notice(node.exclude ?
-                                `已将"${node.title}"排除` :
-                                `已将"${node.title}"包含`);
+                                i18n.t('EXCLUDED_NOTICE', { title: node.title }) :
+                                i18n.t('INCLUDED_NOTICE', { title: node.title }));
                         });
                     });
 
@@ -310,13 +315,13 @@ export class ChapterTree {
                 }
 
                 menu.addItem((item) => {
-                    item.setTitle("创建副本");
+                    item.setTitle(i18n.t('CREATE_COPY'));
                     item.setIcon("copy");
                     item.onClick(async () => {
                         try {
                             const parentPath = node.path.substring(0, node.path.lastIndexOf('/'));
                             const baseName = node.title;
-                            const newName = `${baseName} 副本`;
+                            const newName = i18n.t('COPY_NAME', { name: baseName });
                             const newPath = parentPath
                                 ? `${this.bookPath}/${parentPath}/${newName}${node.type === 'file' ? '.md' : ''}`
                                 : `${this.bookPath}/${newName}${node.type === 'file' ? '.md' : ''}`;
@@ -354,22 +359,21 @@ export class ChapterTree {
                                 structure: this.book.structure
                             });
                             await this.onDragComplete?.();
-                            new Notice('创建副本成功');
+                            new Notice(i18n.t('COPY_SUCCESS'));
                         } catch (error) {
-                            new Notice(`创建副本失败: ${error.message}`);
+                            new Notice(i18n.t('COPY_FAILED', { error: error.message }));
                         }
                     });
                 });
 
                 menu.addItem((item) => {
-                    item.setTitle("重命名");
+                    item.setTitle(i18n.t('RENAME'));
                     item.setIcon("pencil");
                     item.onClick(async () => {
-                        // 获取当前文件名（不含扩展名）
                         const currentName = node.type === 'file'
                             ? node.title.replace(/\.md$/, '')
                             : node.title;
-                        const newName = await this.promptForName("请输入新名称", currentName);
+                        const newName = await this.promptForName(i18n.t('ENTER_NEW_NAME'), currentName);
                         if (!newName) return;
 
                         try {
@@ -394,21 +398,23 @@ export class ChapterTree {
                             });
 
                             await this.onDragComplete?.();
-                            new Notice('重命名成功');
+                            new Notice(i18n.t('RENAME_SUCCESS'));
                         } catch (error) {
-                            new Notice(`重命名失败: ${error.message}`);
+                            new Notice(i18n.t('RENAME_FAILED', { error: error.message }));
                         }
                     });
                 });
 
                 menu.addItem((item) => {
-                    item.setTitle("删除");
+                    item.setTitle(i18n.t('DELETE'));
                     item.setIcon("trash");
                     item.onClick(() => {
-                        const title = node.type === 'file' ? "删除文件" : "删除文件夹";
+                        const title = node.type === 'file' ? 
+                            i18n.t('DELETE_FILE_TITLE') : 
+                            i18n.t('DELETE_FOLDER_TITLE');
                         const message = node.type === 'file'
-                            ? `确定要删除文件 "${node.title}" 吗？\n它将被移动到系统回收站。`
-                            : `确定要删除文件夹 "${node.title}" 及其所有内容吗？\n它们将被移动到系统回收站。`;
+                            ? i18n.t('DELETE_FILE_DESC', { title: node.title })
+                            : i18n.t('DELETE_FOLDER_DESC', { title: node.title });
 
                         new ConfirmModal(this.app, title, message, async () => {
                             try {
@@ -418,9 +424,9 @@ export class ChapterTree {
                                     structure: this.book.structure
                                 });
                                 await this.onDragComplete?.();
-                                new Notice('删除成功');
+                                new Notice(i18n.t('DELETE_SUCCESS'));
                             } catch (error) {
-                                new Notice(`删除失败: ${error.message}`);
+                                new Notice(i18n.t('DELETE_FAILED', { error: error.message }));
                             }
                         }).open();
                     });
@@ -541,18 +547,18 @@ export class ChapterTree {
 
             const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
             if (!sourceFile) {
-                throw new Error('源文件不存在');
+                throw new Error(i18n.t('SOURCE_NOT_FOUND'));
             }
 
             const existingFile = this.app.vault.getAbstractFileByPath(targetPath);
             if (existingFile && existingFile !== sourceFile) {
-                throw new Error('目标位置已存在同名文件');
+                throw new Error(i18n.t('TARGET_EXISTS'));
             }
 
             if (position === 'inside') {
                 const targetFolder = this.app.vault.getAbstractFileByPath(`${this.bookPath}/${targetNode.path}`);
                 if (!targetFolder) {
-                    throw new Error('目标文件夹不存在');
+                    throw new Error(i18n.t('TARGET_FOLDER_NOT_FOUND'));
                 }
             }
 
@@ -564,7 +570,7 @@ export class ChapterTree {
             await this.onDragComplete?.();
         } catch (error) {
             console.error('移动失败:', error);
-            new Notice(`移动失败`);
+            new Notice(i18n.t('MOVE_FAILED'));
         } finally {
             this.draggedNode = null;
         }
@@ -632,7 +638,9 @@ export class ChapterTree {
         parentNode?: ChapterNode
     ) {
         const isFile = type === 'file';
-        const name = await this.promptForName(`请输入${isFile ? '文件' : '文件夹'}名`);
+        const name = await this.promptForName(
+            isFile ? i18n.t('ENTER_FILE_NAME') : i18n.t('ENTER_FOLDER_NAME')
+        );
         if (!name) return;
 
         const newPath = parentPath

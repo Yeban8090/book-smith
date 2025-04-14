@@ -1,5 +1,6 @@
 import { MarkdownView, Notice } from 'obsidian';
 import BookSmithPlugin from '../main';
+import { i18n } from '../i18n/i18n';
 
 export interface FocusStats {
     interruptions: number;     // 中断次数
@@ -235,8 +236,16 @@ export class FocusManager {
         this.state = FocusState.BREAK;
         this.remainingTime = this.plugin.settings.focus.breakDuration * 60;
         this.startTimer();
-        new Notice('休息时间开始');
+        new Notice(i18n.t('BREAK_TIME_START'));
         this.notifyUpdate();
+    }
+
+    private showSummary(): void {
+        new Notice(i18n.t('FOCUS_SUMMARY', {
+            duration: this.plugin.settings.focus.workDuration,
+            interruptions: this.stats.interruptions,
+            words: this.currentWords
+        }));
     }
 
     // =============== 事件监听方法 ===============
@@ -268,10 +277,5 @@ export class FocusManager {
                 timeout = null;
             }, wait);
         };
-    }
-
-    private showSummary(): void {
-        const summary = `专注结束！\n完成时间：${this.plugin.settings.focus.workDuration}分钟\n中断次数：${this.stats.interruptions}次\n本次字数：${this.currentWords}`;
-        new Notice(summary);
     }
 }

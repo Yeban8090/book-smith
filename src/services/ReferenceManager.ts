@@ -3,6 +3,7 @@ import BookSmithPlugin from '../main';
 import { Book, ChapterNode } from '../types/book';
 import { Reference, ReferenceData, ChapterReferences } from '../types/reference';
 import { ReferenceModal } from '../modals/ReferenceModal';
+import { i18n } from '../i18n/i18n';
 
 export class ReferenceManager {
     // === 1. 初始化 ===
@@ -39,10 +40,10 @@ export class ReferenceManager {
     }
 
     private checkReferenceFile(bookPath: string): boolean {
-        const referencePath = `${bookPath}/引用书目.md`;
+        const referencePath = `${bookPath}/${i18n.t('REFERENCE_FILE_NAME')}`;
         const file = this.app.vault.getAbstractFileByPath(referencePath);
         if (!file) {
-            new Notice('请先在书籍目录下创建"引用书目.md"文件');
+            new Notice(i18n.t('REFERENCE_FILE_NOT_FOUND'));
             return false;
         }
         return true;
@@ -191,10 +192,10 @@ export class ReferenceManager {
 
         if (!this.checkReferenceFile(bookPath)) return;
 
-        const referencePath = `${bookPath}/引用书目.md`;
+        const referencePath = `${bookPath}/${i18n.t('REFERENCE_FILE_NAME')}`;
         const file = this.app.vault.getAbstractFileByPath(referencePath);
         if (!(file instanceof TFile)) {
-            throw new Error('引用书目文件不存在或类型错误');
+            throw new Error(i18n.t('REFERENCE_FILE_ERROR'));
         }
 
         references.chapters.sort((a, b) => {
@@ -253,7 +254,7 @@ export class ReferenceManager {
     private addEditReferenceMenuItem(menu: Menu, editor: Editor, bookPath: string, refId: string) {
         menu.addItem((item) => {
             item
-                .setTitle("编辑当前引用")
+                .setTitle(i18n.t('EDIT_REFERENCE'))
                 .setIcon("edit")
                 .onClick(async () => {
                     const references = await this.getReferenceData(bookPath);
@@ -265,17 +266,10 @@ export class ReferenceManager {
         });
     }
 
-    private addDeleteReferenceMenuItem(
-        menu: Menu,
-        editor: Editor,
-        bookPath: string,
-        refId: string,
-        linkPart: string,
-        orderPart: string
-    ) {
+    private addDeleteReferenceMenuItem(menu: Menu, editor: Editor, bookPath: string, refId: string, linkPart: string, orderPart: string) {
         menu.addItem((item) => {
             item
-                .setTitle("删除当前引用")
+                .setTitle(i18n.t('DELETE_REFERENCE'))
                 .setIcon("trash")
                 .onClick(async () => {
                     const references = await this.getReferenceData(bookPath);
@@ -306,7 +300,7 @@ export class ReferenceManager {
     private addNewReferenceMenuItem(menu: Menu, editor: Editor, file: TFile | null) {
         menu.addItem((item) => {
             item
-                .setTitle("插入新引用")
+                .setTitle(i18n.t('INSERT_REFERENCE'))
                 .setIcon("quote-glyph")
                 .onClick(async () => {
                     await this.handleReferenceInsertion(editor, file);
@@ -318,7 +312,7 @@ export class ReferenceManager {
     private async handleReferenceInsertion(editor: Editor, file: TFile | null) {
         const selectedText = editor.getSelection().trim();
         if (!selectedText || selectedText.length === 0) {
-            new Notice("请选择要引用的文本");
+            new Notice(i18n.t('SELECT_TEXT_TO_REFERENCE'));
             return;
         }
 
@@ -354,7 +348,7 @@ export class ReferenceManager {
             if (editor && selectedText) {
                 const found = this.findReferenceById(references, ref.id);
                 if (found) {
-                    const referenceLink = `[[${bookPath}/引用书目#^${ref.id}|${selectedText}]]${this.toSuperscript(found.order)}`;
+                    const referenceLink = `[[${bookPath}/${i18n.t('REFERENCE_FILE_NAME')}#^${ref.id}|${selectedText}]]${this.toSuperscript(found.order)}`;
                     editor.replaceSelection(referenceLink);
                 }
             }
@@ -373,7 +367,7 @@ export class ReferenceManager {
 
             const currentNode = this.findCurrentNode(file);
             if (!currentNode) {
-                new Notice("无法获取当前章节信息");
+                new Notice(i18n.t('CHAPTER_INFO_ERROR'));
                 return;
             }
 
@@ -389,7 +383,7 @@ export class ReferenceManager {
             chapter.references.push(newRef);
             await this.updateReferenceFiles(bookPath, references);
 
-            const referenceLink = `[[${bookPath}/引用书目#^${newRef.id}|${selectedText}]]${this.toSuperscript(newRef.order)}`;
+            const referenceLink = `[[${bookPath}/${i18n.t('REFERENCE_FILE_NAME')}#^${newRef.id}|${selectedText}]]${this.toSuperscript(newRef.order)}`;
             editor.replaceSelection(referenceLink);
         }).open();
     }

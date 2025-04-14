@@ -1,5 +1,6 @@
 import { App, Modal, Setting } from 'obsidian';
 import { Book } from '../types/book';
+import { i18n } from '../i18n/i18n';
 
 export class SwitchBookModal extends Modal {
     constructor(
@@ -16,13 +17,13 @@ export class SwitchBookModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         contentEl.addClass('book-smith-switch-book-modal');
-        contentEl.createEl('h2', { text: '切换书籍' });
+        contentEl.createEl('h2', { text: i18n.t('SWITCH_BOOK_TITLE') });
 
         // 添加搜索框
         const searchContainer = contentEl.createDiv({ cls: 'book-smith-search-container' });
         this.searchInput = searchContainer.createEl('input', {
             type: 'text',
-            placeholder: '搜索书籍...',
+            placeholder: i18n.t('SEARCH_BOOK_PLACEHOLDER'),
             cls: 'book-smith-search-input'
         });
         
@@ -57,12 +58,12 @@ export class SwitchBookModal extends Modal {
             new Setting(this.bookList)
                 .setName(`《${book.basic.title}》${book.basic.subtitle ? ` - ${book.basic.subtitle}` : ''}`)
                 .setDesc(
-                    `作者：${book.basic.author.join('、')}
-                    \n | 进度：${Math.round(book.stats.progress_by_chapter * 100)}% | 字数：${(book.stats.target_total_words / 10000).toFixed(1)}万
-                    \n | 最后修改：${new Date(book.stats.last_modified).toLocaleString()}`
+                    `${i18n.t('BOOK_AUTHOR_LABEL')}：${book.basic.author.join('、')}
+                    \n | ${i18n.t('BOOK_PROGRESS_LABEL')}：${Math.round(book.stats.progress_by_chapter * 100)}% | ${i18n.t('BOOK_WORDCOUNT_LABEL')}：${(book.stats.target_total_words / 10000).toFixed(1)}万
+                    \n | ${i18n.t('BOOK_LASTMOD_LABEL')}：${new Date(book.stats.last_modified).toLocaleString()}`
                 )
                 .addButton(btn => btn
-                    .setButtonText('选择')
+                    .setButtonText(i18n.t('SELECT_BOOK'))
                     .setCta()
                     .onClick(() => {
                         this.onSelect(book);

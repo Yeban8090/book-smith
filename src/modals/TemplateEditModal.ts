@@ -2,6 +2,7 @@ import { App, Modal, Setting, setIcon, Menu, Notice } from 'obsidian';
 import { ChapterTree, ChapterNode } from '../types/book';
 import BookSmithPlugin from '../main';
 import { v4 as uuidv4 } from 'uuid';
+import { i18n } from '../i18n/i18n';
 
 export class TemplateEditModal extends Modal {
     private templateName: string = '';
@@ -37,41 +38,41 @@ export class TemplateEditModal extends Modal {
         contentEl.empty();
         contentEl.addClass('book-smith-template-modal');
 
-        contentEl.createEl('h2', { text: this.isEdit ? '编辑模板' : '新建模板' });
+        contentEl.createEl('h2', { text: this.isEdit ? i18n.t('TEMPLATE_EDIT_TITLE') : i18n.t('TEMPLATE_CREATE_TITLE') });
 
         // 基本信息设置
         const formContainer = contentEl.createDiv('book-smith-template-form');
         new Setting(formContainer)
-            .setName('模板名称')
+            .setName(i18n.t('TEMPLATE_NAME'))
             .addText(text => text
-                .setPlaceholder('请输入模板名称')
+                .setPlaceholder(i18n.t('TEMPLATE_NAME_PLACEHOLDER'))
                 .setValue(this.templateName)
                 .onChange(value => this.templateName = value));
 
         new Setting(formContainer)
-            .setName('模板描述')
+            .setName(i18n.t('TEMPLATE_DESC'))
             .addTextArea(text => text
-                .setPlaceholder('可描述模板的简要结构')
+                .setPlaceholder(i18n.t('TEMPLATE_DESC_PLACEHOLDER'))
                 .setValue(this.templateDesc)
                 .onChange(value => this.templateDesc = value));
 
         // 模板结构编辑区域
         const structureContainer = contentEl.createDiv('book-smith-template-structure');
-        structureContainer.createEl('h3', { text: '章节树' });
+        structureContainer.createEl('h3', { text: i18n.t('TEMPLATE_STRUCTURE') });
 
         // 添加新节点按钮
         new Setting(structureContainer)
             .addButton(btn => btn
-                .setButtonText('添加文件')
+                .setButtonText(i18n.t('ADD_FILE'))
                 .onClick(() => {
-                    const newNode = this.createNewNode('file', '新章节');
+                    const newNode = this.createNewNode('file', i18n.t('NEW_CHAPTER'));
                     this.templateStructure.tree.push(newNode);
                     this.createNodeSetting(nodeListContainer, newNode, this.templateStructure.tree.length - 1);
                 }))
             .addButton(btn => btn
-                .setButtonText('添加文件夹')
+                .setButtonText(i18n.t('ADD_FOLDER'))
                 .onClick(() => {
-                    const newNode = this.createNewNode('group', '新目录');
+                    const newNode = this.createNewNode('group', i18n.t('NEW_DIRECTORY'));
                     this.templateStructure.tree.push(newNode);
                     this.createNodeSetting(nodeListContainer, newNode, this.templateStructure.tree.length - 1);
                 }));
@@ -112,20 +113,20 @@ export class TemplateEditModal extends Modal {
             nodeContent.addEventListener('contextmenu', (e) => {
                 const menu = new Menu();
                 menu.addItem((item) => {
-                    item.setTitle('添加文件')
+                    item.setTitle(i18n.t('ADD_FILE'))
                         .setIcon('file-plus')
                         .onClick(() => {
-                            const newNode = this.createNewNode('file', '新章节', node);
+                            const newNode = this.createNewNode('file', i18n.t('NEW_CHAPTER'), node);
                             node.children = node.children || [];
                             node.children.push(newNode);
                             this.refreshStructure(container);
                         });
                 });
                 menu.addItem((item) => {
-                    item.setTitle('添加文件夹')
+                    item.setTitle(i18n.t('ADD_FOLDER'))
                         .setIcon('folder-plus')
                         .onClick(() => {
-                            const newNode = this.createNewNode('group', '新目录', node);
+                            const newNode = this.createNewNode('group', i18n.t('NEW_DIRECTORY'), node);
                             node.children = node.children || [];
                             node.children.push(newNode);
                             this.refreshStructure(container);
@@ -275,27 +276,25 @@ export class TemplateEditModal extends Modal {
         }
     }
 
+    // 保存验证和提示
     async saveTemplate(): Promise<boolean> {
-        // 验证模板名称
         if (!this.templateName.trim()) {
-            new Notice('请输入模板名称');
+            new Notice(i18n.t('TEMPLATE_NAME_REQUIRED'));
             return false;
         }
-
-        // 验证是否有节点
+    
         if (this.templateStructure.tree.length === 0) {
-            new Notice('请至少添加一个节点');
+            new Notice(i18n.t('TEMPLATE_NODE_REQUIRED'));
             return false;
         }
-
+    
         try {
             const key = this.isEdit ? 
                 this.originalKey : 
                 `${uuidv4().slice(0, 8)}`;
             
-            // 如果是新建模板，检查是否已存在同名模板
             if (!this.isEdit && Object.values(this.plugin.settings.templates.custom).some(t => t.name === this.templateName)) {
-                new Notice('已存在同名模板，请修改模板名称');
+                new Notice(i18n.t('TEMPLATE_NAME_EXISTS'));
                 return false;
             }
             
@@ -305,15 +304,15 @@ export class TemplateEditModal extends Modal {
                 structure: this.templateStructure,
                 isBuiltin: false
             };
-
+    
             await this.plugin.saveSettings();
-            new Notice('模板保存成功');
+            new Notice(i18n.t('TEMPLATE_SAVE_SUCCESS'));
             
             this.onSaved?.();
             return true;
         } catch (error) {
             console.error('保存模板失败:', error);
-            new Notice('保存模板失败，请查看控制台了解详情');
+            new Notice(i18n.t('TEMPLATE_SAVE_FAILED'));
             return false;
         }
     }

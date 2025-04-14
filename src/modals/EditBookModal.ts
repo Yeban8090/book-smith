@@ -2,6 +2,8 @@ import { App, Modal, Setting, Notice } from 'obsidian';
 import { Book, BookBasicInfo } from '../types/book';
 import { BookManager } from '../services/BookManager';
 import BookSmithPlugin from '../main';
+import { i18n } from '../i18n/i18n';
+
 export class EditBookModal extends Modal {
     private bookInfo: Partial<BookBasicInfo>;
     private targetTotalWords: number;
@@ -21,13 +23,13 @@ export class EditBookModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         contentEl.addClass('book-smith-edit-book-modal');
-        contentEl.createEl('h2', { text: '编辑书籍' });
+        contentEl.createEl('h2', { text: i18n.t('EDIT_BOOK_TITLE') });
 
         new Setting(contentEl)
-            .setName('封面')
-            .setDesc('选择封面图片（可选）')
+            .setName(i18n.t('COVER'))
+            .setDesc(i18n.t('COVER_DESC'))
             .addButton(button => button
-                .setButtonText(this.bookInfo.cover ? '更换封面' : '选择封面')
+                .setButtonText(this.bookInfo.cover ? i18n.t('CHANGE_COVER') : i18n.t('SELECT_COVER'))
                 .onClick(async () => {
                     const input = document.createElement('input');
                     input.type = 'file';
@@ -36,49 +38,45 @@ export class EditBookModal extends Modal {
                         const file = input.files?.[0];
                         if (file) {
                             try {
-                                // 确保 covers 目录存在
                                 const coversPath = `${this.plugin.settings.defaultBookPath}/covers`;
                                 if (!await this.app.vault.adapter.exists(coversPath)) {
                                     await this.app.vault.adapter.mkdir(coversPath);
                                 }
 
-                                // 复制图片到插件目录
                                 const fileName = `cover-${Date.now()}.${file.name.split('.').pop()}`;
                                 const coverPath = `${coversPath}/${fileName}`;
                                 await this.app.vault.adapter.writeBinary(coverPath, await file.arrayBuffer());
                                 this.bookInfo.cover = coverPath;
-                                new Notice('封面更新成功');
+                                new Notice(i18n.t('COVER_UPDATE_SUCCESS'));
                             } catch (error) {
-                                new Notice('封面更新失败：' + error.message);
+                                new Notice(i18n.t('COVER_UPDATE_FAILED') + error.message);
                             }
                         }
                     };
                     input.click();
                 }));
 
-
-
         new Setting(contentEl)
-            .setName('书名')
-            .setDesc('请输入书籍标题')
+            .setName(i18n.t('BOOK_TITLE'))
+            .setDesc(i18n.t('BOOK_TITLE_DESC'))
             .addText(text => text
                 .setValue(this.bookInfo.title || '')
                 .onChange(value => this.bookInfo.title = value));
 
         new Setting(contentEl)
-            .setName('副标题')
-            .setDesc('可选')
+            .setName(i18n.t('SUBTITLE'))
+            .setDesc(i18n.t('SUBTITLE_DESC'))
             .addText(text => text
                 .setValue(this.bookInfo.subtitle || '')
                 .onChange(value => this.bookInfo.subtitle = value));
+
         new Setting(contentEl)
-            .setName('目标字数')
-            .setDesc('设置本书预计总字数：万字')
+            .setName(i18n.t('TARGET_WORDS'))
+            .setDesc(i18n.t('TARGET_WORDS_DESC'))
             .addText(text => text
-                .setPlaceholder('例如：20或20.0万')
+                .setPlaceholder(i18n.t('TARGET_WORDS_PLACEHOLDER'))
                 .setValue(`${Math.floor(this.targetTotalWords / 10000)}万`)
                 .onChange(value => {
-                    // 处理输入的字数
                     const match = value.match(/^(\d+(?:\.\d+)?)万?$/);
                     if (match) {
                         const num = parseFloat(match[1]) * 10000;
@@ -87,28 +85,28 @@ export class EditBookModal extends Modal {
                         this.targetTotalWords = 10000;
                     }
                 }));
+
         new Setting(contentEl)
-            .setName('作者')
-            .setDesc('请输入作者名称，多个作者用逗号分隔')
+            .setName(i18n.t('AUTHOR'))
+            .setDesc(i18n.t('AUTHOR_DESC'))
             .addText(text => text
                 .setValue(this.bookInfo.author?.join(',') || '')
                 .onChange(value => this.bookInfo.author = value ? value.split(',') : []));
 
         new Setting(contentEl)
-            .setName('简介')
-            .setDesc('请输入书籍简介')
+            .setName(i18n.t('DESCRIPTION'))
+            .setDesc(i18n.t('DESCRIPTION_DESC'))
             .addTextArea(text => text
                 .setValue(this.bookInfo.desc || '')
                 .onChange(value => this.bookInfo.desc = value));
 
-        // 修改保存按钮的处理
         new Setting(contentEl)
             .addButton(btn => btn
-                .setButtonText('保存')
+                .setButtonText(i18n.t('SAVE'))
                 .setCta()
                 .onClick(async () => {
                     if (!this.validateBookInfo()) {
-                        new Notice('请填写必要信息');
+                        new Notice(i18n.t('REQUIRED_FIELDS'));
                         return;
                     }
                     try {
@@ -119,11 +117,11 @@ export class EditBookModal extends Modal {
                                 target_total_words: this.targetTotalWords
                             }
                         });
-                        new Notice('保存成功');
+                        new Notice(i18n.t('SAVE_SUCCESS'));
                         this.close();
                         this.onSaved?.({ type: 'edited', bookId: this.book.basic.uuid });
                     } catch (error) {
-                        new Notice(`保存失败: ${error.message}`);
+                        new Notice(i18n.t('SAVE_FAILED') + error.message);
                     }
                 }));
     }

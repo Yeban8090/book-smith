@@ -6,6 +6,8 @@ import { EbookModal } from '../modals/EbookModal';
 import { CommunityModal } from '../modals/CommunityModal';
 import { ContactModal } from '../modals/ContactModal';
 import BookSmithPlugin from '../main';
+import { i18n } from '../i18n/i18n';
+
 interface ToolItem {
     icon: string;
     text: string;
@@ -32,7 +34,7 @@ export class ToolView extends ItemView {
 
     // 视图基础配置
     getViewType() { return 'book-smith-tool'; }
-    getDisplayText() { return '写作工具箱'; }
+    getDisplayText() { return i18n.t('WRITING_TOOLBOX'); }
     getIcon() { return 'wrench'; }
 
     // 生命周期方法
@@ -74,37 +76,37 @@ export class ToolView extends ItemView {
         // 保持原有的图标和标题
         const mainIconSpan = titleContainer.createSpan({ cls: 'book-smith-panel-icon' });
         setIcon(mainIconSpan, 'archive');
-        titleContainer.createSpan({ text: '写作工具箱' });
+        titleContainer.createSpan({ text: i18n.t('WRITING_TOOLBOX') });
     }
 
     // 工具组创建
     private createToolGroups(container: HTMLElement) {
         // 写作助手工具组
         if (this.plugin.settings.tools.assistant) {
-            this.createToolGroup(container, '写作助手', [
+            this.createToolGroup(container, i18n.t('WRITING_ASSISTANT'), [
                 {
                     icon: 'target',
-                    text: '专注模式',
+                    text: i18n.t('FOCUS_MODE'),
                     hasProgress: true,
                     onClick: () => this.enterFocusMode()
                 },
                 {
                     icon: 'brain',
-                    text: '创作灵感',
+                    text: i18n.t('CREATIVE_INSPIRATION'),
                     onClick: () => new InspirationModal(this.containerEl).open()
                 },
                 {
                     icon: 'file-text',
-                    text: '人物档案',
+                    text: i18n.t('CHARACTER_PROFILES'),
                     onClick: () => {
-                        new Notice('人物档案功能即将上线');
+                        new Notice(i18n.t('FEATURE_COMING_SOON', { feature: i18n.t('CHARACTER_PROFILES') }));
                     }
                 },
                 {
                     icon: 'map',
-                    text: '世界构建',
+                    text: i18n.t('WORLD_BUILDING'),
                     onClick: () => {
-                        new Notice('世界构建功能即将上线');
+                        new Notice(i18n.t('FEATURE_COMING_SOON', { feature: i18n.t('WORLD_BUILDING') }));
                     }
                 }
             ]);
@@ -112,24 +114,24 @@ export class ToolView extends ItemView {
 
         // 导出发布工具组
         if (this.plugin.settings.tools.export) {
-            this.createToolGroup(container, '导出发布', [
+            this.createToolGroup(container, i18n.t('EXPORT_PUBLISH'), [
                 { 
                     icon: 'edit-3', 
-                    text: '设计排版',
+                    text: i18n.t('DESIGN_TYPOGRAPHY'),
                     onClick: () => {
-                        new Notice('书籍设计排版功能即将上线');
+                        new Notice(i18n.t('FEATURE_COMING_SOON', { feature: i18n.t('DESIGN_TYPOGRAPHY') }));
                     }
                 },
                 { 
                     icon: 'book', 
-                    text: '生成电子书',
+                    text: i18n.t('GENERATE_EBOOK'),
                     onClick: () => new EbookModal(this.containerEl).open()
                 },
                 { 
                     icon: 'clock', 
-                    text: '更多功能...',
+                    text: i18n.t('MORE_FEATURES'),
                     onClick: () => {
-                        new Notice('更多功能等你一起共创');
+                        new Notice(i18n.t('MORE_FEATURES_MESSAGE'));
                     }
                 }
             ]);
@@ -137,21 +139,21 @@ export class ToolView extends ItemView {
 
         // 写作圈子工具组
         if (this.plugin.settings.tools.community) {
-            this.createToolGroup(container, '写作圈子', [
+            this.createToolGroup(container, i18n.t('WRITING_COMMUNITY'), [
                 { 
                     icon: 'users', 
-                    text: '创作社区', 
+                    text: i18n.t('CREATIVE_COMMUNITY'), 
                     extra: '',
                     onClick: () => new CommunityModal(this.containerEl).open()
                 },
                 { 
                     icon: 'message-square', 
-                    text: '联系作者',
+                    text: i18n.t('CONTACT_AUTHOR'),
                     onClick: () => new ContactModal(this.containerEl).open()
                 },
                 { 
                     icon: 'heart', 
-                    text: '赞助捐赠',
+                    text: i18n.t('DONATE_SUPPORT'),
                     onClick: () => new DonateModal(this.containerEl).open()
                 }
             ]);
@@ -192,15 +194,15 @@ export class ToolView extends ItemView {
 
     // 设置面板创建
     private createSettings(container: HTMLElement) {
-        const settingsItem = this.createToolItem(container, 'settings', '面板设置');
+        const settingsItem = this.createToolItem(container, 'settings', i18n.t('PANEL_SETTINGS'));
         settingsItem.addClass('settings');
         
         settingsItem.addEventListener('contextmenu', (event) => {
             const menu = new Menu();
             
             // 添加工具显隐选项
-            this.addToolVisibilityMenuItem(menu, 'assistant', 'target', '写作助手');
-            this.addToolVisibilityMenuItem(menu, 'export', 'download', '导出发布');
+            this.addToolVisibilityMenuItem(menu, 'assistant', 'target', i18n.t('WRITING_ASSISTANT'));
+            this.addToolVisibilityMenuItem(menu, 'export', 'download', i18n.t('EXPORT_PUBLISH'));
 
             menu.showAtMouseEvent(event);
         });
@@ -209,7 +211,7 @@ export class ToolView extends ItemView {
     // 添加工具显隐菜单项
     private addToolVisibilityMenuItem(menu: Menu, key: keyof typeof this.plugin.settings.tools, icon: string, text: string) {
         menu.addItem(item => item
-            .setTitle(`${this.plugin.settings.tools[key] ? '隐藏' : '显示'}${text}`)
+            .setTitle(`${this.plugin.settings.tools[key] ? i18n.t('HIDE') : i18n.t('SHOW')}${text}`)
             .setIcon(icon)
             .setChecked(this.plugin.settings.tools[key])
             .onClick(async () => {

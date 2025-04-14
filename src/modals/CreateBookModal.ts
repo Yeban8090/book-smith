@@ -2,6 +2,7 @@ import { App, Modal, Setting, Notice } from 'obsidian';
 import { BookBasicInfo, Book } from '../types/book';
 import BookSmithPlugin from '../main';
 import { TemplateManager } from '../services/TemplateManager';
+import { i18n } from '../i18n/i18n';
 
 export class CreateBookModal extends Modal {
     private bookInfo: Partial<BookBasicInfo> = {
@@ -23,12 +24,12 @@ export class CreateBookModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         contentEl.addClass('book-smith-create-book-modal');
-        contentEl.createEl('h2', { text: '创建新书籍' });
+        contentEl.createEl('h2', { text: i18n.t('CREATE_BOOK_TITLE') });
 
         // 添加模板选择
         new Setting(contentEl)
-            .setName('模板')
-            .setDesc('请选择书籍模板')
+            .setName(i18n.t('BOOK_TEMPLATE'))
+            .setDesc(i18n.t('TEMPLATE_CHECK_DESC'))
             .addDropdown(dropdown => {
                 const templates = this.templateManager.getAllTemplateTypes();
                 templates.forEach(template => {
@@ -43,10 +44,10 @@ export class CreateBookModal extends Modal {
             });
         // 添加封面上传
         new Setting(contentEl)
-            .setName('封面')
-            .setDesc('选择封面图片（可选）')
+            .setName(i18n.t('COVER'))
+            .setDesc(i18n.t('COVER_DESC'))
             .addButton(button => button
-                .setButtonText('选择图片')
+                .setButtonText(i18n.t('SELECT_IMAGE'))
                 .onClick(async () => {
                     const input = document.createElement('input');
                     input.type = 'file';
@@ -66,33 +67,34 @@ export class CreateBookModal extends Modal {
                                 const coverPath = `${coversPath}/${fileName}`;
                                 await this.plugin.app.vault.adapter.writeBinary(coverPath, await file.arrayBuffer());
                                 this.bookInfo.cover = coverPath;
-                                new Notice('封面上传成功');
+                                new Notice(i18n.t('COVER_UPLOAD_SUCCESS'));
                             } catch (error) {
-                                new Notice('封面上传失败：' + error.message);
+                                new Notice(i18n.t('COVER_UPLOAD_FAILED') + error.message);
                             }
                         }
                     };
                     input.click();
                 }));
+
         new Setting(contentEl)
-            .setName('书名')
-            .setDesc('请输入书籍标题')
+            .setName(i18n.t('BOOK_TITLE'))
+            .setDesc(i18n.t('BOOK_TITLE_DESC'))
             .addText(text => text
-                .setPlaceholder('书名')
+                .setPlaceholder(i18n.t('BOOK_TITLE_PLACEHOLDER'))
                 .onChange(value => this.bookInfo.title = value));
 
         new Setting(contentEl)
-            .setName('副标题')
-            .setDesc('可选')
+            .setName(i18n.t('SUBTITLE'))
+            .setDesc(i18n.t('SUBTITLE_DESC'))
             .addText(text => text
-                .setPlaceholder('副标题')
+                .setPlaceholder(i18n.t('SUBTITLE_PLACEHOLDER'))
                 .onChange(value => this.bookInfo.subtitle = value));
-        // 添加目标字数设置
+
         new Setting(contentEl)
-            .setName('目标字数')
-            .setDesc('设置本书预计总字数：万字')
+            .setName(i18n.t('TARGET_WORDS'))
+            .setDesc(i18n.t('TARGET_WORDS_DESC'))
             .addText(text => text
-                .setPlaceholder('例如：20或20.0万')
+                .setPlaceholder(i18n.t('TARGET_WORDS_PLACEHOLDER'))
                 .onChange(value => {
                     // 处理输入的字数
                     const match = value.match(/^(\d+(?:\.\d+)?)万?$/);
@@ -103,35 +105,29 @@ export class CreateBookModal extends Modal {
                         this.targetTotalWords = 10000;
                     }
                 }));
+
         new Setting(contentEl)
-            .setName('作者')
-            .setDesc('请输入作者名称，多个作者用逗号分隔')
+            .setName(i18n.t('AUTHOR'))
+            .setDesc(i18n.t('AUTHOR_DESC'))
             .addText(text => text
-                .setPlaceholder('作者')
+                .setPlaceholder(i18n.t('AUTHOR_PLACEHOLDER'))
                 .setValue(this.plugin.settings.defaultAuthor || '')
                 .onChange(value => this.bookInfo.author = value ? value.split(',') : []));
 
-
-
         new Setting(contentEl)
-            .setName('简介')
-            .setDesc('请输入书籍简介')
+            .setName(i18n.t('DESCRIPTION'))
+            .setDesc(i18n.t('DESCRIPTION_DESC'))
             .addTextArea(text => text
-                .setPlaceholder('书籍简介')
+                .setPlaceholder(i18n.t('DESCRIPTION_PLACEHOLDER'))
                 .onChange(value => this.bookInfo.desc = value));
 
-
-
-
-
-        // 修改创建按钮的处理
         new Setting(contentEl)
             .addButton(btn => btn
-                .setButtonText('创建')
+                .setButtonText(i18n.t('CREATE'))
                 .setCta()
                 .onClick(async () => {
                     if (!this.validateBookInfo()) {
-                        new Notice('请填写必要信息');
+                        new Notice(i18n.t('REQUIRED_FIELDS'));
                         return;
                     }
                     try {
@@ -140,13 +136,13 @@ export class CreateBookModal extends Modal {
                             this.selectedTemplate,
                             this.targetTotalWords
                         );
-                        new Notice('书籍创建成功');
+                        new Notice(i18n.t('CREATE_SUCCESS'));
                         if (this.onBookCreated) {
                             this.onBookCreated(newBook);
                         }
                         this.close();
                     } catch (error) {
-                        new Notice(`创建失败: ${error.message}`);
+                        new Notice(i18n.t('CREATE_FAILED') + error.message);
                     }
                 }));
     }
