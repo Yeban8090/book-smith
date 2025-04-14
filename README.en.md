@@ -4,7 +4,7 @@ Book Smith is a writing management plugin designed for Obsidian, helping authors
 
 ![downloads](https://img.shields.io/badge/downloads-500-brightgreen) ![version](https://img.shields.io/badge/version-1.0.0-blue) ![license](https://img.shields.io/badge/license-MIT-green) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-yellow)](https://ko-fi.com/bruceyeban)
 
-[简体中文](README.zh-CN.md) | English
+[简体中文](README.md) | English
 
 ## Features
 
