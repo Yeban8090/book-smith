@@ -172,7 +172,7 @@ export class FocusToolView {
     private updateProgress(progress: number) {
         const circumference = 2 * Math.PI * 45;
         const offset = circumference * (1 - progress);
-        this.progressEl.style.setProperty('--progress-offset', `${offset}px`);
+        this.progressEl.style.strokeDashoffset = offset.toString();
     }
 
     private updateStatus(text: string) {
