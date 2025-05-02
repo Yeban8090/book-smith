@@ -137,10 +137,10 @@ const toolViewTranslation: ToolViewTranslation = {
 // 设置面板翻译
 const settingsTranslation: SettingsTranslation = {
 
-    SETTINGS_TITLE: 'Book Smith 设置',
-    BASIC_SETTINGS: '基本设置',
-    TEMPLATE_SETTINGS: '模板设置',
-    WRITING_TOOLS_SETTINGS: '写作工具箱设置',
+    PLUGIN_NAME: 'Book Smith',
+    BASIC_OPTIONS: '基本选项',
+    TEMPLATE_OPTIONS: '模板选项',
+    WRITING_TOOLS_OPTIONS: '写作工具箱选项',
 
     // 基本设置
     LANGUAGE_SETTING: '语言',
@@ -163,7 +163,7 @@ const settingsTranslation: SettingsTranslation = {
     DELETE_TEMPLATE_DESC: '确定要删除此模板吗？删除后无法恢复。',
 
     // 写作工具箱设置
-    FOCUS_MODE_SETTINGS: '专注模式设置',
+    FOCUS_MODE_OPTIONS: '专注模式选项',
     FOCUS_DURATION: '专注时长',
     FOCUS_DURATION_DESC: '每个专注周期的工作时长（分钟）',
     BREAK_DURATION: '间隔时长',

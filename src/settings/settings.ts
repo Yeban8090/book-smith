@@ -1,9 +1,7 @@
 import { defaultTemplate } from '../templates/default';
 import { ChapterTree } from '../types/book';
-import { Locale } from '../i18n/i18n';
 export interface BookSmithSettings {
     // 基础配置
-    language: Locale;
     defaultAuthor: string;
     defaultBookPath: string;
     lastBookId?: string;
@@ -46,7 +44,6 @@ export interface BookSmithSettings {
 }
 
 export const DEFAULT_SETTINGS: BookSmithSettings = {
-    language: 'zh-CN', // 默认中文
     defaultAuthor: 'Yeban',
     defaultBookPath: 'books',
     lastBookId: '',

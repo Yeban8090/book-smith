@@ -19,7 +19,6 @@ export class I18n {
     // 获取系统语言
     private getSystemLocale(): Locale {
         const systemLocale = moment.locale();
-        
         // 映射 moment 语言代码到我们支持的语言
         if (systemLocale.startsWith('zh')) return 'zh-CN';
         if (systemLocale.startsWith('en')) return 'en';
@@ -33,18 +32,7 @@ export class I18n {
         
         // 默认英文
         return 'en';
-    }
-    
-    // 设置当前语言
-    public setLocale(locale: Locale) {
-        this.locale = locale;
-    }
-    
-    // 获取当前语言
-    public getLocale(): Locale {
-        return this.locale;
-    }
-    
+    }    
     // 加载翻译文件
     private loadTranslations() {
         // 导入所有语言文件

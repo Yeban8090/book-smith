@@ -1,18 +1,3 @@
-/* 整体容器 */
-.book-smith-settings {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 10px 20px;
-}
-
-/* 标题样式 */
-.book-smith-settings h2 {
-    margin: 20px 5px;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--background-modifier-border);
-    font-size: 1.4em;
-}
-
 /* 通用设置区块样式 */
 .book-smith-settings .settings-section {
     margin-bottom: 1.5rem;
@@ -24,34 +9,14 @@
 .book-smith-settings .settings-section-header {
     display: flex;
     align-items: center;
-    cursor: pointer;
-    padding: 1rem;
+    padding: 1rem 1rem 0 1rem;
     background-color: var(--background-secondary);
-    transition: background-color 0.2s ease;
-}
-
-.book-smith-settings .settings-section-header:hover {
-    background-color: var(--background-secondary-alt);
-}
-
-.book-smith-settings .settings-section-header h4 {
-    margin: 0;
-    flex: 1;
-}
-
-.book-smith-settings .settings-section-toggle {
-    margin-right: 0.5rem;
 }
 
 .book-smith-settings .settings-section-content {
-    display: none;
     padding: 1rem;
     padding: 0 40px;
     background-color: var(--background-primary);
-}
-
-.book-smith-settings .settings-section.is-expanded .settings-section-content {
-    display: block;
 }
 
 /* 模板设置特有样式 */

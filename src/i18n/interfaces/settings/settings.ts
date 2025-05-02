@@ -1,9 +1,9 @@
 export interface SettingsTranslation {
     // 设置页面
-    SETTINGS_TITLE: string;
-    BASIC_SETTINGS: string;
-    TEMPLATE_SETTINGS: string;
-    WRITING_TOOLS_SETTINGS: string;
+    PLUGIN_NAME: string;
+    BASIC_OPTIONS: string;
+    TEMPLATE_OPTIONS: string;
+    WRITING_TOOLS_OPTIONS: string;
     
     // 基本设置
     LANGUAGE_SETTING: string;
@@ -26,7 +26,7 @@ export interface SettingsTranslation {
     DELETE_TEMPLATE_DESC: string;
     
     // 写作工具箱设置
-    FOCUS_MODE_SETTINGS: string;
+    FOCUS_MODE_OPTIONS: string;
     FOCUS_DURATION: string;
     FOCUS_DURATION_DESC: string;
     BREAK_DURATION: string;

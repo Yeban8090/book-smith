@@ -3,7 +3,7 @@
 	"name": "Book Smith",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "A writing plugin for book management",
+	"description": "Simplify long-form writing and book creation. Organize chapters, track progress, and export your manuscript in various formats for a seamless publishing workflow.",
 	"author": "Yeban",
 	"isDesktopOnly": false
 }

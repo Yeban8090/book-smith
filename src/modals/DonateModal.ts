@@ -1,8 +1,8 @@
-import { Notice } from "obsidian";
 import { BaseModal } from "./BaseModal";
 import { WechatQRCode } from '../assets/wechat-qrcode';
 import { AlipayQRCode } from '../assets/alipay-qrcode';
 import { i18n } from '../i18n/i18n';
+import { kofiImage } from '../assets/kofi3';
 
 export class DonateModal extends BaseModal {
     private selectedAmount: number = 6;
@@ -107,7 +107,7 @@ export class DonateModal extends BaseModal {
         });
         kofiLink.createEl('img', {
             attr: {
-                src: 'https://storage.ko-fi.com/cdn/kofi3.png?v=3',
+                src: kofiImage,
                 alt: i18n.t('PAYMENT_KOFI'),
                 style: 'height: 50px;'
             }

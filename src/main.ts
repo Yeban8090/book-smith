@@ -16,9 +16,7 @@ export default class BookSmithPlugin extends Plugin {
     statsManager: BookStatsManager;
 
     async onload() {
-        await this.loadSettings();
-        i18n.setLocale(this.settings.language);
-        
+        await this.loadSettings();        
         // 初始化所有管理器
         this.bookManager = new BookManager(this.app, this.settings);
         this.statsManager = new BookStatsManager(this.app, this, this.bookManager);
