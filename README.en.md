@@ -2,7 +2,7 @@
 
 Book Smith is a writing management plugin designed for Obsidian, helping authors better organize and manage their writing projects.
 
-![downloads](https://img.shields.io/badge/downloads-500-brightgreen) ![version](https://img.shields.io/badge/version-1.0.0-blue) ![license](https://img.shields.io/badge/license-MIT-green) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-yellow)](https://ko-fi.com/bruceyeban)
+![downloads](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=downloads&query=%24%5B%22book-smith%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&style=flat) ![version](https://img.shields.io/github/v/tag/Yeban8090/book-smith?color=blue&label=version&style=flat) ![license](https://img.shields.io/badge/license-MIT-green) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-yellow)](#support-the-author)
 
 [简体中文](README.md) | English
 
@@ -113,11 +113,26 @@ The plugin interface currently supports:
 - Simplified Chinese
 - English
 
-## Support the Author
+## Support The Author
 If this plugin helps you, consider buying me a coffee ☕:
-- WeChat Pay
-- Alipay
-- [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-yellow)](https://ko-fi.com/bruceyeban)
+<div align="center">
+  <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+    <div style="text-align: center; margin: 1px;">
+      <strong>微信支付</strong><br/>
+      <img src="src/assets/donate/wechat_pay.png" alt="微信支付" width="180px" style="margin-top: 10px;">
+    </div>
+    <div style="text-align: center; margin: 1px;">
+      <strong>支付宝</strong><br/>
+      <img src="src/assets/donate/alipay.png" alt="支付宝" width="180px" style="margin-top: 10px;">
+    </div>
+    <div style="text-align: center; margin: 1px;">
+      <strong>Buy Me a Coffee</strong><br/>
+      <a href="https://ko-fi.com/bruceyeban" style="margin-top: 10px; display: inline-block;">
+        <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-支持作者-yellow?style=for-the-badge&logo=ko-fi" alt="Buy Me a Coffee" />
+      </a>
+    </div>
+  </div>
+</div>
 
 Your support motivates me to keep improving this plugin!
 
