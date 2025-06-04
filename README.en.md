@@ -6,6 +6,15 @@ Book Smith is a writing management plugin designed for Obsidian, helping authors
 
 [简体中文](README.md) | English
 
+## 功能演示
+<!-- 插图展示 -->
+<p align="center">
+  <img src="src/assets/introduce/p1.png" alt="功能演示1" width="100%" style="margin:8px;">
+  <img src="src/assets/introduce/p2.png" alt="功能演示2" width="100%" style="margin:8px;">
+  <img src="src/assets/introduce/p3.png" alt="功能演示3" width="100%" style="margin:8px;">
+  <img src="src/assets/introduce/p4.png" alt="功能演示4" width="100%" style="margin:8px;">
+</p>
+
 ## Features
 
 - 📚 Book Project Management

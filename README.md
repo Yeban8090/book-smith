@@ -5,6 +5,14 @@ Book Smith 是一个专为 Obsidian 设计的写作管理插件。它能帮助�
 ![downloads](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=downloads&query=%24%5B%22book-smith%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&style=flat) ![version](https://img.shields.io/github/v/tag/Yeban8090/book-smith?color=blue&label=version&style=flat) ![license](https://img.shields.io/badge/license-MIT-green) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-支持作者-yellow)](#支持作者)
 
 简体中文 | [English](README.en.md)
+## 功能演示
+<!-- 插图展示 -->
+<p align="center">
+  <img src="src/assets/introduce/p1.png" alt="功能演示1" width="100%" style="margin:1px;">
+  <img src="src/assets/introduce/p2.png" alt="功能演示2" width="100%" style="margin:1px;">
+  <img src="src/assets/introduce/p3.png" alt="功能演示3" width="100%" style="margin:1px;">
+  <img src="src/assets/introduce/p4.png" alt="功能演示4" width="100%" style="margin:1px;">
+</p>
 
 ## 功能特点
 
