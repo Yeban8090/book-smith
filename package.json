@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
+    "docx": "^9.5.0",
     "uuid": "^11.1.0"
   }
 }
