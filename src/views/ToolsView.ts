@@ -125,7 +125,7 @@ export class ToolView extends ItemView {
                 { 
                     icon: 'book', 
                     text: i18n.t('GENERATE_EBOOK'),
-                    onClick: () => new EbookModal(this.containerEl).open()
+                    onClick: () => new EbookModal(this.containerEl, this.app, this.plugin.settings).open()
                 },
                 { 
                     icon: 'clock', 

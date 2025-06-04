@@ -1,9 +1,9 @@
-import { App, PluginSettingTab, Setting, setIcon, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, TFolder } from 'obsidian';
 import BookSmithPlugin from '../main';
-import { i18n, Locale } from '../i18n/i18n';
+import { i18n } from '../i18n/i18n';
 import { TemplateEditModal } from '../modals/TemplateEditModal';
 import { ConfirmModal } from '../modals/ConfirmModal';
-
+import { GenericTextSuggester } from '../settings/GenericTextSuggester';
 export class BookSmithSettingTab extends PluginSettingTab {
     plugin: BookSmithPlugin;
     private expandedSections: Set<string> = new Set();
@@ -18,10 +18,10 @@ export class BookSmithSettingTab extends PluginSettingTab {
         const header = section.createDiv('settings-section-header');
         new Setting(header).setName(title).setHeading();
 
-    
+
         const content = section.createDiv('settings-section-content');
         renderContent(content);
-    
+
         return section;
     }
 
@@ -29,17 +29,17 @@ export class BookSmithSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
         containerEl.addClass('book-smith-settings');
-    
+
         // 基本设置
         this.createSection(containerEl, i18n.t('BASIC_OPTIONS'), el => this.renderBasicSettings(el));
-    
+
         // 模板设置
         this.createSection(containerEl, i18n.t('TEMPLATE_OPTIONS'), el => this.renderTemplateSettings(el));
-    
+
         // 写作工具箱设置
         this.createSection(containerEl, i18n.t('WRITING_TOOLS_OPTIONS'), el => this.renderWritingToolsSettings(el));
     }
-    
+
     private renderBasicSettings(containerEl: HTMLElement): void {
         // 添加语言选择
         new Setting(containerEl)
@@ -52,20 +52,32 @@ export class BookSmithSettingTab extends PluginSettingTab {
                     this.plugin.settings.defaultAuthor = value;
                     await this.plugin.saveSettings();
                 }));
-    
+
         new Setting(containerEl)
             .setName(i18n.t('BOOK_STORAGE_PATH'))
             .setDesc(i18n.t('BOOK_STORAGE_DESC'))
-            .addText(text => text
-                .setPlaceholder('books')
+            .addText((text) => {
+                text
+                    .setPlaceholder('books')
                 .setValue(this.plugin.settings.defaultBookPath)
                 .onChange(async (value) => {
                     this.plugin.settings.defaultBookPath = value;
                     await this.plugin.saveSettings();
-                    new Notice(i18n.t('STORAGE_PATH_CHANGED'));
-                }));
+                });
+
+                new GenericTextSuggester(
+                    this.app,
+                    text.inputEl,
+                    this.app.vault
+                        .getAllLoadedFiles()
+                        .filter((f) => f instanceof TFolder && f.path !== "/")
+                        .map((f) => f.path)
+                );
+            });
+
+
     }
-    
+
     private renderTemplateSettings(containerEl: HTMLElement): void {
         // 默认模板选择
         new Setting(containerEl)
@@ -82,7 +94,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     });
             });
-    
+
         // 模板列表
         const templateList = containerEl.createDiv('template-list');
 
@@ -121,7 +133,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
                             ).open();
                         }));
             });
-    
+
         // 添加新模板按钮
         new Setting(containerEl)
             .addButton(btn => btn
@@ -136,7 +148,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
                     ).open();
                 }));
     }
-    
+
     private renderWritingToolsSettings(containerEl: HTMLElement): void {
         // 专注模式设置
         const focusSection = containerEl.createDiv();
@@ -152,7 +164,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
                     this.plugin.settings.focus.workDuration = Number(value) || 25;
                     await this.plugin.saveSettings();
                 }));
-    
+
         new Setting(focusSection)
             .setName(i18n.t('BREAK_DURATION'))
             .setDesc(i18n.t('BREAK_DURATION_DESC'))
@@ -163,7 +175,7 @@ export class BookSmithSettingTab extends PluginSettingTab {
                     this.plugin.settings.focus.breakDuration = Number(value) || 5;
                     await this.plugin.saveSettings();
                 }));
-    
+
         new Setting(focusSection)
             .setName(i18n.t('WORD_GOAL'))
             .setDesc(i18n.t('WORD_GOAL_DESC'))

@@ -260,8 +260,8 @@ export class ChapterTree {
                     // 只有当文件不排除之外时，才显示"标记完成章节"选项
                     if (!node.exclude) {
                         menu.addItem((item) => {
-                            item.setTitle(node.default_status === 'done' ? 
-                                i18n.t('MARK_AS_DRAFT') : 
+                            item.setTitle(node.default_status === 'done' ?
+                                i18n.t('MARK_AS_DRAFT') :
                                 i18n.t('MARK_AS_COMPLETE'));
                             item.setIcon(node.default_status === 'done' ? "x-circle" : "check-circle");
                             item.onClick(async () => {
@@ -284,15 +284,29 @@ export class ChapterTree {
 
                     // 添加排除选项
                     menu.addItem((item) => {
-                        item.setTitle(node.exclude ? 
-                            i18n.t('INCLUDE_IN_STATS') : 
+                        item.setTitle(node.exclude ?
+                            i18n.t('INCLUDE_IN_STATS') :
                             i18n.t('EXCLUDE_FROM_STATS'));
                         item.setIcon(node.exclude ? "plus-circle" : "minus-circle");
+                        // 修改排除选项的onClick处理函数
                         item.onClick(async () => {
                             node.exclude = !node.exclude;
 
                             // 无论是包含还是排除，都设置为草稿状态
                             node.default_status = 'draft';
+
+                            // 如果是文件夹，并且被排除，则递归排除所有子节点
+                            if (node.type === 'group' && node.exclude && node.children?.length) {
+                                this.recursiveExclude(node.children, true);
+                            }
+
+                            // 如果是文件夹，并且被包含，则递归包含所有子节点
+                            if (node.type === 'group' && !node.exclude && node.children?.length) {
+                                this.recursiveExclude(node.children, false);
+                            }
+
+                            // 更新父目录的排除状态
+                            this.updateParentExcludeStatus(node);
 
                             // 计算新的章节进度
                             const progress = this.calculateChapterProgress(this.book.structure.tree);
@@ -409,8 +423,8 @@ export class ChapterTree {
                     item.setTitle(i18n.t('DELETE'));
                     item.setIcon("trash");
                     item.onClick(() => {
-                        const title = node.type === 'file' ? 
-                            i18n.t('DELETE_FILE_TITLE') : 
+                        const title = node.type === 'file' ?
+                            i18n.t('DELETE_FILE_TITLE') :
                             i18n.t('DELETE_FOLDER_TITLE');
                         const message = node.type === 'file'
                             ? i18n.t('DELETE_FILE_DESC', { title: node.title })
@@ -437,6 +451,49 @@ export class ChapterTree {
                 menu.showAtPosition({ x: e.clientX, y: e.clientY });
             }
         });
+    }
+
+    // 添加一个新方法来更新父目录的排除状态
+    private updateParentExcludeStatus(node: ChapterNode) {
+        // 找到当前节点的父节点
+        const findParentNode = (searchNode: ChapterNode, nodes: ChapterNode[]): ChapterNode | null => {
+            for (const n of nodes) {
+                if (n.children?.some(child => child.id === searchNode.id)) {
+                    return n;
+                }
+                if (n.children?.length) {
+                    const parent = findParentNode(searchNode, n.children);
+                    if (parent) return parent;
+                }
+            }
+            return null;
+        };
+
+        const parent = findParentNode(node, this.book.structure.tree);
+        if (parent && parent.type === 'group') {
+            // 检查父目录的所有子节点是否都被排除
+            const allExcluded = parent.children?.every(child =>
+                child.exclude || (child.type === 'group' && this.isFolderExcluded(child))
+            );
+
+            // 更新父目录的排除状态
+            if (allExcluded !== parent.exclude) {
+                parent.exclude = allExcluded;
+
+                // 递归更新上层目录
+                this.updateParentExcludeStatus(parent);
+            }
+        }
+    }
+
+    // 添加递归排除/包含子节点的方法
+    private recursiveExclude(nodes: ChapterNode[], exclude: boolean) {
+        for (const node of nodes) {
+            node.exclude = exclude;
+            if (node.type === 'group' && node.children?.length) {
+                this.recursiveExclude(node.children, exclude);
+            }
+        }
     }
 
     // === 拖拽相关 ===
