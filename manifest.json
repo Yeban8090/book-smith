@@ -1,7 +1,7 @@
 {
 	"id": "book-smith",
 	"name": "Book Smith",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Simplify long-form writing and book creation. Organize chapters, track progress, and export your manuscript in various formats for a seamless publishing workflow.",
 	"author": "Yeban",
