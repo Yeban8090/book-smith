@@ -64,18 +64,21 @@ export class BookStatsManager {
         // 移除 Markdown 语法标记和标点符号
         const plainText = content
             .replace(/[#*`~\[\](){}|_]/g, '') // 移除 Markdown 标记
-            .replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, ' '); // 只保留中文、英文、数字和空格
+            .replace(/[^\u4e00-\u9fa5\u3040-\u30ff\u3400-\u4dbf\uAC00-\uD7AF\u1100-\u11FF\u0600-\u06FF\u0590-\u05FF\u0900-\u097F\u0980-\u09FF\u0E00-\u0E7F\u0400-\u04FF\u0500-\u052FЁёa-zA-Z0-9\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\s]/g, ' '); // 保留各种语言字符和空格
         
-        // 统计中文字
-        const chineseWords = (plainText.match(/[\u4e00-\u9fa5]/g) || []).length;
+        // 统计中文字、日文汉字和韩文
+        const cjkWords = (plainText.match(/[\u4e00-\u9fa5\u3400-\u4dbf\uAC00-\uD7AF]/g) || []).length;
         
-        // 统计英文单词（连续的字母或数字视为一个单词）
-        const englishWords = plainText
+        // 统计日文假名和韩文字母
+        const jpKoWords = (plainText.match(/[\u3040-\u30ff\u1100-\u11FF]/g) || []).length;
+        
+        // 统计其他语言单词（连续的字母或数字视为一个单词）
+        const otherWords = plainText
             .split(/\s+/)
-            .filter(word => /[a-zA-Z0-9]+/.test(word))
+            .filter(word => /[a-zA-Z0-9\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\u0400-\u04FF\u0500-\u052FЁё\u0600-\u06FF\u0590-\u05FF\u0900-\u097F\u0980-\u09FF\u0E00-\u0E7F]+/.test(word))
             .length;
 
-        return chineseWords + englishWords;
+        return cjkWords + jpKoWords + otherWords;
     }
 
     private async updateStats(stats: BookStats, totalWordCount: number): Promise<BookStats> {
