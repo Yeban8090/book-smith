@@ -1,31 +1,58 @@
-import { App, Notice } from "obsidian";
-import { BaseModal } from "./BaseModal";
+import { App, setIcon, Notice } from 'obsidian';
 import { BookManager } from "../services/BookManager";
 import { Book } from "../types/book";
 import { ExportService } from "../services/ExportService";
 import { i18n } from "../i18n/i18n";
+import BookSmithPlugin from '../main';
 
-export class EbookModal extends BaseModal {
+export class EbookView {
+    private container: HTMLElement;
     private bookManager: BookManager;
     private exportService: ExportService;
     private books: Book[] = [];
     private selectedBook: Book | null = null;
     private selectedFormat: string = 'txt';
 
-    constructor(container: HTMLElement, private app: App, private settings: any) {
-        super(container, '生成电子书');
-        this.bookManager = new BookManager(app, settings);
-        this.exportService = new ExportService(app, settings);
+    constructor(
+        private app: App,
+        private plugin: BookSmithPlugin,
+        private parentEl: HTMLElement,
+        private onExit: () => void
+    ) {
+        this.bookManager = new BookManager(app, plugin.settings);
+        this.exportService = new ExportService(app, plugin.settings);
+        this.createUI();
     }
 
-    async open() {
-        // 加载所有书籍
-        this.books = await this.bookManager.getAllBooks();
-        super.open();
+    async initialize() {
+        try {
+            // 加载所有书籍
+            this.books = await this.bookManager.getAllBooks();
+            this.updateBookSelector();
+        } catch (error) {
+            console.error('加载书籍失败:', error);
+        }
     }
 
-    protected createContent() {
-        const content = this.element.createDiv({ cls: 'ebook-content' });
+    private createUI() {
+        this.container = this.parentEl.createDiv({ cls: 'book-smith-ebook-view' });
+        this.createHeader();
+        this.createContent();
+    }
+
+    private createHeader() {
+        const header = this.container.createDiv({ cls: 'ebook-header' });
+        setIcon(header.createSpan({ cls: 'ebook-header-icon' }), 'book');
+        header.createSpan({ text: i18n.t('GENERATE_EBOOK'), cls: 'ebook-title' });
+        
+        // 添加退出按钮
+        const exitBtn = header.createDiv({ cls: 'ebook-exit-btn' });
+        setIcon(exitBtn, 'x');
+        exitBtn.addEventListener('click', () => this.onExit());
+    }
+
+    private createContent() {
+        const content = this.container.createDiv({ cls: 'ebook-content' });
         
         // 电子书信息表单
         const form = content.createDiv({ cls: 'ebook-form' });
@@ -34,7 +61,7 @@ export class EbookModal extends BaseModal {
         this.createBookSelector(form);
         
         // 格式选择
-        const formatField = this.createFormField(form, '格式', 'format', 'select');
+        const formatField = this.createFormField(form, i18n.t('FORMAT') || '格式', 'format', 'select');
         const formatSelect = formatField.querySelector('select');
         if (formatSelect) {
             // 添加支持的格式
@@ -49,40 +76,59 @@ export class EbookModal extends BaseModal {
         }
         
         // 生成按钮
-        const generateBtn = content.createDiv({ cls: 'generate-btn', text: '生成电子书' });
+        const generateBtn = content.createDiv({ cls: 'generate-btn', text: i18n.t('GENERATE_EBOOK') || '生成电子书' });
         generateBtn.addEventListener('click', () => {
             this.exportBook();
         });
     }
-    
-    private createBookSelector(container: HTMLElement) {
-        const field = this.createFormField(container, '选择书籍', 'book', 'select');
-        const select = field.querySelector('select');
+
+    private updateBookSelector() {
+        const select = this.container.querySelector('select');
+        if (!select) return;
         
-        if (select && this.books.length > 0) {
+        // 清空现有选项
+        select.innerHTML = '';
+        
+        if (this.books.length > 0) {
             // 添加书籍选项
             for (const book of this.books) {
-                this.createSelectOption(select, book.basic.uuid, book.basic.title);
+                this.createSelectOption(select as HTMLSelectElement, book.basic.uuid, book.basic.title);
             }
             
             // 默认选择第一本书
             this.selectedBook = this.books[0];
-            
-            // 监听选择变化
-            select.addEventListener('change', (e) => {
-                const uuid = (e.target as HTMLSelectElement).value;
-                this.selectedBook = this.books.find(book => book.basic.uuid === uuid) || null;
-            });
-        } else if (select) {
+            select.value = this.books[0].basic.uuid;
+        } else {
             // 没有书籍时显示提示
-            this.createSelectOption(select, '', '没有可用的书籍');
+            this.createSelectOption(select as HTMLSelectElement, '', i18n.t('NO_BOOKS_AVAILABLE') || '没有可用的书籍');
             select.disabled = true;
         }
     }
     
+    private createBookSelector(container: HTMLElement) {
+        const field = this.createFormField(container, i18n.t('SELECT_BOOK') || '选择书籍', 'book', 'select');
+        const select = field.querySelector('select');
+        
+        if (select) {
+            // 监听选择变化
+            select.addEventListener('change', (e) => {
+                const uuid = (e.target as HTMLSelectElement).value;
+                this.selectedBook = this.books.find(book => book.basic.uuid === uuid) || null;
+                
+                // 添加高亮效果
+                select.classList.add('selected-option');
+                setTimeout(() => select.classList.remove('selected-option'), 500);
+            });
+        }
+    }
+    
+    // 其余方法从 EbookModal 迁移过来，保持相同的功能
+    // ... 省略其他方法，与 EbookModal 中的相同 ...
+
+    // 以下是必要的方法实现
     private async exportBook() {
         if (!this.selectedBook) {
-            this.showNotice('请先选择一本书籍');
+            new Notice(i18n.t('SELECT_BOOK_FIRST') || '请先选择一本书籍');
             return;
         }
         
@@ -95,7 +141,7 @@ export class EbookModal extends BaseModal {
             
             // 如果导出功能尚未实现，显示提示
             if (content.content.startsWith(`${this.selectedFormat.toUpperCase()}导出功能开发中`)) {
-                this.showNotice(`${this.selectedFormat.toUpperCase()}导出功能尚在开发中，敬请期待！`);
+                new Notice(`${this.selectedFormat.toUpperCase()}导出功能尚在开发中，敬请期待！`);
                 return;
             }
             
@@ -122,14 +168,13 @@ export class EbookModal extends BaseModal {
                 document.body.removeChild(a);
             }
             
-            this.showNotice(`导出成功！`);
-            this.close();
+            new Notice(`导出成功！`);
         } catch (error) {
             console.error('导出错误:', error);
-            this.showNotice(`导出失败: ${error.message}`);
+            new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
-    
+
     private createFormField(container: HTMLElement, label: string, id: string, type: string, placeholder?: string) {
         const field = container.createDiv({ cls: 'form-field' });
         field.createDiv({ cls: 'field-label', text: label });
@@ -141,7 +186,7 @@ export class EbookModal extends BaseModal {
                 attr: {
                     type,
                     id,
-                    placeholder: placeholder || null
+                    placeholder: placeholder || ''
                 }
             });
         }
@@ -154,5 +199,9 @@ export class EbookModal extends BaseModal {
         option.value = value;
         option.text = text;
         select.appendChild(option);
+    }
+
+    remove() {
+        this.container.remove();
     }
 }

@@ -2,11 +2,12 @@ import { ItemView, WorkspaceLeaf, setIcon, Menu, Notice } from 'obsidian';
 import { FocusToolView } from '../components/FocusToolView';
 import { DonateModal } from '../modals/DonateModal';
 import { InspirationModal } from '../modals/InspirationModal';
-import { EbookModal } from '../modals/EbookModal';
 import { CommunityModal } from '../modals/CommunityModal';
 import { ContactModal } from '../modals/ContactModal';
 import BookSmithPlugin from '../main';
 import { i18n } from '../i18n/i18n';
+import { TypographyView } from '../components/TypographyView';
+import { EbookView } from '../components/EbookView';
 
 interface ToolItem {
     icon: string;
@@ -19,6 +20,8 @@ interface ToolItem {
 export class ToolView extends ItemView {
     private normalView: HTMLElement | null = null;
     private focusView: FocusToolView | null = null;
+    private typographyView: TypographyView | null = null;
+    private ebookView: EbookView | null = null;
 
     constructor(leaf: WorkspaceLeaf, private plugin: BookSmithPlugin) {
         super(leaf);
@@ -44,13 +47,6 @@ export class ToolView extends ItemView {
         container.addClass('book-smith-tools-view');
         this.normalView = container as HTMLElement;
         this.createNormalView(container as HTMLElement);
-    }
-
-    async onClose() {
-        if (this.focusView) {
-            this.focusView.remove();
-            this.focusView = null;
-        }
     }
 
     // 视图刷新方法
@@ -118,14 +114,12 @@ export class ToolView extends ItemView {
                 { 
                     icon: 'edit-3', 
                     text: i18n.t('DESIGN_TYPOGRAPHY'),
-                    onClick: () => {
-                        new Notice(i18n.t('FEATURE_COMING_SOON', { feature: i18n.t('DESIGN_TYPOGRAPHY') }));
-                    }
+                    onClick: () => this.enterTypographyMode()
                 },
                 { 
                     icon: 'book', 
                     text: i18n.t('GENERATE_EBOOK'),
-                    onClick: () => new EbookModal(this.containerEl, this.app, this.plugin.settings).open()
+                    onClick: () => this.enterEbookMode()
                 },
                 { 
                     icon: 'clock', 
@@ -240,5 +234,69 @@ export class ToolView extends ItemView {
                 }
             }
         );
+    }
+
+    // 添加进入排版模式的方法
+    private enterTypographyMode() {
+        if (!this.normalView) return;
+        this.normalView.empty();
+        
+        this.typographyView = new TypographyView(
+            this.app,
+            this.plugin,
+            this.normalView,
+            () => {
+                this.typographyView?.remove();
+                this.typographyView = null;
+                if (this.normalView) {
+                    this.normalView.empty();
+                    this.createNormalView(this.normalView);
+                }
+            }
+        );
+        
+        // 初始化视图（加载书籍等）
+        this.typographyView.initialize();
+    }
+
+    // 添加进入电子书模式的方法
+    private enterEbookMode() {
+        if (!this.normalView) return;
+        this.normalView.empty();
+        
+        this.ebookView = new EbookView(
+            this.app,
+            this.plugin,
+            this.normalView,
+            () => {
+                this.ebookView?.remove();
+                this.ebookView = null;
+                if (this.normalView) {
+                    this.normalView.empty();
+                    this.createNormalView(this.normalView);
+                }
+            }
+        );
+        
+        // 初始化视图（加载书籍等）
+        this.ebookView.initialize();
+    }
+
+    // 修改 onClose 方法，确保所有视图都被正确关闭
+    async onClose() {
+        if (this.focusView) {
+            this.focusView.remove();
+            this.focusView = null;
+        }
+        
+        if (this.typographyView) {
+            this.typographyView.remove();
+            this.typographyView = null;
+        }
+        
+        if (this.ebookView) {
+            this.ebookView.remove();
+            this.ebookView = null;
+        }
     }
 }

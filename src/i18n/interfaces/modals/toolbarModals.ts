@@ -52,4 +52,33 @@ export interface ToolbarModalTranslation {
     PAYMENT_ALIPAY: string;
     PAYMENT_KOFI: string;
     CURRENCY_UNIT: string;
+    
+    // TypographyModal
+    PREVIEW: string;
+    NO_BOOKS_AVAILABLE: string;
+    LOADING: string;
+    DEFAULT_FONT: string;
+    SERIF_FONT: string;
+    SANS_SERIF_FONT: string;
+    MONOSPACE_FONT: string;
+    APPLY: string;
+    TYPOGRAPHY_APPLIED: string;
+    EXPORT: string;
+    SELECT_BOOK_FIRST: string;
+    EXPORT_SUCCESS: string;
+    EXPORT_FAILED: string;
+    FORMAT: string;
+    CUSTOM_SIZE: string;
+
+    // CoverModal
+    DESIGN_COVER: string;
+    SHOW_COVER: string;
+    COVER_DESIGN: string;
+    COVER_IMAGE: string;
+    CLEAR_IMAGE: string;
+    BACKGROUND_COLOR: string;
+    OVERLAY: string;
+    OVERLAY_DESC: string;
+    OVERLAY_OPACITY: string;
+    SCALE: string;
 }

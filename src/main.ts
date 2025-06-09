@@ -8,11 +8,15 @@ import { BookManager } from './services/BookManager';
 import { TemplateManager } from './services/TemplateManager';
 import { BookStatsManager } from './services/BookStatsManager';
 import { i18n } from './i18n/i18n';
+import { ImgTemplateManager } from './services/ImgTemplateManager';
+import { ThemeManager } from './services/ThemeManager';
 
 export default class BookSmithPlugin extends Plugin {
     settings: BookSmithSettings;
     bookManager: BookManager;
     templateManager: TemplateManager;
+    imgTemplateManager: ImgTemplateManager;
+    themeManager: ThemeManager;
     statsManager: BookStatsManager;
 
     async onload() {
@@ -70,6 +74,10 @@ export default class BookSmithPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.bookManager = new BookManager(this.app, this.settings);
+        this.templateManager = new TemplateManager(this.settings);
+        this.imgTemplateManager = new ImgTemplateManager(this.app, this.settings);
+        this.themeManager = new ThemeManager(this.app, this.settings);
     }
 
     async saveSettings() {

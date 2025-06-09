@@ -1,0 +1,612 @@
+/* 排版视图基础样式 */
+.book-smith-typography-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--background-primary);
+}
+
+/* 头部样式 */
+.typography-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.typography-header-icon {
+    margin-right: 8px;
+    color: var(--text-accent);
+}
+
+.typography-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.typography-exit-btn {
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.typography-exit-btn:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+}
+
+/* 内容区域样式 */
+.typography-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 顶部选择器面板样式 */
+.typography-top-panel {
+    padding: 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary-alt);
+}
+
+/* 选择器容器样式 */
+.typography-selectors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 表单字段样式 */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+}
+
+.field-label {
+    font-weight: 500;
+    color: var(--text-normal);
+    font-size: 12px;
+}
+
+/* 选择器样式 */
+.typography-selectors select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    font-size: 14px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 30px;
+}
+
+.typography-selectors select:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+.typography-selectors select:hover {
+    border-color: var(--interactive-hover);
+}
+
+/* 选择器容器样式 */
+.typography-selectors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 表单字段样式 - 移除垂直布局 */
+.form-field {
+    display: inline-block;
+    min-width: 150px;
+}
+
+.field-label {
+    font-weight: 500;
+    color: var(--text-normal);
+    font-size: 12px;
+}
+
+/* 预览面板样式 */
+.typography-preview-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 预览标题 */
+.typography-preview-panel h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: var(--text-normal);
+    text-align: center;
+}
+
+/* 预览内容区域 */
+.typography-preview {
+    flex: 1;
+    padding: 20px;
+    background-color: white;
+    color: black;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    margin: 0 auto;
+    max-width: 800px;
+}
+
+/* 底部按钮面板样式 */
+.typography-bottom-panel {
+    padding: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary-alt);
+}
+
+/* 按钮样式 */
+.typography-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.apply-btn, .export-btn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 120px;
+}
+
+.apply-btn {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.apply-btn:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
+.export-btn {
+    background-color: var(--background-modifier-border);
+    color: var(--text-normal);
+}
+
+.export-btn:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+/* 选中效果 */
+.selected-option {
+    animation: highlight 0.5s ease-in-out;
+}
+
+@keyframes highlight {
+    0% { background-color: var(--background-primary); }
+    50% { background-color: var(--interactive-accent-hover); }
+    100% { background-color: var(--background-primary); }
+}
+
+/* 保留原有的字体、字号、行高和页边距样式 */
+.font-default {
+    font-family: var(--default-font);
+}
+
+.font-serif {
+    font-family: Georgia, Times, 'Times New Roman', serif;
+}
+
+.font-sans-serif {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.font-monospace {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+/* 字号预览样式 */
+.font-size-small {
+    font-size: 14px;
+}
+
+.font-size-medium {
+    font-size: 16px;
+}
+
+.font-size-large {
+    font-size: 18px;
+}
+
+/* 行高预览样式 */
+.line-height-compact {
+    line-height: 1.3;
+}
+
+.line-height-normal {
+    line-height: 1.6;
+}
+
+.line-height-relaxed {
+    line-height: 1.8;
+}
+
+/* 页边距预览样式 */
+.margin-narrow {
+    padding: 10px;
+}
+
+.margin-normal {
+    padding: 20px;
+}
+
+.margin-wide {
+    padding: 30px;
+}
+
+
+/* 添加模板相关样式 */
+
+/* 备忘录模板样式 */
+.notes-template {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.notes-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.notes-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+}
+
+.notes-content {
+    line-height: 1.6;
+}
+
+/* 简洁模板样式 */
+.simple-template {
+    background-color: white;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.simple-content {
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* 文章模板样式 */
+.article-template {
+    background-color: white;
+    padding: 30px;
+    font-family: Georgia, Times, "Times New Roman", serif;
+}
+
+.article-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.article-meta {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.article-abstract {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-left: 4px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.article-content {
+    line-height: 1.8;
+}
+
+.article-footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+}
+
+.article-references {
+    margin-bottom: 10px;
+}
+
+.article-copyright {
+    font-style: italic;
+}
+
+/* 选择器高亮效果 */
+.selected-option {
+    background-color: rgba(14, 101, 235, 0.1) !important;
+    transition: background-color 0.5s ease;
+}
+
+/* ===== 下拉选择器 ===== */
+.red-select-container {
+    position: relative;
+    max-width: 200px;
+    flex: 1;
+}
+
+.red-select {
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    color: var(--text-normal);
+    box-shadow: 0 1px 3px var(--background-modifier-box-shadow);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.red-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.red-select:hover {
+    background: var(--background-modifier-hover);
+    box-shadow: 0 2px 6px var(--background-modifier-box-shadow);
+}
+
+.red-select.disabled {
+    opacity: 0.5;
+    background: var(--background-secondary) !important;
+    color: var(--text-muted) !important;
+    border-color: var(--background-modifier-border) !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.red-select-arrow {
+    color: var(--text-normal);
+    font-size: 12px;
+    transition: transform 0.2s ease;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+.red-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--background-modifier-box-shadow);
+    display: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.red-select-dropdown.red-show {
+    display: block;
+}
+
+.red-select-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-normal);
+}
+
+.red-select-item:hover {
+    background: var(--background-modifier-hover);
+}
+
+.red-select-item.red-selected {
+    background: var(--background-modifier-hover);
+    color: var(--text-accent);
+}
+
+/* ===== 字号调整组件 ===== */
+.red-font-size-group {
+    height: 36px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 3px var(--background-modifier-box-shadow);
+}
+
+.red-font-size-input {
+    width: 30px;
+    text-align: center;
+}
+
+.red-font-size-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-normal);
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+.red-font-size-btn:hover {
+    background: var(--background-modifier-hover);
+}
+
+
+/* 开本大小样式 */
+.book-size-a4 {
+    aspect-ratio: 1 / 1.414; /* A4 比例 */
+    max-width: 595px; /* A4 宽度 */
+}
+
+.book-size-a5 {
+    aspect-ratio: 1 / 1.414; /* A5 比例 */
+    max-width: 420px; /* A5 宽度 */
+}
+
+.book-size-b5 {
+    aspect-ratio: 1 / 1.414; /* B5 比例 */
+    max-width: 498px; /* B5 宽度 */
+}
+
+.book-size-16k {
+    aspect-ratio: 1 / 1.5; /* 16K 比例 */
+    max-width: 460px; /* 16K 宽度 */
+}
+
+.book-size-custom {
+    max-width: 800px;
+}
+
+
+/* 分页容器 */
+.typography-paged-content {
+    column-count: 2;
+    column-gap: 40px;
+    column-fill: auto;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 页面样式 */
+.typography-page {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 章节标题强制分页 */
+h1, h2 {
+    break-before: page;
+    page-break-before: always;
+}
+
+/* 目录样式 */
+.typography-toc {
+    margin-bottom: 30px;
+}
+
+.typography-toc-item {
+    margin: 5px 0;
+}
+
+.typography-toc-level-1 {
+    font-weight: bold;
+    margin-left: 0;
+}
+
+.typography-toc-level-2 {
+    margin-left: 20px;
+}
+
+.typography-toc-level-3 {
+    margin-left: 40px;
+}
+
+/* 添加到 styles/views/typography.css 或直接在 TypographyView 中添加样式 */
+.typography-content-pages {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.book-page {
+    border: 1px solid #ddd;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 200px;
+    max-height: 800px;
+    overflow: hidden;
+    page-break-after: always;
+    position: relative;
+}
+
+/* 目录样式 */
+.typography-toc {
+    margin-bottom: 30px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+}
+
+.toc-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.toc-list ul {
+    padding-left: 20px;
+    list-style-type: none;
+}
+
+.toc-list li {
+    margin: 5px 0;
+}
+
+.toc-list a {
+    text-decoration: none;
+    color: #333;
+}
+
+.toc-list a:hover {
+    text-decoration: underline;
+}

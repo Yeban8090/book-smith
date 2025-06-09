@@ -372,7 +372,36 @@ const toolbarModalTranslation: ToolbarModalTranslation = {
     PAYMENT_WECHAT: '微信赞赏',
     PAYMENT_ALIPAY: '支付宝赞赏',
     PAYMENT_KOFI: 'Ko-fi 赞赏',
-    CURRENCY_UNIT: '元'
+    CURRENCY_UNIT: '元',
+
+    // TypographyModal
+    PREVIEW: '预览',
+    NO_BOOKS_AVAILABLE: '没有可用的书籍',
+    LOADING: '加载中...',
+    DEFAULT_FONT: '默认字体',
+    SERIF_FONT: '衬线字体',
+    SANS_SERIF_FONT: '无衬线字体',
+    MONOSPACE_FONT: '等宽字体',
+    APPLY: '应用',
+    TYPOGRAPHY_APPLIED: '排版设置已应用',
+    EXPORT: '导出',
+    SELECT_BOOK_FIRST: '请先选择一本书籍',
+    EXPORT_SUCCESS: '导出成功',
+    EXPORT_FAILED: '导出失败: ',
+    FORMAT  : '格式',
+    CUSTOM_SIZE: '自定义大小',
+
+    // CoverModal
+    DESIGN_COVER: '设计封面',
+    SHOW_COVER: '显示封面',
+    COVER_DESIGN: '封面设计',
+    COVER_IMAGE: '封面图片',
+    CLEAR_IMAGE: '清除图片',
+    BACKGROUND_COLOR: '背景颜色',
+    OVERLAY: '覆盖层',
+    OVERLAY_DESC: '添加半透明覆盖层以增强文字可读性',
+    OVERLAY_OPACITY: '覆盖层透明度',
+    SCALE: '缩放',
 };
 
 const componentTranslation: ComponentTranslation = {
