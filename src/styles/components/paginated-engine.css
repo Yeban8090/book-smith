@@ -123,19 +123,6 @@
     font-size: 14px;
 }
 
-/* 封面和内容容器 */
-.typography-preview-container {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-    width: 100%;
-}
-
-.typography-cover-container,
-.typography-content-container {
-    width: 100%;
-}
-
 /* 页码样式 */
 .page-number {
     position: absolute;

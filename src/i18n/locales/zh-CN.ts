@@ -376,7 +376,7 @@ const toolbarModalTranslation: ToolbarModalTranslation = {
 
     // TypographyModal
     PREVIEW: '预览',
-    NO_BOOKS_AVAILABLE: '没有可用的书籍',
+    NO_BOOKS_AVAILABLE: '无书籍',
     LOADING: '加载中...',
     DEFAULT_FONT: '默认字体',
     SERIF_FONT: '衬线字体',

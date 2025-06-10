@@ -100,7 +100,6 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 0; /* 移除底部边距 */
-    justify-content: center; /* 居中显示 */
     width: 100%;
 }
 

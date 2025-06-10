@@ -143,37 +143,31 @@ export class TypographyView {
     // 按照要求的顺序创建顶部选择器：书籍、模板、主题、字体、字号大小
     private createTopSelectors(container: HTMLElement) {
         // 创建第一行选择器容器
-        const selectorsRow1 = container.createDiv({ cls: 'typography-selectors-row' });
-
+        const selectorsRow = container.createDiv({ cls: 'typography-selectors-row' });
         // 1. 创建书籍选择器
-        this.createBookSelector(selectorsRow1);
-
+        this.createBookSelector(selectorsRow);
         // 2. 创建模板选择器
-        this.createTemplateSelector(selectorsRow1);
+        this.createTemplateSelector(selectorsRow);
 
         // 3. 创建主题选择器
-        this.createThemeSelector(selectorsRow1);
-
-        // 创建第二行选择器容器
-        const selectorsRow2 = container.createDiv({ cls: 'typography-selectors-row' });
-
+        this.createThemeSelector(selectorsRow);
         // 4. 创建字体选择器
-        this.createFontSelector(selectorsRow2);
+        this.createFontSelector(selectorsRow);
 
         // 5. 创建字号大小控制
-        this.createFontSizeControls(selectorsRow2);
-
+        this.createFontSizeControls(selectorsRow);
+        
         // 6. 创建开本大小选择器
-        this.createBookSizeSelector(selectorsRow2);
+        this.createBookSizeSelector(selectorsRow);
     }
 
     // 自定义选择器通用方法
     private createCustomSelect(parent: HTMLElement, className: string, options: { value: string, text: string }[]): HTMLElement {
-        const container = parent.createDiv({ cls: `red-select-container ${className}` });
+        const container = parent.createDiv({ cls: `book-smith-select-container ${className}` });
 
-        const select = container.createDiv({ cls: 'red-select' });
-        const textSpan = select.createSpan({ cls: 'red-text' });
-        const arrowSpan = select.createSpan({ cls: 'red-select-arrow' });
+        const select = container.createDiv({ cls: 'book-smith-select' });
+        const textSpan = select.createSpan({ cls: 'book-smith-text' });
+        const arrowSpan = select.createSpan({ cls: 'book-smith-select-arrow' });
         setIcon(arrowSpan, 'chevron-down');
 
         // 默认选择第一个选项
@@ -183,17 +177,17 @@ export class TypographyView {
         }
 
         // 创建下拉菜单
-        const dropdown = container.createDiv({ cls: 'red-select-dropdown' });
+        const dropdown = container.createDiv({ cls: 'book-smith-select-dropdown' });
 
         // 添加选项
         for (const option of options) {
-            const item = dropdown.createDiv({ cls: 'red-select-item' });
+            const item = dropdown.createDiv({ cls: 'book-smith-select-item' });
             item.textContent = option.text;
             item.dataset.value = option.value;
 
             // 默认选中第一个
             if (options.indexOf(option) === 0) {
-                item.addClass('red-selected');
+                item.addClass('book-smith-selected');
             }
 
             // 点击选项
@@ -203,13 +197,13 @@ export class TypographyView {
                 select.dataset.value = option.value;
 
                 // 更新选中状态
-                dropdown.querySelectorAll('.red-select-item').forEach(el => {
-                    el.removeClass('red-selected');
+                dropdown.querySelectorAll('.book-select-item').forEach(el => {
+                    el.removeClass('book-smith-selected');
                 });
-                item.addClass('red-selected');
+                item.addClass('book-smith-selected');
 
                 // 关闭下拉菜单
-                dropdown.removeClass('red-show');
+                dropdown.removeClass('book-smith-show');
                 arrowSpan.style.transform = '';
 
                 // 触发自定义事件
@@ -222,13 +216,13 @@ export class TypographyView {
         // 点击选择器显示/隐藏下拉菜单
         select.addEventListener('click', (e) => {
             e.stopPropagation();
-            dropdown.toggleClass('red-show', !dropdown.hasClass('red-show'));
-            arrowSpan.style.transform = dropdown.hasClass('red-show') ? 'rotate(180deg)' : '';
+            dropdown.toggleClass('book-smith-show', !dropdown.hasClass('book-smith-show'));
+            arrowSpan.style.transform = dropdown.hasClass('book-smith-show') ? 'rotate(180deg)' : '';
         });
 
         // 点击其他地方关闭下拉菜单
         document.addEventListener('click', () => {
-            dropdown.removeClass('red-show');
+            dropdown.removeClass('book-smith-show');
             arrowSpan.style.transform = '';
         });
 
@@ -237,9 +231,9 @@ export class TypographyView {
 
     // 更新自定义选择器的选项
     private updateCustomSelectOptions(selectElement: HTMLElement, options: { value: string, text: string }[]) {
-        const dropdown = selectElement.querySelector('.red-select-dropdown');
-        const select = selectElement.querySelector('.red-select');
-        const textSpan = selectElement.querySelector('.red-text');
+        const dropdown = selectElement.querySelector('.book-smith-select-dropdown');
+        const select = selectElement.querySelector('.book-smith-select');
+        const textSpan = selectElement.querySelector('.book-smith-text');
 
         if (!dropdown || !select || !textSpan) return;
 
@@ -248,13 +242,13 @@ export class TypographyView {
 
         // 添加新选项
         for (const option of options) {
-            const item = dropdown.createDiv({ cls: 'red-select-item' });
+            const item = dropdown.createDiv({ cls: 'book-smith-select-item' });
             item.textContent = option.text;
             item.dataset.value = option.value;
 
             // 默认选中第一个
             if (options.indexOf(option) === 0) {
-                item.addClass('red-selected');
+                item.addClass('book-smith-selected');
                 textSpan.textContent = option.text;
                 (select as HTMLElement).setAttribute('data-value', option.value);
             }
@@ -266,13 +260,13 @@ export class TypographyView {
                 (select as HTMLElement).setAttribute('data-value', option.value);
 
                 // 更新选中状态
-                dropdown.querySelectorAll('.red-select-item').forEach(el => {
-                    el.removeClass('red-selected');
+                dropdown.querySelectorAll('.book-smith-select-item').forEach(el => {
+                    el.removeClass('book-smith-selected');
                 });
-                item.addClass('red-selected');
+                item.addClass('book-smith-selected');
 
                 // 关闭下拉菜单
-                dropdown.removeClass('red-show');
+                dropdown.removeClass('book-smith-show');
 
                 // 触发自定义事件
                 select.dispatchEvent(new CustomEvent('change', {
@@ -301,7 +295,7 @@ export class TypographyView {
         // 创建自定义选择器
         this.customBookSelect = this.createCustomSelect(
             parent,
-            'red-book-select',
+            'book-smith-book-select',
             bookOptions
         );
         this.customBookSelect.id = 'book-select';
@@ -321,7 +315,7 @@ export class TypographyView {
         this.updateCustomSelectOptions(this.customBookSelect, bookOptions);
 
         // 添加事件监听
-        this.customBookSelect.querySelector('.red-select')?.addEventListener('change', async (e: any) => {
+        this.customBookSelect.querySelector('.book-smith-select')?.addEventListener('change', async (e: any) => {
             const value = e.detail.value;
             this.selectedBook = this.books.find(book => book.basic.uuid === value) || null;
             this.updatePreview();
@@ -329,7 +323,7 @@ export class TypographyView {
 
         // 如果有书籍，选择第一本
         if (bookOptions.length > 0) {
-            const select = this.customBookSelect.querySelector('.red-select');
+            const select = this.customBookSelect.querySelector('.book-smith-select');
             if (select) {
                 (select as HTMLElement).setAttribute('data-value', bookOptions[0].value);
                 this.selectedBook = this.books[0];
@@ -342,7 +336,7 @@ export class TypographyView {
     private createTemplateSelector(parent: HTMLElement) {
         this.customTemplateSelect = this.createCustomSelect(
             parent,
-            'red-template-select',
+            'book-smith-template-select',
             [{ value: '', text: i18n.t('LOADING') || '加载中...' }]
         );
         this.customTemplateSelect.id = 'template-select';
@@ -359,7 +353,7 @@ export class TypographyView {
         this.updateCustomSelectOptions(this.customTemplateSelect, templateOptions);
 
         // 添加事件监听
-        this.customTemplateSelect.querySelector('.red-select')?.addEventListener('change', async (e: any) => {
+        this.customTemplateSelect.querySelector('.book-smith-select')?.addEventListener('change', async (e: any) => {
             const value = e.detail.value;
             this.currentTemplate = this.imgTemplateManager.getTemplate(value) || null;
             this.updatePreview();
@@ -367,7 +361,7 @@ export class TypographyView {
 
         // 默认选择第一个模板
         if (templateOptions.length > 0) {
-            const select = this.customTemplateSelect.querySelector('.red-select');
+            const select = this.customTemplateSelect.querySelector('.book-smith-select');
             if (select) {
                 (select as HTMLElement).setAttribute('data-value', templateOptions[0].value);
                 this.currentTemplate = this.imgTemplateManager.getTemplate(templateOptions[0].value) || null;
@@ -379,7 +373,7 @@ export class TypographyView {
     private createThemeSelector(parent: HTMLElement) {
         this.customThemeSelect = this.createCustomSelect(
             parent,
-            'red-theme-select',
+            'book-smith-theme-select',
             [{ value: '', text: i18n.t('LOADING') || '加载中...' }]
         );
         this.customThemeSelect.id = 'theme-select';
@@ -396,7 +390,7 @@ export class TypographyView {
         this.updateCustomSelectOptions(this.customThemeSelect, themes);
 
         // 添加事件监听
-        this.customThemeSelect.querySelector('.red-select')?.addEventListener('change', async (e: any) => {
+        this.customThemeSelect.querySelector('.book-smith-select')?.addEventListener('change', async (e: any) => {
             const value = e.detail.value;
             this.themeManager.setCurrentTheme(value);
             if (this.previewElement) {
@@ -406,7 +400,7 @@ export class TypographyView {
 
         // 默认选择第一个主题
         if (themes.length > 0) {
-            const select = this.customThemeSelect.querySelector('.red-select');
+            const select = this.customThemeSelect.querySelector('.book-smith-select');
             if (select) {
                 (select as HTMLElement).setAttribute('data-value', themes[0].value);
                 this.themeManager.setCurrentTheme(themes[0].value);
@@ -429,7 +423,7 @@ export class TypographyView {
 
         this.customFontSelect = this.createCustomSelect(
             parent,
-            'red-font-select',
+            'book-smith-font-select',
             fontOptions
         );
         this.customFontSelect.id = 'font-select';
@@ -440,23 +434,23 @@ export class TypographyView {
         if (!this.customFontSelect) return;
 
         // 添加事件监听
-        this.customFontSelect.querySelector('.red-select')?.addEventListener('change', () => {
+        this.customFontSelect.querySelector('.book-smith-select')?.addEventListener('change', () => {
             this.updatePreview();
         });
     }
 
     // 5. 字号大小控制
     private createFontSizeControls(parent: HTMLElement) {
-        const fontSizeGroup = parent.createEl('div', { cls: 'red-font-size-group' });
+        const fontSizeGroup = parent.createEl('div', { cls: 'book-smith-font-size-group' });
 
         // 添加减小按钮
         const decreaseButton = fontSizeGroup.createEl('button', {
-            cls: 'red-font-size-button red-decrease-button',
+            cls: 'book-smith-font-size-button book-smith-decrease-button',
             text: '-'
         });
     
         this.fontSizeInput = fontSizeGroup.createEl('input', {
-            cls: 'red-font-size-input',
+            cls: 'book-smith-font-size-input',
             type: 'text',
             value: '16',
             attr: {
@@ -468,13 +462,13 @@ export class TypographyView {
     
         // 添加增大按钮
         const increaseButton = fontSizeGroup.createEl('button', {
-            cls: 'red-font-size-button red-increase-button',
+            cls: 'book-smith-font-size-button book-smith-increase-button',
             text: '+'
         });
         
         // 添加单位标签
         fontSizeGroup.createEl('span', {
-            cls: 'red-font-size-unit'
+            cls: 'book-smith-font-size-unit'
         });
     }
     
@@ -500,8 +494,8 @@ export class TypographyView {
         };
     
         // 获取按钮元素
-        const decreaseButton = this.fontSizeInput.parentElement?.querySelector('.red-decrease-button');
-        const increaseButton = this.fontSizeInput.parentElement?.querySelector('.red-increase-button');
+        const decreaseButton = this.fontSizeInput.parentElement?.querySelector('.book-smith-decrease-button');
+        const increaseButton = this.fontSizeInput.parentElement?.querySelector('.book-smith-increase-button');
     
         // 添加减小字号事件
         decreaseButton?.addEventListener('click', () => {
@@ -557,7 +551,7 @@ export class TypographyView {
 
         this.customBookSizeSelect = this.createCustomSelect(
             parent,
-            'red-book-size-select',
+            'book-smith-book-size-select',
             bookSizeOptions
         );
         this.customBookSizeSelect.id = 'book-size-select';
@@ -568,7 +562,7 @@ export class TypographyView {
         if (!this.customBookSizeSelect) return;
 
         // 添加事件监听
-        this.customBookSizeSelect.querySelector('.red-select')?.addEventListener('change', () => {
+        this.customBookSizeSelect.querySelector('.book-smith-select')?.addEventListener('change', () => {
             this.updatePreview();
         });
     }
@@ -580,15 +574,15 @@ export class TypographyView {
         const showCover = coverToggle ? coverToggle.checked : true;
 
         return {
-            fontFamily: (this.customFontSelect?.querySelector('.red-select') as HTMLElement)?.getAttribute('data-value') || 'default',
+            fontFamily: (this.customFontSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default',
             fontSize: this.fontSizeInput?.value || '16',
             lineHeight: 'normal', // 保留默认值
             margin: '0', // 保留默认值
-            templateId: (this.customTemplateSelect?.querySelector('.red-select') as HTMLElement)?.getAttribute('data-value') || 'notes',
-            themeId: (this.customThemeSelect?.querySelector('.red-select') as HTMLElement)?.getAttribute('data-value') || 'default',
+            templateId: (this.customTemplateSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'notes',
+            themeId: (this.customThemeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default',
             coverSettings: this.coverSettings || undefined,
             showCover: showCover,
-            bookSize: (this.customBookSizeSelect?.querySelector('.red-select') as HTMLElement)?.getAttribute('data-value') || 'a4'
+            bookSize: (this.customBookSizeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'a4'
         };
     }
 
@@ -766,16 +760,13 @@ export class TypographyView {
         const buttonsContainer = container.createDiv({ cls: 'typography-buttons-container' });
     
         // 第一行按钮组 - 封面相关
-        const coverButtonsGroup = buttonsContainer.createDiv({ cls: 'typography-buttons-group cover-buttons-group' });
+        const buttonsGroup = buttonsContainer.createDiv({ cls: 'typography-buttons-group cover-buttons-group' });
         
         // 添加封面设计开关
-        this.createCoverToggle(coverButtonsGroup);
-    
-        // 第二行按钮组 - 操作按钮
-        const actionButtonsGroup = buttonsContainer.createDiv({ cls: 'typography-buttons-group action-buttons-group' });
+        this.createCoverToggle(buttonsGroup);
     
         // 应用按钮
-        const applyBtn = actionButtonsGroup.createEl('button', {
+        const applyBtn = buttonsGroup.createEl('button', {
             text: i18n.t('APPLY') || '应用',
             cls: 'typography-btn apply-btn'
         });
@@ -785,7 +776,7 @@ export class TypographyView {
         });
     
         // 导出按钮
-        const exportBtn = actionButtonsGroup.createEl('button', {
+        const exportBtn = buttonsGroup.createEl('button', {
             text: i18n.t('EXPORT') || '导出',
             cls: 'typography-btn export-btn'
         });
