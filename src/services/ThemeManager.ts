@@ -228,95 +228,19 @@ export class ThemeManager {
     }
     
     // 应用主题到元素
+    // 修改 applyTheme 方法，使用 CSS 类而不是内联样式
     applyTheme(element: HTMLElement, themeId?: string): void {
         const theme = themeId ? this.getTheme(themeId) : this.getCurrentTheme();
         if (!theme) return;
         
-        // 应用容器样式
-        element.setAttribute('style', theme.styles.container);
+        // 移除所有主题相关的类
+        const themeClasses = Array.from(element.classList).filter(cls => cls.startsWith('theme-'));
+        themeClasses.forEach(cls => element.classList.remove(cls));
         
-        // 应用标题样式
-        element.querySelectorAll('h1').forEach(el => {
-            el.setAttribute('style', theme.styles.title.h1);
-        });
+        // 添加当前主题的类
+        element.classList.add(`theme-${theme.id}`);
         
-        element.querySelectorAll('h2').forEach(el => {
-            el.setAttribute('style', theme.styles.title.h2);
-        });
-        
-        element.querySelectorAll('h3').forEach(el => {
-            el.setAttribute('style', theme.styles.title.h3);
-        });
-        
-        // 应用段落样式
-        element.querySelectorAll('p').forEach(el => {
-            el.setAttribute('style', theme.styles.paragraph);
-        });
-        
-        // 应用引用样式
-        element.querySelectorAll('blockquote').forEach(el => {
-            el.setAttribute('style', theme.styles.quote);
-        });
-        
-        // 应用列表样式
-        element.querySelectorAll('ul').forEach(el => {
-            el.setAttribute('style', theme.styles.list.ul);
-        });
-        
-        element.querySelectorAll('ol').forEach(el => {
-            el.setAttribute('style', theme.styles.list.ol);
-        });
-        
-        element.querySelectorAll('li').forEach(el => {
-            el.setAttribute('style', theme.styles.list.li);
-        });
-        
-        // 应用强调样式
-        element.querySelectorAll('strong').forEach(el => {
-            el.setAttribute('style', theme.styles.emphasis.strong);
-        });
-        
-        element.querySelectorAll('em').forEach(el => {
-            el.setAttribute('style', theme.styles.emphasis.em);
-        });
-        
-        element.querySelectorAll('del').forEach(el => {
-            el.setAttribute('style', theme.styles.emphasis.del);
-        });
-        
-        // 应用代码样式
-        element.querySelectorAll('pre code').forEach(el => {
-            el.setAttribute('style', theme.styles.code.block);
-        });
-        
-        element.querySelectorAll('code:not(pre code)').forEach(el => {
-            el.setAttribute('style', theme.styles.code.inline);
-        });
-        
-        // 应用表格样式
-        element.querySelectorAll('table').forEach(el => {
-            el.setAttribute('style', theme.styles.table.container);
-        });
-        
-        element.querySelectorAll('th').forEach(el => {
-            el.setAttribute('style', theme.styles.table.header);
-        });
-        
-        element.querySelectorAll('td').forEach(el => {
-            el.setAttribute('style', theme.styles.table.cell);
-        });
-        
-        // 应用其他元素样式
-        element.querySelectorAll('hr').forEach(el => {
-            el.setAttribute('style', theme.styles.hr);
-        });
-        
-        element.querySelectorAll('img').forEach(el => {
-            el.setAttribute('style', theme.styles.image);
-        });
-        
-        element.querySelectorAll('a').forEach(el => {
-            el.setAttribute('style', theme.styles.link);
-        });
+        // 设置字体大小
+        element.style.fontSize = `${this.currentFontSize}px`;
     }
 }

@@ -22,33 +22,35 @@
     width: 210mm;
     min-height: 297mm;
     max-height: 297mm;
-    padding-bottom:10px
+    padding: 15mm 10mm 10mm 10mm;
 }
 
 .book-size-a5 {
     width: 148mm;
     min-height: 210mm;
     max-height: 210mm;
+    padding: 15mm 10mm 10mm 10mm;
 }
 
 .book-size-b5 {
     width: 176mm;
     min-height: 250mm;
     max-height: 250mm;
+    padding: 15mm 10mm 10mm 10mm;
 }
 
 .book-size-16k {
     width: 184mm;
     min-height: 260mm;
     max-height: 260mm;
-    padding: 18mm;
+    padding: 15mm 10mm 10mm 10mm;
 }
 
 .book-size-custom {
     width: 180mm;
     min-height: 240mm;
     max-height: 240mm;
-    padding: 15mm;
+    padding: 15mm 10mm 10mm 10mm;
 }
 
 /* 目录样式 */
@@ -90,6 +92,8 @@
 
 .toc-page-ref {
     margin-left: 10px;
+    font-size: 14px;
+    font-weight: 200;
     color: #666;
 }
 
@@ -143,16 +147,32 @@
     color: #666;
 }
 
+/* 新增：页码标记内容布局 */
+.marker-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+}
+
 /* 页码标记样式 */
 .page-marker {
     position: absolute;
-    bottom: 30px;
+    bottom: 10px;
     left: 0;
     right: 0;
-    text-align: center;
+    text-align: right;
     font-size: 12px;
     color: #999;
     border-top: 1px solid #eee;
     padding-top: 5px;
     margin-top: 10px;
+}
+
+/* 新增：BookSmith标识样式 */
+.booksmith-logo {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+    font-weight: bold;
 }

@@ -86,7 +86,20 @@ class DefaultTemplate implements ImgTemplate {
     constructor() {}
 
     render(element: HTMLElement, settings?: any) {
-        // 实现默认模板的渲染逻辑
+        // 添加模板特定的类名
+        element.classList.add('template-default');
+        
+        // 设置基本布局
+        const contentPages = element.querySelector('.typography-content-pages');
+        if (contentPages) {
+            contentPages.classList.add('default-content-layout');
+        }
+        
+        // 设置页面边距和布局
+        const pages = element.querySelectorAll('.page');
+        pages.forEach(page => {
+            page.classList.add('default-page-layout');
+        });
     }
 }
 
@@ -104,7 +117,27 @@ class NotesTemplate implements ImgTemplate {
     constructor() {}
 
     render(element: HTMLElement, settings?: any) {
-        // 实现备忘录模板的渲染逻辑
+        // 添加模板特定的类名
+        element.classList.add('template-notes');
+        
+        // 设置备忘录风格的页眉
+        const pages = element.querySelectorAll('.page');
+        pages.forEach((page, index) => {
+            // 添加页眉
+            const header = document.createElement('div');
+            header.className = 'notes-header';
+            header.innerHTML = `<div class="notes-title">备忘录</div><div class="notes-date">${new Date().toLocaleDateString()}</div>`;
+            
+            // 将页眉插入到页面内容之前
+            if (page.firstChild) {
+                page.insertBefore(header, page.firstChild);
+            } else {
+                page.appendChild(header);
+            }
+            
+            // 添加备忘录风格的线条背景
+            page.classList.add('notes-page-style');
+        });
     }
 }
 
@@ -122,7 +155,27 @@ class BookTemplate implements ImgTemplate {
     constructor() {}
 
     render(element: HTMLElement, settings?: any) {
-        // 实现书籍模板的渲染逻辑
+        // 添加模板特定的类名
+        element.classList.add('template-book');
+        
+        // 设置书籍风格的页面
+        const pages = element.querySelectorAll('.page');
+        pages.forEach((page, index) => {
+            // 添加书籍风格的页面样式
+            page.classList.add('book-page-style');
+            
+            // 添加页脚（页码）
+            const footer = document.createElement('div');
+            footer.className = 'book-footer';
+            footer.innerHTML = `<div class="book-page-number">${index + 1}</div>`;
+            page.appendChild(footer);
+        });
+        
+        // 设置封面样式
+        const coverPage = element.querySelector('.page:first-child');
+        if (coverPage) {
+            coverPage.classList.add('book-cover');
+        }
     }
 }
 
@@ -140,6 +193,38 @@ class MagazineTemplate implements ImgTemplate {
     constructor() {}
 
     render(element: HTMLElement, settings?: any) {
-        // 实现杂志模板的渲染逻辑
+        // 添加模板特定的类名
+        element.classList.add('template-magazine');
+        
+        // 设置杂志风格的页面
+        const pages = element.querySelectorAll('.page');
+        pages.forEach((page, index) => {
+            // 添加杂志风格的页面样式
+            page.classList.add('magazine-page-style');
+            
+            // 添加页眉
+            const header = document.createElement('div');
+            header.className = 'magazine-header';
+            header.innerHTML = `<div class="magazine-section">专题</div>`;
+            
+            // 将页眉插入到页面内容之前
+            if (page.firstChild) {
+                page.insertBefore(header, page.firstChild);
+            } else {
+                page.appendChild(header);
+            }
+            
+            // 添加页脚
+            const footer = document.createElement('div');
+            footer.className = 'magazine-footer';
+            footer.innerHTML = `<div class="magazine-page-number">${index + 1}</div>`;
+            page.appendChild(footer);
+        });
+        
+        // 设置封面样式
+        const coverPage = element.querySelector('.page:first-child');
+        if (coverPage) {
+            coverPage.classList.add('magazine-cover');
+        }
     }
 }

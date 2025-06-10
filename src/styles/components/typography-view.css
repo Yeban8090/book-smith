@@ -47,19 +47,48 @@
     overflow: hidden;
 }
 
-/* 顶部选择器面板样式 */
+/* 顶部选择器面板样式 - 防止换行 */
 .typography-top-panel {
     padding: 16px;
+    max-width: 686px;
     border-bottom: 1px solid var(--background-modifier-border);
     background-color: var(--background-secondary-alt);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-/* 选择器容器样式 */
-.typography-selectors {
+/* 选择器行容器样式 */
+.typography-selectors-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* 防止换行 */
     gap: 12px;
     align-items: center;
+    justify-content: center; /* 居中排列 */
+    min-width: min-content; /* 确保内容不会被压缩 */
+    max-width: 1200px; /* 设置最大宽度 */
+    margin: 0 auto; /* 居中显示 */
+}
+
+/* 移除原有的选择器容器样式 */
+/* .typography-selectors {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: min-content;
+    max-width: 1200px;
+    margin: 0 auto;
+} */
+
+/* 自定义选择器容器样式 */
+.red-select-container {
+    position: relative;
+    flex: 0 0 auto; /* 防止压缩 */
+    min-width: 120px; /* 最小宽度 */
+    max-width: 200px; /* 最大宽度 */
+    
 }
 
 /* 表单字段样式 */
@@ -126,13 +155,52 @@
     font-size: 12px;
 }
 
-/* 预览面板样式 */
+/* 预览面板样式 - 添加滚动条支持 */
 .typography-preview-panel {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
     display: flex;
     flex-direction: column;
+    align-items: center; /* 确保内容居中 */
+}
+
+/* 预览容器样式 - 添加居中和缩放支持 */
+.typography-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+/* 封面和内容容器样式 */
+.typography-cover-container,
+.typography-content-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* 预览内容区域 - 确保缩放时的行为正确 */
+.typography-preview {
+    padding: 20px;
+    background-color: white;
+    color: black;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    overflow: auto;
+    margin: 0 auto;
+    min-width: 650px;
+    transform-origin: center top; /* 确保缩放以中心为基准 */
+}
+
+/* 书页样式优化 */
+.book-page {
+    margin: 0 auto; /* 确保居中 */
+    max-width: 100%; /* 限制最大宽度 */
+    box-sizing: border-box;
 }
 
 /* 预览标题 */
@@ -144,19 +212,6 @@
     text-align: center;
 }
 
-/* 预览内容区域 */
-.typography-preview {
-    flex: 1;
-    padding: 20px;
-    background-color: white;
-    color: black;
-    border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    margin: 0 auto;
-    max-width: 800px;
-}
-
 /* 底部按钮面板样式 */
 .typography-bottom-panel {
     padding: 16px;
@@ -164,13 +219,35 @@
     background-color: var(--background-secondary-alt);
 }
 
-/* 按钮样式 */
-.typography-buttons {
+/* 按钮容器样式 */
+.typography-buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* 按钮组样式 */
+.typography-buttons-group {
     display: flex;
     gap: 12px;
     justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
+/* 封面按钮组样式 */
+.cover-buttons-group {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* 操作按钮组样式 */
+.action-buttons-group {
+    padding-top: 4px;
+}
+
+/* 原有的按钮样式保持不变 */
 .apply-btn, .export-btn {
     padding: 10px 16px;
     border-radius: 6px;
@@ -210,7 +287,7 @@
     100% { background-color: var(--background-primary); }
 }
 
-/* 保留原有的字体、字号、行高和页边距样式 */
+/* 字体样式 */
 .font-default {
     font-family: var(--default-font);
 }
@@ -225,6 +302,22 @@
 
 .font-monospace {
     font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+.font-songti {
+    font-family: SimSun, "宋体", STSong, "华文宋体", serif;
+}
+
+.font-heiti {
+    font-family: SimHei, "黑体", STHeiti, "华文黑体", sans-serif;
+}
+
+.font-kaiti {
+    font-family: KaiTi, "楷体", STKaiti, "华文楷体", serif;
+}
+
+.font-fangsong {
+    font-family: FangSong, "仿宋", STFangsong, "华文仿宋", serif;
 }
 
 /* 字号预览样式 */
@@ -359,13 +452,6 @@
     transition: background-color 0.5s ease;
 }
 
-/* ===== 下拉选择器 ===== */
-.red-select-container {
-    position: relative;
-    max-width: 200px;
-    flex: 1;
-}
-
 .red-select {
     height: 36px;
     padding: 0 12px;
@@ -450,6 +536,8 @@
 
 /* ===== 字号调整组件 ===== */
 .red-font-size-group {
+    min-width: 36px;
+    max-width: 120px;
     height: 36px;
     flex: 1;
     display: flex;

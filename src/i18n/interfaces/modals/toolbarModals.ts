@@ -61,6 +61,10 @@ export interface ToolbarModalTranslation {
     SERIF_FONT: string;
     SANS_SERIF_FONT: string;
     MONOSPACE_FONT: string;
+    SONGTI_FONT: string;
+    HEITI_FONT: string;
+    KAITI_FONT: string;
+    FANGSONG_FONT: string;
     APPLY: string;
     TYPOGRAPHY_APPLIED: string;
     EXPORT: string;
@@ -69,7 +73,6 @@ export interface ToolbarModalTranslation {
     EXPORT_FAILED: string;
     FORMAT: string;
     CUSTOM_SIZE: string;
-
     // CoverModal
     DESIGN_COVER: string;
     SHOW_COVER: string;

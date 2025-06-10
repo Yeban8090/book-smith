@@ -47,7 +47,7 @@ export class TextBlock implements IBlock {
         const head = this.content.slice(0, splitPoint).trim();
         const tail = this.content.slice(splitPoint).trim();
     
-        if (tail.length < minLength * 0.6) return null;
+        if (tail.length < minLength) return null;
     
         this.content = head;
         return new TextBlock(this.type, tail);
@@ -151,18 +151,7 @@ export class Page {
         return this.blocks.pop() || null;
     }
     isOverflow(maxHeight: number): boolean {
-        return this.element.scrollHeight > maxHeight;
-    }
-    setPageNumber(number: number): void {
-        const pageNumberElement = this.element.querySelector('.page-number');
-        if (pageNumberElement) {
-            pageNumberElement.textContent = number.toString();
-            (pageNumberElement as HTMLElement).style.position = 'absolute';
-            (pageNumberElement as HTMLElement).style.bottom = '10px';
-            (pageNumberElement as HTMLElement).style.left = '0';
-            (pageNumberElement as HTMLElement).style.right = '0';
-            (pageNumberElement as HTMLElement).style.textAlign = 'center';
-        }
+        return this.element.scrollHeight > maxHeight + 20;
     }
 }
 
@@ -260,7 +249,6 @@ export class PaginatedEngine {
                 unpaginatedBlocks.shift();
             }
         }
-        this.pages.forEach((page, idx) => page.setPageNumber(idx + 1));
         return this.pages.length;
     }
 
@@ -275,7 +263,26 @@ export class PaginatedEngine {
         this.pages.forEach((page, idx) => {
             const marker = document.createElement('div');
             marker.classList.add('page-marker');
-            marker.textContent = format.replace("{page}", (idx + 1).toString());
+            
+            // 将页码格式化为三位数
+            const pageNum = (idx + 1).toString().padStart(3, '0');
+            
+            // 创建包含BookSmith标识和页码的内容
+            const markerContent = document.createElement('div');
+            markerContent.classList.add('marker-content');
+            
+            // 添加BookSmith标识
+            const bookSmithLogo = document.createElement('span');
+            bookSmithLogo.classList.add('booksmith-logo');
+            bookSmithLogo.textContent = 'BookSmith';
+            markerContent.appendChild(bookSmithLogo);
+            
+            // 添加页码
+            const pageMarker = document.createElement('span');
+            pageMarker.textContent = format.replace("{page}", pageNum);
+            markerContent.appendChild(pageMarker);
+            
+            marker.appendChild(markerContent);
             page.element.appendChild(marker);
         });
     }
@@ -296,43 +303,30 @@ export function createNewPage(bookSize: string = 'a4'): HTMLElement {
     return page;
 }
 
-/**
- * 生成分页目录
- */
-export function generatePaginatedTOC(container: HTMLElement, contentContainer: HTMLElement, bookSize: string = 'a4'): HTMLElement[] {
-    // 创建目录容器
-    const tocContainer = document.createElement('div');
+export function generatePaginatedTOC(contentContainer: HTMLElement, bookSize: string = 'a4'): HTMLElement[] {
+    const pageHeightMap = {
+        'a4': 1123, 'a5': 794, 'b5': 945, '16k': 983, 'custom': 907
+    };
+    const maxHeight = pageHeightMap[bookSize as keyof typeof pageHeightMap] || 1000;
 
-    const tocTitle = document.createElement('h2');
-    tocTitle.textContent = '目录';
-    tocContainer.appendChild(tocTitle);
-
-    const tocList = document.createElement('ul');
-    tocList.classList.add('toc-list');
-    tocContainer.appendChild(tocList);
-
-    // 查找所有标题元素和它们所在的页面
     const headingsWithPages: Array<{
         level: number;
         text: string;
         id: string;
         pageNumber: number;
     }> = [];
-    const pages = Array.from(contentContainer.querySelectorAll('.book-page'));
 
+    // 提取标题与对应页码
+    const pages = Array.from(contentContainer.querySelectorAll('.book-page'));
     pages.forEach((page, pageIndex) => {
-        const headings = Array.from(page.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        const headings = Array.from(page.querySelectorAll('h1, h2, h3'));
         headings.forEach((heading, index) => {
-            // 优先使用自定义属性中的实际层级，如果没有则使用标签名中的数字
             const level = (heading as HTMLElement).dataset.actualLevel
                 ? parseInt((heading as HTMLElement).dataset.actualLevel || '1')
                 : parseInt(heading.tagName.substring(1));
             const text = heading.textContent || '';
             const id = `heading-${pageIndex}-${index}`;
-
-            // 设置标题ID，用于锚点链接
             heading.id = id;
-
             headingsWithPages.push({
                 level,
                 text,
@@ -342,133 +336,75 @@ export function generatePaginatedTOC(container: HTMLElement, contentContainer: H
         });
     });
 
-    // 为每个标题创建目录项
-    headingsWithPages.forEach(({ level, text, id, pageNumber }) => {
+    const tocPages: HTMLElement[] = [];
+
+    // 工具函数：创建一页目录结构
+    const createTocPage = (): {
+        page: HTMLElement;
+        list: HTMLElement;
+    } => {
+        const tocPage = document.createElement('div');
+        tocPage.classList.add('book-page', 'toc-page', `book-size-${bookSize}`);
+
+        const tocContainer = document.createElement('div');
+        const tocTitle = document.createElement('h1');
+        tocTitle.textContent = '目录';
+        tocContainer.appendChild(tocTitle);
+
+        const tocList = document.createElement('div');
+        tocList.classList.add('toc-list');
+        tocContainer.appendChild(tocList);
+
+        tocPage.appendChild(tocContainer);
+        document.body.appendChild(tocPage); // 必须临时挂载才能测量 scrollHeight
+
+        return { page: tocPage, list: tocList };
+    };
+
+    let { page: currentPage, list: currentList } = createTocPage();
+    tocPages.push(currentPage);
+
+    for (let i = 0; i < headingsWithPages.length; ) {
+        const { level, text, id, pageNumber } = headingsWithPages[i];
+
+        // 构建目录项
         const listItem = document.createElement('li');
         listItem.classList.add(`toc-level-${level}`);
 
-        // 创建链接和页码容器
         const itemContent = document.createElement('div');
         itemContent.classList.add('toc-item-content');
 
-        // 添加链接
         const link = document.createElement('a');
         link.href = `#${id}`;
         link.textContent = text;
         itemContent.appendChild(link);
 
-        // 添加页码
         const pageRef = document.createElement('span');
         pageRef.classList.add('toc-page-ref');
-        pageRef.textContent = pageNumber.toString();
+        pageRef.textContent = pageNumber.toString().padStart(3, '0');
         itemContent.appendChild(pageRef);
 
         listItem.appendChild(itemContent);
-        tocList.appendChild(listItem);
-    });
+        currentList.appendChild(listItem);
 
-    // 对目录进行分页处理
-    const tocPages = [];
-    const pageHeight = getPageHeightByBookSize(bookSize);
+        // 判断是否溢出
+        if (currentPage.scrollHeight > maxHeight) {
+            currentList.removeChild(listItem); // 撤回当前项
 
-    // 创建第一个目录页
-    let currentTocPage = document.createElement('div');
-    currentTocPage.classList.add('book-page', 'toc-page', `book-size-${bookSize}`);
-    currentTocPage.appendChild(tocContainer.cloneNode(true));
-    tocPages.push(currentTocPage);
+            // 新建一页
+            const next = createTocPage();
+            currentPage = next.page;
+            currentList = next.list;
+            tocPages.push(currentPage);
 
-    // 检查目录是否需要分页
-    if (currentTocPage.scrollHeight > pageHeight) {
-        // 重新创建目录，按项目分页
-        tocPages.length = 0;
-        currentTocPage = document.createElement('div');
-        currentTocPage.classList.add('book-page', 'toc-page', `book-size-${bookSize}`);
+            continue; // 不推进 i，下次重新尝试这一条
+        }
 
-        const newTocContainer = document.createElement('div');
-        newTocContainer.classList.add('typography-toc');
-        newTocContainer.classList.add(`book-size-${bookSize}`);
-
-        const newTocTitle = document.createElement('h2');
-        newTocTitle.textContent = '目录';
-        newTocContainer.appendChild(newTocTitle);
-
-        const newTocList = document.createElement('ul');
-        newTocList.classList.add('toc-list');
-        newTocContainer.appendChild(newTocList);
-
-        currentTocPage.appendChild(newTocContainer);
-        tocPages.push(currentTocPage);
-
-        // 逐项添加目录项，检查是否需要创建新页
-        headingsWithPages.forEach(({ level, text, id, pageNumber }) => {
-            const listItem = document.createElement('li');
-            listItem.classList.add(`toc-level-${level}`);
-
-            // 创建链接和页码容器
-            const itemContent = document.createElement('div');
-            itemContent.classList.add('toc-item-content');
-
-            // 添加链接
-            const link = document.createElement('a');
-            link.href = `#${id}`;
-            link.textContent = text;
-            itemContent.appendChild(link);
-
-            // 添加页码
-            const pageRef = document.createElement('span');
-            pageRef.classList.add('toc-page-ref');
-            pageRef.textContent = pageNumber.toString();
-            itemContent.appendChild(pageRef);
-
-            listItem.appendChild(itemContent);
-
-            // 添加到当前目录页
-            const currentTocList = currentTocPage.querySelector('.toc-list');
-            if (currentTocList) {
-                currentTocList.appendChild(listItem);
-
-                // 检查是否溢出
-                if (currentTocPage.scrollHeight > pageHeight) {
-                    // 移除刚添加的项
-                    currentTocList.removeChild(listItem);
-
-                    // 创建新的目录页
-                    const nextTocPage = document.createElement('div');
-                    nextTocPage.classList.add('book-page', 'toc-page', `book-size-${bookSize}`);
-
-                    const nextTocContainer = document.createElement('div');
-                    nextTocContainer.classList.add('typography-toc');
-                    nextTocContainer.classList.add(`book-size-${bookSize}`);
-
-                    const nextTocTitle = document.createElement('h2');
-                    nextTocTitle.textContent = '目录';
-                    nextTocContainer.appendChild(nextTocTitle);
-
-                    const nextTocList = document.createElement('ul');
-                    nextTocList.classList.add('toc-list');
-                    nextTocContainer.appendChild(nextTocList);
-
-                    nextTocPage.appendChild(nextTocContainer);
-                    nextTocList.appendChild(listItem);
-
-                    tocPages.push(nextTocPage);
-                    currentTocPage = nextTocPage;
-                }
-            }
-        });
+        i++; // 成功添加才推进
     }
+
+    // 清除挂载
+    tocPages.forEach(p => document.body.contains(p) && p.remove());
 
     return tocPages;
-}
-
-// 辅助函数：根据开本大小获取页面高度
-function getPageHeightByBookSize(bookSize: string): number {
-    switch (bookSize) {
-        case 'a4': return 1000;
-        case 'a5': return 800;
-        case 'b5': return 900;
-        case '16k': return 850;
-        case 'custom': return 800;
-        default: return 800;
-    }
 }

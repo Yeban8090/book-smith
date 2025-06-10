@@ -8,7 +8,7 @@ import { ImgTemplateManager, ImgTemplate } from '../services/ImgTemplateManager'
 import { ThemeManager, Theme } from '../services/ThemeManager';
 import { CoverManager, CoverSettings } from '../services/CoverManager';
 import { CoverSettingModal } from '../modals/CoverSettingModal';
-import { PaginatedEngine, IBlock, extractBlocks, generatePaginatedTOC } from '../utils/PaginatedEngine';
+import { PaginatedEngine, extractBlocks, generatePaginatedTOC } from '../utils/PaginatedEngine';
 interface TypographySettings {
     fontFamily: string;
     fontSize: string;
@@ -128,8 +128,6 @@ export class TypographyView {
     }
 
     private createPreviewArea(container: HTMLElement) {
-        container.createEl('h2', { text: i18n.t('PREVIEW') });
-
         // 创建一个包含封面和内容的容器
         const previewContainer = container.createDiv({ cls: 'typography-preview-container' });
 
@@ -144,25 +142,29 @@ export class TypographyView {
 
     // 按照要求的顺序创建顶部选择器：书籍、模板、主题、字体、字号大小
     private createTopSelectors(container: HTMLElement) {
-        const selectorsContainer = container.createDiv({ cls: 'typography-selectors' });
+        // 创建第一行选择器容器
+        const selectorsRow1 = container.createDiv({ cls: 'typography-selectors-row' });
 
         // 1. 创建书籍选择器
-        this.createBookSelector(selectorsContainer);
+        this.createBookSelector(selectorsRow1);
 
         // 2. 创建模板选择器
-        this.createTemplateSelector(selectorsContainer);
+        this.createTemplateSelector(selectorsRow1);
 
         // 3. 创建主题选择器
-        this.createThemeSelector(selectorsContainer);
+        this.createThemeSelector(selectorsRow1);
+
+        // 创建第二行选择器容器
+        const selectorsRow2 = container.createDiv({ cls: 'typography-selectors-row' });
 
         // 4. 创建字体选择器
-        this.createFontSelector(selectorsContainer);
+        this.createFontSelector(selectorsRow2);
 
         // 5. 创建字号大小控制
-        this.createFontSizeControls(selectorsContainer);
+        this.createFontSizeControls(selectorsRow2);
 
         // 6. 创建开本大小选择器
-        this.createBookSizeSelector(selectorsContainer);
+        this.createBookSizeSelector(selectorsRow2);
     }
 
     // 自定义选择器通用方法
@@ -416,9 +418,13 @@ export class TypographyView {
     private createFontSelector(parent: HTMLElement) {
         const fontOptions = [
             { value: 'default', text: i18n.t('DEFAULT_FONT') || '默认字体' },
+            { value: 'songti', text: i18n.t('SONGTI_FONT') || '宋体' },
+            { value: 'heiti', text: i18n.t('HEITI_FONT') || '黑体' },
+            { value: 'kaiti', text: i18n.t('KAITI_FONT') || '楷体' },
+            { value: 'fangsong', text: i18n.t('FANGSONG_FONT') || '仿宋' },
             { value: 'serif', text: i18n.t('SERIF_FONT') || '衬线字体' },
             { value: 'sans-serif', text: i18n.t('SANS_SERIF_FONT') || '无衬线字体' },
-            { value: 'monospace', text: i18n.t('MONOSPACE_FONT') || '等宽字体' }
+            { value: 'monospace', text: i18n.t('MONOSPACE_FONT') || '等宽字体' },
         ];
 
         this.customFontSelect = this.createCustomSelect(
@@ -443,31 +449,60 @@ export class TypographyView {
     private createFontSizeControls(parent: HTMLElement) {
         const fontSizeGroup = parent.createEl('div', { cls: 'red-font-size-group' });
 
-
+        // 添加减小按钮
+        const decreaseButton = fontSizeGroup.createEl('button', {
+            cls: 'red-font-size-button red-decrease-button',
+            text: '-'
+        });
+    
         this.fontSizeInput = fontSizeGroup.createEl('input', {
             cls: 'red-font-size-input',
             type: 'text',
             value: '16',
             attr: {
-                style: 'border: none; outline: none; background: transparent;'
+                style: 'border: none; outline: none; background: transparent;',
+                min: '12',
+                max: '30'
             }
         }) as HTMLInputElement;
-
+    
+        // 添加增大按钮
+        const increaseButton = fontSizeGroup.createEl('button', {
+            cls: 'red-font-size-button red-increase-button',
+            text: '+'
+        });
+        
+        // 添加单位标签
+        fontSizeGroup.createEl('span', {
+            cls: 'red-font-size-unit'
+        });
     }
-
+    
     // 初始化字号控制
     private initializeFontSizeControls() {
         if (!this.fontSizeInput) return;
-
+    
         const updateFontSize = () => {
             if (!this.fontSizeInput) return;
+            
+            // 获取当前值并确保在有效范围内
+            let currentSize = parseInt(this.fontSizeInput.value) || 16;
+            currentSize = Math.max(12, Math.min(30, currentSize));
+            
+            // 更新输入框值
+            this.fontSizeInput.value = currentSize.toString();
+            
+            // 更新主题管理器中的字体大小
+            this.themeManager.setFontSize(currentSize);
+            
+            // 更新预览
             this.updatePreview();
         };
-
+    
         // 获取按钮元素
-        const decreaseButton = this.fontSizeInput.parentElement?.querySelector('button:first-child');
-        const increaseButton = this.fontSizeInput.parentElement?.querySelector('button:last-child');
-
+        const decreaseButton = this.fontSizeInput.parentElement?.querySelector('.red-decrease-button');
+        const increaseButton = this.fontSizeInput.parentElement?.querySelector('.red-increase-button');
+    
         // 添加减小字号事件
         decreaseButton?.addEventListener('click', () => {
             if (!this.fontSizeInput) return;
@@ -477,7 +512,7 @@ export class TypographyView {
                 updateFontSize();
             }
         });
-
+    
         // 添加增大字号事件
         increaseButton?.addEventListener('click', () => {
             if (!this.fontSizeInput) return;
@@ -487,7 +522,7 @@ export class TypographyView {
                 updateFontSize();
             }
         });
-
+    
         // 添加输入框变化事件
         this.fontSizeInput.addEventListener('change', updateFontSize);
         this.fontSizeInput.addEventListener('input', updateFontSize);
@@ -586,60 +621,56 @@ export class TypographyView {
             // 清空预览元素
             this.previewElement.empty();
 
-            // 应用模板
-            if (this.currentTemplate) {
-                this.currentTemplate.render(this.previewElement);
-            }
-
-            // 应用主题
-            this.themeManager.applyTheme(this.previewElement);
-
-            // 渲染内容
+            // 渲染内容（内部会应用主题和模板）
             await this.renderPaginatedContent(settings);
-
-            
         }
     }
 
-    // 新增：渲染分页内容
+    // 修改 renderPaginatedContent 方法，确保一致的应用顺序
     private async renderPaginatedContent(settings: TypographySettings) {
         if (!this.previewElement || !this.tempRenderContainer) return;
-
+    
         // 清空临时容器
         this.tempRenderContainer.empty();
-
+        
         // 1. 先渲染所有内容到临时容器
         await this.renderAllContent(this.tempRenderContainer);
-
+        
         // 2. 提取内容块，转换为支持文字级分页的 IBlock 对象
         const blocks = extractBlocks(this.tempRenderContainer);
+        
         // 3. 创建分页内容容器
         const contentContainer = this.previewElement.createDiv({ cls: 'typography-content-pages' });
-
+        
         // 4. 创建分页引擎并应用分页
         const engine = new PaginatedEngine(contentContainer);
         engine.setOptions({
             bookSize: settings.bookSize
         });
-
+        
         // 执行分页
-        const pageCount = engine.paginate(blocks);
-
+        engine.paginate(blocks);
+        
+        // 添加页码标记，修改格式为三位数
+        engine.addPageMarkers(" {page} ");
+    
         // 5. 生成分页目录
-        const tocPages = generatePaginatedTOC(this.previewElement, contentContainer, settings.bookSize);
-
+        const tocPages = generatePaginatedTOC(contentContainer, settings.bookSize);
+        
         // 6. 将目录页添加到内容前面
         const tocContainer = this.previewElement.createDiv({ cls: 'typography-toc-pages' });
         tocPages.forEach(tocPage => {
             tocContainer.appendChild(tocPage);
         });
-
-        // 将目录容器移到内容容器前面
+        
+        // 7.将目录容器移到内容容器前面
         this.previewElement.insertBefore(tocContainer, contentContainer);
-
-        // 7. 添加页码信息
-        const pageInfo = this.previewElement.createDiv({ cls: 'page-info' });
-        pageInfo.textContent = `共 ${pageCount + tocPages.length} 页（目录 ${tocPages.length} 页，正文 ${pageCount} 页）`;
+        
+        // 8. 在分页完成后应用主题和模板
+        if (this.currentTemplate) {
+            this.currentTemplate.render(this.previewElement);
+        }
+        this.themeManager.applyTheme(this.previewElement);
     }
 
     // 渲染所有内容到指定容器
@@ -732,13 +763,19 @@ export class TypographyView {
     // 底部按钮
     private createButtons(container: HTMLElement) {
         // 创建按钮容器
-        const buttonsContainer = container.createDiv({ cls: 'typography-buttons' });
-
+        const buttonsContainer = container.createDiv({ cls: 'typography-buttons-container' });
+    
+        // 第一行按钮组 - 封面相关
+        const coverButtonsGroup = buttonsContainer.createDiv({ cls: 'typography-buttons-group cover-buttons-group' });
+        
         // 添加封面设计开关
-        this.createCoverToggle(buttonsContainer);
-
+        this.createCoverToggle(coverButtonsGroup);
+    
+        // 第二行按钮组 - 操作按钮
+        const actionButtonsGroup = buttonsContainer.createDiv({ cls: 'typography-buttons-group action-buttons-group' });
+    
         // 应用按钮
-        const applyBtn = buttonsContainer.createEl('button', {
+        const applyBtn = actionButtonsGroup.createEl('button', {
             text: i18n.t('APPLY') || '应用',
             cls: 'typography-btn apply-btn'
         });
@@ -746,9 +783,9 @@ export class TypographyView {
             // 应用排版设置
             new Notice(i18n.t('TYPOGRAPHY_APPLIED') || '排版设置已应用');
         });
-
+    
         // 导出按钮
-        const exportBtn = buttonsContainer.createEl('button', {
+        const exportBtn = actionButtonsGroup.createEl('button', {
             text: i18n.t('EXPORT') || '导出',
             cls: 'typography-btn export-btn'
         });
