@@ -1,0 +1,135 @@
+/* 导出模态框样式 */
+.book-smith-modal-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 标题样式 */
+.book-smith-modal-header h2 {
+    font-size: 18px;
+    text-align: center;
+    margin: 0;
+    padding-bottom: 10px;
+    color: var(--text-normal);
+}
+
+/* 导出内容区域 */
+.export-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 0;
+}
+
+/* 导出标题 */
+.export-title {
+    font-size: 16px;
+    text-align: center;
+    color: var(--text-normal);
+    margin-bottom: 5px;
+}
+
+/* 分隔线 */
+.export-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--background-modifier-border);
+    margin: 0 0 10px 0;
+}
+
+/* 格式选择容器 */
+.export-formats-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px;
+}
+
+/* 格式按钮样式 */
+.export-format-btn {
+    padding: 12px 20px;
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 0.95em;
+}
+
+.export-format-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+    background-color: var(--background-modifier-border);
+}
+
+.export-format-btn.selected {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+}
+
+/* 按钮容器 */
+.export-buttons-container {
+    display: flex;
+    justify-content: right;
+    gap: 10px;
+}
+
+/* 取消按钮 */
+.export-cancel-btn {
+    padding: 10px 16px;
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.export-cancel-btn:hover {
+    background-color: var(--background-modifier-hover);
+    transform: translateY(-2px);
+}
+
+/* 确认按钮 */
+.export-confirm-btn {
+    padding: 10px 16px;
+    background-color: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.export-confirm-btn:hover {
+    background-color: var(--interactive-accent-hover);
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* 导出模态框标题 */
+.book-smith-modal-header {
+    position: relative;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin-bottom: 15px;
+}
+
+/* 选择导出格式标题 */
+.export-title {
+    font-size: 16px;
+    text-align: center;
+    margin: 0 0 15px 0;
+    color: var(--text-normal);
+}

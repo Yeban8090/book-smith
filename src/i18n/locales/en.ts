@@ -373,7 +373,41 @@ const toolbarModalTranslation: ToolbarModalTranslation = {
     PAYMENT_WECHAT: 'WeChat pay',
     PAYMENT_ALIPAY: 'Alipay',
     PAYMENT_KOFI: 'Ko-fi',
-    CURRENCY_UNIT: 'CNY'
+    CURRENCY_UNIT: 'CNY',
+
+    // TypographyModal
+    PREVIEW: 'Preview',
+    NO_BOOKS_AVAILABLE: 'No books available',
+    LOADING: 'Loading...',
+    DEFAULT_FONT: 'Default font',
+    SERIF_FONT: 'Serif font',
+    SANS_SERIF_FONT: 'Sans-serif font',
+    MONOSPACE_FONT: 'Monospace font',
+    SONGTI_FONT: 'Songti font',
+    HEITI_FONT: 'Heiti font',
+    KAITI_FONT: 'Kaiti font',
+    FANGSONG_FONT: 'Fangsong font',
+    APPLY: 'Apply',
+    TYPOGRAPHY_APPLIED: 'Typography applied',
+    EXPORT: 'Export',
+    SELECT_BOOK_FIRST: 'Please select a book first',
+    EXPORT_SUCCESS: 'Export successful',
+    EXPORT_FAILED: 'Export failed: ',
+    FORMAT: 'Format',
+    CUSTOM_SIZE: 'Custom size',
+    SELECT_EXPORT_FORMAT: 'Select export format',
+
+    // CoverModal
+    DESIGN_COVER: 'Design cover',
+    SHOW_COVER: 'Show cover',
+    COVER_DESIGN: 'Cover design',
+    COVER_IMAGE: 'Cover image',
+    CLEAR_IMAGE: 'Clear image',
+    BACKGROUND_COLOR: 'Background color',
+    OVERLAY: 'Overlay',
+    OVERLAY_DESC: 'Add an overlay to the cover',
+    OVERLAY_OPACITY: 'Overlay opacity',
+    SCALE: 'Scale',
 };
 
 const componentTranslation: ComponentTranslation = {

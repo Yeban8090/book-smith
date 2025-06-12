@@ -1,0 +1,123 @@
+/* 封面预览样式 */
+.typography-cover-preview {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 30px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* 封面内容样式 */
+.cover-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 40px;
+    text-align: center;
+}
+
+/* 封面标题默认样式 */
+.cover-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* 封面作者默认样式 */
+.cover-author {
+    font-size: 18px;
+    color: #ffffff;
+    font-style: italic;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 封面设计模态框样式 */
+.book-smith-cover-modal {
+    max-width: 90vw;
+}
+
+.cover-settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cover-preview-area {
+    width: 100%;
+    height: 300px;
+    margin-bottom: 20px;
+}
+
+.cover-preview {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cover-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cover-button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.cover-cancel-button,
+.cover-apply-button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cover-cancel-button {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+}
+
+.cover-apply-button {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+}
+
+/* 封面开关样式 */
+.cover-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0; /* 移除底部边距 */
+    width: 100%;
+}
+
+.cover-toggle-label {
+    font-size: 14px;
+}
+
+.cover-toggle-input {
+    margin: 0;
+}
+
+.cover-design-btn {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    margin-left: 10px;
+}

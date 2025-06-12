@@ -1,0 +1,631 @@
+/* 排版视图基础样式 */
+.book-smith-typography-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--background-primary);
+}
+
+/* 头部样式 */
+.typography-header {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.typography-header-icon {
+    margin-right: 8px;
+    color: var(--text-accent);
+}
+
+.typography-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.typography-exit-btn {
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.typography-exit-btn:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+}
+
+/* 内容区域样式 */
+.typography-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 顶部面板样式 */
+.typography-top-panel {
+    padding: 10px;
+    max-width: 680px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary-alt);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 选择器行容器样式 */
+.typography-selectors-row {
+    display: flex;
+    flex-wrap: nowrap; /* 防止换行 */
+    align-items: center;
+    justify-content: center; /* 居中排列 */
+    min-width: min-content; /* 确保内容不会被压缩 */
+    max-width: 1200px; /* 设置最大宽度 */
+    margin: 0 auto; /* 居中显示 */
+}
+
+/* 自定义选择器容器样式 */
+.book-smith-select-container {
+    position: relative;
+    flex: 0 0 auto; /* 防止压缩 */
+    min-width: 120px; /* 最小宽度 */
+    max-width: 200px; /* 最大宽度 */
+}
+
+/* 表单字段样式 */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 150px;
+}
+
+.field-label {
+    font-weight: 500;
+    color: var(--text-normal);
+    font-size: 12px;
+}
+
+/* 预览面板样式 */
+.typography-preview-panel {
+    flex: 1;
+    padding: 20px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 预览容器样式 - 添加居中和缩放支持 */
+.typography-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+/* 封面和内容容器样式 */
+.typography-cover-container,
+.typography-content-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* 预览内容区域 - 确保缩放时的行为正确 */
+.typography-preview {
+    padding: 20px;
+    background-color: white;
+    color: black;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    overflow: auto;
+    margin: 0 auto;
+    min-width: 650px;
+    transform-origin: center top; /* 确保缩放以中心为基准 */
+}
+
+/* 书页样式优化 */
+.book-page {
+    margin: 0 auto; /* 确保居中 */
+    max-width: 100%; /* 限制最大宽度 */
+    box-sizing: border-box;
+}
+
+/* 预览标题 */
+.typography-preview-panel h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: var(--text-normal);
+    text-align: center;
+}
+
+/* 底部按钮面板样式 */
+.typography-bottom-panel {
+    padding: 10px 30px 0 36px;
+    border-top: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary-alt);
+}
+
+/* 按钮容器样式 */
+.typography-buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* 按钮组样式 */
+.typography-buttons-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* 封面按钮组样式 */
+.cover-buttons-group {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* 操作按钮组样式 */
+.action-buttons-group {
+    padding-top: 4px;
+}
+
+/* 原有的按钮样式保持不变 */
+.export-btn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 120px;
+}
+
+.export-btn {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.export-btn:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
+/* 选中效果 */
+.selected-option {
+    animation: highlight 0.5s ease-in-out;
+}
+
+@keyframes highlight {
+    0% { background-color: var(--background-primary); }
+    50% { background-color: var(--interactive-accent-hover); }
+    100% { background-color: var(--background-primary); }
+}
+
+
+/* 字号预览样式 */
+.font-size-small {
+    font-size: 14px;
+}
+
+.font-size-medium {
+    font-size: 16px;
+}
+
+.font-size-large {
+    font-size: 18px;
+}
+
+/* 行高预览样式 */
+.line-height-compact {
+    line-height: 1.3;
+}
+
+.line-height-normal {
+    line-height: 1.6;
+}
+
+.line-height-relaxed {
+    line-height: 1.8;
+}
+
+/* 页边距预览样式 */
+.margin-narrow {
+    padding: 10px;
+}
+
+.margin-normal {
+    padding: 20px;
+}
+
+.margin-wide {
+    padding: 30px;
+}
+
+
+/* 添加模板相关样式 */
+
+/* 备忘录模板样式 */
+.notes-template {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.notes-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.notes-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+}
+
+.notes-content {
+    line-height: 1.6;
+}
+
+/* 简洁模板样式 */
+.simple-template {
+    background-color: white;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.simple-content {
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* 文章模板样式 */
+.article-template {
+    background-color: white;
+    padding: 30px;
+    font-family: Georgia, Times, "Times New Roman", serif;
+}
+
+.article-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.article-meta {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.article-abstract {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-left: 4px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.article-content {
+    line-height: 1.8;
+}
+
+.article-footer {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+}
+
+.article-references {
+    margin-bottom: 10px;
+}
+
+.article-copyright {
+    font-style: italic;
+}
+
+/* 选择器高亮效果 */
+.selected-option {
+    background-color: rgba(14, 101, 235, 0.1) !important;
+    transition: background-color 0.5s ease;
+}
+
+/* 自定义选择器样式 */
+.book-smith-select {
+    max-width: 112px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    color: var(--text-normal);
+    box-shadow: 0 1px 3px var(--background-modifier-box-shadow);
+    white-space: nowrap;
+    overflow: hidden;
+}
+.book-smith-book-size-select .book-smith-select{
+    max-width: 76px;
+}
+.book-smith-select:hover {
+    background: var(--background-modifier-hover);
+    box-shadow: 0 2px 6px var(--background-modifier-box-shadow);
+}
+
+.book-smith-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.book-smith-select-arrow {
+    margin-left: 8px;
+    transition: transform 0.2s ease;
+}
+
+/* 选择器下拉菜单样式 */
+.book-smith-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--background-modifier-box-shadow);
+    display: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.book-smith-select-dropdown.book-smith-show {
+    display: block;
+}
+
+.book-smith-select-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-normal);
+}
+
+.book-smith-select-item:hover {
+    background: var(--background-modifier-hover);
+}
+
+.book-smith-select-item.book-smith-selected {
+    background: var(--background-modifier-hover);
+    color: var(--text-accent);
+}
+
+/* 字体大小控制组样式 */
+.book-smith-font-size-group {
+    min-width: 36px;
+    max-width: 120px;
+    height: 36px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    margin: 0 10px 0 1px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px var(--background-modifier-box-shadow);
+}
+
+.book-smith-font-size-input {
+    width: 30px;
+    text-align: center;
+}
+
+.book-smith-font-size-btn {    
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-normal);
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+.book-smith-font-size-btn:hover {
+    background: var(--background-modifier-hover);
+}
+
+/* 开本大小样式 */
+.book-size-A3 {
+    width: 297mm;
+    min-height: 420mm;
+    max-height: 420mm;
+}
+
+.book-size-A4 {
+    width: 210mm;
+    min-height: 297mm;
+    max-height: 297mm;
+}
+
+.book-size-A5 {
+    width: 148mm;
+    min-height: 210mm;
+    max-height: 210mm;
+}
+
+.book-size-Legal {
+    width: 216mm;
+    min-height: 356mm;
+    max-height: 356mm;
+}
+
+.book-size-Letter {
+    width: 216mm;
+    min-height: 279mm;
+    max-height: 279mm;
+}
+
+.book-size-Tabloid {
+    width: 279mm;
+    min-height: 432mm;
+    max-height: 432mm;
+}
+
+.book-size-B5 {
+    width: 176mm;
+    min-height: 250mm;
+    max-height: 250mm;
+}
+
+.book-size-16k {
+    width: 184mm;
+    min-height: 260mm;
+    max-height: 260mm;
+}
+
+.book-size-custom {
+    width: 180mm;
+    min-height: 240mm;
+    max-height: 240mm;
+}
+
+/* 简洁模板样式 */
+.simple-template {
+    background-color: white;
+    padding: 20px;
+    font-family: var(--font-text, sans-serif);
+    max-width: 800px;
+    line-height: 1.6;
+}
+
+.simple-template .header {
+    margin-bottom: 20px;
+}
+
+.simple-template .title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.simple-template .meta {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.simple-template .abstract {
+    font-style: italic;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-left: 3px solid #ddd;
+}
+
+.simple-template .content {
+    margin-bottom: 20px;
+}
+
+.simple-template .footer {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+}
+
+/* 文章模板样式 */
+.article-template {
+    background-color: white;
+    padding: 30px;
+    font-family: var(--font-text, serif);
+    max-width: 800px;
+    line-height: 1.8;
+}
+
+.article-template .header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.article-template .title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.article-template .meta {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.article-template .abstract {
+    font-style: italic;
+    margin: 0 auto 30px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-left: 4px solid #ddd;
+    max-width: 80%;
+}
+
+.article-template .content {
+    margin-bottom: 30px;
+}
+
+.article-template .footer {
+    margin-top: 40px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+}
+
+.article-template blockquote {
+    margin: 20px 0;
+    padding: 10px 20px;
+    background-color: #f9f9f9;
+    border-left: 4px solid #ddd;
+    font-style: italic;
+}
+
+.article-template .copyright {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #999;
+}
+
+/* 选择器高亮效果 */
+.selected-option {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}

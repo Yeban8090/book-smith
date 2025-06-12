@@ -1,0 +1,98 @@
+/* 默认模板样式 */
+.template-default .page {
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 备忘录模板样式 */
+.template-notes .page {
+    background-color: #fffdf7;
+    background-image: linear-gradient(#eee 1px, transparent 1px);
+    background-size: 100% 24px;
+    padding: 30px 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+}
+
+.notes-header {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.notes-title {
+    font-weight: bold;
+    color: #555;
+}
+
+.notes-date {
+    color: #888;
+}
+
+/* 书籍模板样式 */
+.template-book .page {
+    padding: 30px;
+    background-color: #fffef5;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.book-page-style {
+    position: relative;
+    min-height: 800px;
+}
+
+.book-footer {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+}
+
+.book-cover {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f5f5f5;
+}
+
+/* 杂志模板样式 */
+.template-magazine .page {
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.magazine-header {
+    display: flex;
+    justify-content: flex-end;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+}
+
+.magazine-section {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.magazine-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+}
+
+.magazine-cover {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

@@ -21,6 +21,7 @@
     "@typescript-eslint/eslint-plugin": "5.29.0",
     "@typescript-eslint/parser": "5.29.0",
     "builtin-modules": "^3.3.0",
+    "electron": "32.2.5",
     "esbuild": "^0.17.3",
     "obsidian": "latest",
     "tslib": "2.4.0",
@@ -29,6 +30,7 @@
   "dependencies": {
     "@popperjs/core": "^2.11.8",
     "docx": "^9.5.0",
+    "pdf-lib": "^1.17.1",
     "uuid": "^11.1.0"
   }
 }
