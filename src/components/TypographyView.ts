@@ -1,13 +1,14 @@
 import { App, setIcon, Notice, TFile, MarkdownRenderer } from 'obsidian';
 import { BookManager } from "../services/BookManager";
 import { Book, ChapterNode } from "../types/book";
-import { ExportService } from "../services/ExportService";
+import { ExportService} from "../services/ExportService";
 import { i18n } from "../i18n/i18n";
 import BookSmithPlugin from '../main';
 import { ImgTemplateManager, ImgTemplate } from '../services/ImgTemplateManager';
-import { ThemeManager, Theme } from '../services/ThemeManager';
+import { ThemeManager } from '../services/ThemeManager';
 import { CoverManager, CoverSettings } from '../services/CoverManager';
 import { CoverSettingModal } from '../modals/CoverSettingModal';
+import { ExportModal } from '../modals/ExportModal';
 import { PaginatedEngine, extractBlocks, generatePaginatedTOC } from '../utils/PaginatedEngine';
 interface TypographySettings {
     fontFamily: string;
@@ -764,17 +765,7 @@ export class TypographyView {
         
         // 添加封面设计开关
         this.createCoverToggle(buttonsGroup);
-    
-        // 应用按钮
-        const applyBtn = buttonsGroup.createEl('button', {
-            text: i18n.t('APPLY') || '应用',
-            cls: 'typography-btn apply-btn'
-        });
-        applyBtn.addEventListener('click', () => {
-            // 应用排版设置
-            new Notice(i18n.t('TYPOGRAPHY_APPLIED') || '排版设置已应用');
-        });
-    
+        
         // 导出按钮
         const exportBtn = buttonsGroup.createEl('button', {
             text: i18n.t('EXPORT') || '导出',
@@ -785,41 +776,105 @@ export class TypographyView {
 
     // 导出功能
     private async exportWithTypography() {
-        if (!this.selectedBook) {
-            new Notice(i18n.t('SELECT_BOOK_FIRST') || '请先选择一本书籍');
-            return;
-        }
-
         try {
-            // 获取排版设置
-
-            // 调用导出服务，传入排版设置和封面设置
-            // const result = await this.exportService.exportBook(
-            //     'pdf',
-            //     this.selectedBook,
-            //     settings
-            // );
-
-            // 处理导出结果
-            // if (result.success) {
-            //     new Notice(i18n.t('EXPORT_SUCCESS') || '导出成功');
-
-            //     // 如果有下载链接，触发下载
-            //     if (result.downloadUrl) {
-            //         const a = document.createElement('a');
-            //         a.href = result.downloadUrl;
-            //         a.download = result.fileName || 'export.html';
-            //         document.body.appendChild(a);
-            //         a.click();
-            //         document.body.removeChild(a);
-            //     }
-            // } else {
-            //     new Notice(i18n.t('EXPORT_FAILED') || '导出失败: ' + (result.error || '未知错误'));
-            // }
+            if (!this.selectedBook) {
+                throw new Error('未选择书籍');
+            }
+            
+            // 使用新的导出模态框
+            const exportModal = new ExportModal(
+                this.parentEl,
+                this.exportService,
+                (format) => this.executeExport(format)
+            );
+            
+            exportModal.open();
         } catch (error) {
             console.error('导出错误:', error);
             new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+    
+    // 执行导出
+    private async executeExport(format: string) {
+        try {
+            if (!this.selectedBook) {
+                throw new Error('未选择书籍');
+            }
+            
+            let htmlContent: string | undefined;
+            let useTypography = false;
+            
+            // 对于非 txt 格式，获取排版后的 HTML 内容
+            if (format !== 'txt') {
+                useTypography = true;
+                
+                // 获取当前排版设置
+                const settings = this.getTypographySettings();
+                
+                // 创建临时容器，用于获取完整的 HTML 内容
+                const tempContainer = document.createElement('div');
+                tempContainer.className = 'typography-export-container';
+                
+                // 复制预览元素的内容到临时容器
+                if (this.previewElement) {
+                    tempContainer.innerHTML = this.previewElement.innerHTML;
+                    
+                    // 应用样式
+                    tempContainer.style.fontSize = `${settings.fontSize}px`;
+                    tempContainer.classList.add(`font-${settings.fontFamily}`);
+                    
+                    // 获取 HTML 内容（只获取内部 HTML，不包括外层容器）
+                    htmlContent = tempContainer.innerHTML;
+                }
+            }
+            
+            // 使用统一的 exportBook 方法进行导出
+            const content = await this.exportService.exportBook(format, this.selectedBook, {
+                useTypography,
+                htmlContent
+            });
+            
+            // 处理下载或打印
+            if (format === 'pdf' && content.content === 'print-success') {
+                // PDF 已通过 Printd 直接打印，不需要下载
+                new Notice(`PDF 打印成功！`);
+            } else {
+                // 其他格式需要下载
+                const blob = format === 'txt' 
+                    ? new Blob([content.content], { type: 'text/plain' })
+                    : this.dataURLToBlob(content.content);
+                    
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = content.fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                new Notice(`导出成功！`);
+            }
+        } catch (error) {
+            console.error('导出错误:', error);
+            new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+    
+    // 将 Data URL 转换为 Blob
+    private dataURLToBlob(dataURL: string): Blob {
+        const parts = dataURL.split(';base64,');
+        const contentType = parts[0].split(':')[1];
+        const raw = window.atob(parts[1]);
+        const rawLength = raw.length;
+        const uInt8Array = new Uint8Array(rawLength);
+        
+        for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i);
+        }
+        
+        return new Blob([uInt8Array], { type: contentType });
     }
 
     // 添加封面设计开关

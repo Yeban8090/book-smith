@@ -29,6 +29,7 @@
   "dependencies": {
     "@popperjs/core": "^2.11.8",
     "docx": "^9.5.0",
+    "pdf-lib": "^1.17.1",
     "uuid": "^11.1.0"
   }
 }

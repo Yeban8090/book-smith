@@ -395,6 +395,7 @@ const toolbarModalTranslation: ToolbarModalTranslation = {
     EXPORT_FAILED: 'Export failed: ',
     FORMAT: 'Format',
     CUSTOM_SIZE: 'Custom size',
+    SELECT_EXPORT_FORMAT: 'Select export format',
 
     // CoverModal
     DESIGN_COVER: 'Design cover',

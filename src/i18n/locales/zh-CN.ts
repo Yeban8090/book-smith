@@ -394,7 +394,8 @@ const toolbarModalTranslation: ToolbarModalTranslation = {
     EXPORT_FAILED: '导出失败: ',
     FORMAT  : '格式',
     CUSTOM_SIZE: '自定义大小',
-
+    SELECT_EXPORT_FORMAT: '选择导出格式',
+    
     // CoverModal
     DESIGN_COVER: '设计封面',
     SHOW_COVER: '显示封面',

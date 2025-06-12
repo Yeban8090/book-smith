@@ -184,7 +184,7 @@
 }
 
 /* 原有的按钮样式保持不变 */
-.apply-btn, .export-btn {
+.export-btn {
     padding: 10px 16px;
     border-radius: 6px;
     text-align: center;
@@ -194,22 +194,13 @@
     min-width: 120px;
 }
 
-.apply-btn {
+.export-btn {
     background-color: var(--interactive-accent);
     color: var(--text-on-accent);
 }
 
-.apply-btn:hover {
-    background-color: var(--interactive-accent-hover);
-}
-
-.export-btn {
-    background-color: var(--background-modifier-border);
-    color: var(--text-normal);
-}
-
 .export-btn:hover {
-    background-color: var(--background-modifier-hover);
+    background-color: var(--interactive-accent-hover);
 }
 
 /* 选中效果 */

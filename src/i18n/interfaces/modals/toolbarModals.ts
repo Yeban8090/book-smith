@@ -73,6 +73,7 @@ export interface ToolbarModalTranslation {
     EXPORT_FAILED: string;
     FORMAT: string;
     CUSTOM_SIZE: string;
+    SELECT_EXPORT_FORMAT: string;
     // CoverModal
     DESIGN_COVER: string;
     SHOW_COVER: string;
