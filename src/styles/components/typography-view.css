@@ -213,38 +213,7 @@
     50% { background-color: var(--interactive-accent-hover); }
     100% { background-color: var(--background-primary); }
 }
-/* 字体样式 */
-.font-default {
-    font-family: var(--default-font);
-}
 
-.font-serif {
-    font-family: Georgia, Times, 'Times New Roman', serif;
-}
-
-.font-sans-serif {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
-
-.font-monospace {
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-}
-
-.font-songti {
-    font-family: SimSun, "宋体", STSong, "华文宋体", serif;
-}
-
-.font-heiti {
-    font-family: SimHei, "黑体", STHeiti, "华文黑体", sans-serif;
-}
-
-.font-kaiti {
-    font-family: KaiTi, "楷体", STKaiti, "华文楷体", serif;
-}
-
-.font-fangsong {
-    font-family: FangSong, "仿宋", STFangsong, "华文仿宋", serif;
-}
 
 /* 字号预览样式 */
 .font-size-small {
@@ -494,19 +463,43 @@
 }
 
 /* 开本大小样式 */
-.book-size-a4 {
+.book-size-A3 {
+    width: 297mm;
+    min-height: 420mm;
+    max-height: 420mm;
+}
+
+.book-size-A4 {
     width: 210mm;
     min-height: 297mm;
     max-height: 297mm;
 }
 
-.book-size-a5 {
+.book-size-A5 {
     width: 148mm;
     min-height: 210mm;
     max-height: 210mm;
 }
 
-.book-size-b5 {
+.book-size-Legal {
+    width: 216mm;
+    min-height: 356mm;
+    max-height: 356mm;
+}
+
+.book-size-Letter {
+    width: 216mm;
+    min-height: 279mm;
+    max-height: 279mm;
+}
+
+.book-size-Tabloid {
+    width: 279mm;
+    min-height: 432mm;
+    max-height: 432mm;
+}
+
+.book-size-B5 {
     width: 176mm;
     min-height: 250mm;
     max-height: 250mm;

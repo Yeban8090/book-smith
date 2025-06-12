@@ -9,8 +9,8 @@ import { ThemeManager } from '../services/ThemeManager';
 import { CoverManager, CoverSettings } from '../services/CoverManager';
 import { CoverSettingModal } from '../modals/CoverSettingModal';
 import { ExportModal } from '../modals/ExportModal';
-import { PaginatedEngine, extractBlocks, generatePaginatedTOC } from '../utils/PaginatedEngine';
-interface TypographySettings {
+
+export interface TypographySettings {
     fontFamily: string;
     fontSize: string;
     lineHeight: string;
@@ -75,8 +75,8 @@ export class TypographyView {
 
             // 初始化各个选择器
             this.initializeBookSelect();
-            this.initializeTemplateSelect();
-            this.initializeThemeSelect();
+            // this.initializeTemplateSelect();
+            // this.initializeThemeSelect();
             this.initializeFontSelect();
             this.initializeFontSizeControls();
             this.initializeBookSizeSelect(); // 新增初始化开本大小选择器
@@ -148,16 +148,13 @@ export class TypographyView {
         // 1. 创建书籍选择器
         this.createBookSelector(selectorsRow);
         // 2. 创建模板选择器
-        this.createTemplateSelector(selectorsRow);
-
+        // this.createTemplateSelector(selectorsRow);
         // 3. 创建主题选择器
-        this.createThemeSelector(selectorsRow);
+        // this.createThemeSelector(selectorsRow);
         // 4. 创建字体选择器
         this.createFontSelector(selectorsRow);
-
         // 5. 创建字号大小控制
         this.createFontSizeControls(selectorsRow);
-
         // 6. 创建开本大小选择器
         this.createBookSizeSelector(selectorsRow);
     }
@@ -445,7 +442,7 @@ export class TypographyView {
         const fontSizeGroup = parent.createEl('div', { cls: 'book-smith-font-size-group' });
 
         // 添加减小按钮
-        const decreaseButton = fontSizeGroup.createEl('button', {
+        fontSizeGroup.createEl('button', {
             cls: 'book-smith-font-size-button book-smith-decrease-button',
             text: '-'
         });
@@ -462,7 +459,7 @@ export class TypographyView {
         }) as HTMLInputElement;
 
         // 添加增大按钮
-        const increaseButton = fontSizeGroup.createEl('button', {
+        fontSizeGroup.createEl('button', {
             cls: 'book-smith-font-size-button book-smith-increase-button',
             text: '+'
         });
@@ -543,11 +540,12 @@ export class TypographyView {
     // 开本大小选择器
     private createBookSizeSelector(parent: HTMLElement) {
         const bookSizeOptions = [
-            { value: 'a4', text: 'A4' },
-            { value: 'a5', text: 'A5' },
-            { value: 'b5', text: 'B5' },
-            { value: '16k', text: '16K' },
-            { value: 'custom', text: i18n.t('CUSTOM_SIZE') || '自定义' }
+            { value: 'A4', text: 'A4' },
+            { value: 'A5', text: 'A5' },
+            { value: 'A3', text: 'A3' },
+            { value: 'Legal', text: 'Legal' },
+            { value: 'Letter', text: 'Letter' },
+            { value: 'Tabloid', text: 'Tabloid' }
         ];
 
         this.customBookSizeSelect = this.createCustomSelect(
@@ -574,8 +572,14 @@ export class TypographyView {
         const coverToggle = this.parentEl.querySelector('.cover-toggle-input') as HTMLInputElement;
         const showCover = coverToggle ? coverToggle.checked : true;
 
+        // 获取字体系列
+        const fontFamily = (this.customFontSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default';
+        
+        // 获取实际的字体CSS定义
+        const fontFamilyCSS = this.getFontFamilyCSS(fontFamily);
+
         return {
-            fontFamily: (this.customFontSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default',
+            fontFamily: fontFamilyCSS,
             fontSize: this.fontSizeInput?.value || '16',
             lineHeight: 'normal', // 保留默认值
             margin: '0', // 保留默认值
@@ -587,20 +591,36 @@ export class TypographyView {
         };
     }
 
+    // 获取字体CSS定义
+    private getFontFamilyCSS(fontFamily: string): string {
+        switch (fontFamily) {
+            case 'serif':
+                return 'Georgia, Times, \'Times New Roman\', serif';
+            case 'sans-serif':
+                return '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif';
+            case 'monospace':
+                return '\'SFMono-Regular\', Consolas, \'Liberation Mono\', Menlo, Courier, monospace';
+            case 'songti':
+                return 'SimSun, "宋体", STSong, "华文宋体", serif';
+            case 'heiti':
+                return 'SimHei, "黑体", STHeiti, "华文黑体", sans-serif';
+            case 'kaiti':
+                return 'KaiTi, "楷体", STKaiti, "华文楷体", serif';
+            case 'fangsong':
+                return 'FangSong, "仿宋", STFangsong, "华文仿宋", serif';
+            case 'default':
+            default:
+                return 'var(--default-font)';
+        }
+    }
+
     // 预览相关方法
-    // 在 updatePreview 方法中添加分页逻辑
     private async updatePreview() {
         if (!this.selectedBook) return;
 
         // 获取封面开关状态
         const coverToggle = this.parentEl.querySelector('.cover-toggle-input') as HTMLInputElement;
         const showCover = coverToggle ? coverToggle.checked : true;
-
-        // 获取排版设置
-        const settings = this.getTypographySettings();
-
-        // 更新预览样式
-        this.updatePreviewStyle(settings);
 
         // 分离封面和内容的显示逻辑
         if (this.coverPreviewElement) {
@@ -612,60 +632,33 @@ export class TypographyView {
 
         if (this.previewElement) {
             this.previewElement.style.display = 'block';
-
             // 清空预览元素
             this.previewElement.empty();
-
-            // 渲染内容（内部会应用主题和模板）
-            await this.renderPaginatedContent(settings);
+            // 渲染内容
+            await this.renderPaginatedContent();
         }
     }
 
-    // 修改 renderPaginatedContent 方法，确保一致的应用顺序
-    private async renderPaginatedContent(settings: TypographySettings) {
-        if (!this.previewElement || !this.tempRenderContainer) return;
+    private async renderPaginatedContent() {
+        if (!this.previewElement) return;
 
-        // 清空临时容器
-        this.tempRenderContainer.empty();
+        // 清空预览区域
+        this.previewElement.empty();
 
-        // 1. 先渲染所有内容到临时容器
-        await this.renderAllContent(this.tempRenderContainer);
+        // 获取排版设置
+        const settings = this.getTypographySettings();
 
-        // 2. 提取内容块，转换为支持文字级分页的 IBlock 对象
-        const blocks = extractBlocks(this.tempRenderContainer);
+        // 更新预览样式
+        this.updatePreviewStyle(settings);
 
-        // 3. 创建分页内容容器
-        const contentContainer = this.previewElement.createDiv({ cls: 'typography-content-pages' });
+        // 渲染所有内容
+        await this.renderAllContent(this.previewElement);
 
-        // 4. 创建分页引擎并应用分页
-        const engine = new PaginatedEngine(contentContainer);
-        engine.setOptions({
-            bookSize: settings.bookSize
-        });
-
-        // 执行分页
-        engine.paginate(blocks);
-
-        // 添加页码标记，修改格式为三位数
-        engine.addPageMarkers(" {page} ");
-
-        // 5. 生成分页目录
-        const tocPages = generatePaginatedTOC(contentContainer, settings.bookSize);
-
-        // 6. 将目录页添加到内容前面
-        const tocContainer = this.previewElement.createDiv({ cls: 'typography-toc-pages' });
-        tocPages.forEach(tocPage => {
-            tocContainer.appendChild(tocPage);
-        });
-
-        // 7.将目录容器移到内容容器前面
-        this.previewElement.insertBefore(tocContainer, contentContainer);
-
-        // 8. 在分页完成后应用主题和模板
-        if (this.currentTemplate) {
-            this.currentTemplate.render(this.previewElement);
-        }
-        this.themeManager.applyTheme(this.previewElement);
+        // 在渲染完成后应用主题和模板
+        // if (this.currentTemplate) {
+        //     this.currentTemplate.render(this.previewElement);
+        // }
+        // this.themeManager.applyTheme(this.previewElement);
     }
 
     // 渲染所有内容到指定容器
@@ -734,7 +727,7 @@ export class TypographyView {
         this.previewElement.className = 'typography-preview';
 
         // 应用字体
-        this.previewElement.classList.add(`font-${settings.fontFamily}`);
+        this.previewElement.style.fontFamily = `${settings.fontFamily}`;
 
         // 应用字号
         this.previewElement.style.fontSize = `${settings.fontSize}px`;
@@ -746,7 +739,7 @@ export class TypographyView {
         this.previewElement.classList.add(`margin-${settings.margin}`);
 
         // 应用开本大小
-        // this.previewElement.classList.add(`book-size-${settings.bookSize}`);
+        this.previewElement.classList.add(`book-size-${settings.bookSize}`);
 
         // 如果封面预览元素存在，也应用开本大小
         if (this.coverPreviewElement) {
@@ -772,84 +765,6 @@ export class TypographyView {
             cls: 'typography-btn export-btn'
         });
         exportBtn.addEventListener('click', () => this.exportWithTypography());
-    }
-
-    // 导出功能
-    private async exportWithTypography() {
-        try {
-            if (!this.selectedBook) {
-                throw new Error('未选择书籍');
-            }
-
-            // 使用新的导出模态框
-            const exportModal = new ExportModal(
-                this.parentEl,
-                this.exportService,
-                (format) => this.executeExport(format)
-            );
-
-            exportModal.open();
-        } catch (error) {
-            console.error('导出错误:', error);
-            new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    }
-
-    // 执行导出
-    private async executeExport(format: string) {
-        try {
-            if (!this.selectedBook) {
-                throw new Error("未选择书籍");
-            }
-    
-            let htmlContent: string | undefined;
-            let useTypography = false;
-    
-            if (format !== "txt") {
-                useTypography = true;
-                const settings = this.getTypographySettings();
-                const tempContainer = document.createElement("div");
-                tempContainer.className = "typography-export-container";
-    
-                if (this.previewElement) {
-                    tempContainer.innerHTML = this.previewElement.innerHTML;
-                    tempContainer.style.fontSize = `${settings.fontSize}px`;
-                    tempContainer.classList.add(`font-${settings.fontFamily}`);
-                    htmlContent = tempContainer.innerHTML;
-                }
-            }
-    
-            // 调用统一导出接口
-            const result = await this.exportService.exportBook(format, this.selectedBook, {
-                useTypography,
-                htmlContent,
-            });
-    
-            // 特殊处理 PDF 格式的返回值
-            if (format === "pdf") {
-                if (result.content === "cancelled") {
-                    new Notice("导出已取消");
-                    return;
-                }
-                
-                // 如果返回的是文件路径（不是 data URL）
-                if (!result.content.startsWith("data:")) {
-                    new Notice(`PDF 已成功导出到: ${result.content}`);
-                    return;
-                }
-            }
-    
-            // 处理其他格式或返回 data URL 的情况
-            if (result?.content === "print-success") {
-                new Notice("PDF 已成功打印");
-            } else {
-                new Notice("导出完成！");
-            }
-    
-        } catch (error) {
-            console.error("导出错误:", error);
-            new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
-        }
     }
 
     // 添加封面设计开关
@@ -987,6 +902,67 @@ export class TypographyView {
                     descriptionEl.setAttribute('style', 'font-size: 14px; color: #f0f0f0; margin-top: 20px; max-width: 80%; text-align: center; font-style: italic;');
                 }
             }
+        }
+    }
+
+
+    // 导出功能
+    private async exportWithTypography() {
+        try {
+            if (!this.selectedBook) {
+                throw new Error('未选择书籍');
+            }
+
+            // 使用新的导出模态框
+            const exportModal = new ExportModal(
+                this.parentEl,
+                this.exportService,
+                (format) => this.executeExport(format)
+            );
+
+            exportModal.open();
+        } catch (error) {
+            console.error('导出错误:', error);
+            new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    // 执行导出
+    private async executeExport(format: string) {
+        try {
+            if (!this.selectedBook) {
+                throw new Error("未选择书籍");
+            }
+
+            let useTypography = false;
+            let htmlContent: string | undefined;
+            let typographySettings: any | undefined;
+
+            if (format !== "txt") {
+                useTypography = true;
+                typographySettings = this.getTypographySettings();
+                const tempContainer = document.createElement("div");
+                if (this.previewElement) {
+                    tempContainer.innerHTML = this.previewElement.innerHTML;
+                    htmlContent = tempContainer.innerHTML;
+                }
+            }
+
+            // 调用统一导出接口
+            const result = await this.exportService.exportBook(format, this.selectedBook, {
+                useTypography,
+                htmlContent,
+                typographySettings
+            });
+
+            if (result.content === "cancelled") {
+                new Notice("导出已取消");
+                return;
+            }
+            new Notice(`${format} 已成功导出到: ${result.content}`);
+        } catch (error) {
+            console.error("导出错误:", error);
+            new Notice(`导出失败: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

@@ -7,7 +7,6 @@ import { ContactModal } from '../modals/ContactModal';
 import BookSmithPlugin from '../main';
 import { i18n } from '../i18n/i18n';
 import { TypographyView } from '../components/TypographyView';
-import { EbookView } from '../components/EbookView';
 
 interface ToolItem {
     icon: string;
@@ -21,7 +20,6 @@ export class ToolView extends ItemView {
     private normalView: HTMLElement | null = null;
     private focusView: FocusToolView | null = null;
     private typographyView: TypographyView | null = null;
-    private ebookView: EbookView | null = null;
 
     constructor(leaf: WorkspaceLeaf, private plugin: BookSmithPlugin) {
         super(leaf);
@@ -112,14 +110,9 @@ export class ToolView extends ItemView {
         if (this.plugin.settings.tools.export) {
             this.createToolGroup(container, i18n.t('EXPORT_PUBLISH'), [
                 { 
-                    icon: 'edit-3', 
+                    icon: 'book', 
                     text: i18n.t('DESIGN_TYPOGRAPHY'),
                     onClick: () => this.enterTypographyMode()
-                },
-                { 
-                    icon: 'book', 
-                    text: i18n.t('GENERATE_EBOOK'),
-                    onClick: () => this.enterEbookMode()
                 },
                 { 
                     icon: 'clock', 
@@ -259,29 +252,6 @@ export class ToolView extends ItemView {
         this.typographyView.initialize();
     }
 
-    // 添加进入电子书模式的方法
-    private enterEbookMode() {
-        if (!this.normalView) return;
-        this.normalView.empty();
-        
-        this.ebookView = new EbookView(
-            this.app,
-            this.plugin,
-            this.normalView,
-            () => {
-                this.ebookView?.remove();
-                this.ebookView = null;
-                if (this.normalView) {
-                    this.normalView.empty();
-                    this.createNormalView(this.normalView);
-                }
-            }
-        );
-        
-        // 初始化视图（加载书籍等）
-        this.ebookView.initialize();
-    }
-
     // 修改 onClose 方法，确保所有视图都被正确关闭
     async onClose() {
         if (this.focusView) {
@@ -292,11 +262,6 @@ export class ToolView extends ItemView {
         if (this.typographyView) {
             this.typographyView.remove();
             this.typographyView = null;
-        }
-        
-        if (this.ebookView) {
-            this.ebookView.remove();
-            this.ebookView = null;
         }
     }
 }

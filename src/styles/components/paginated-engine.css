@@ -18,6 +18,13 @@
 }
 
 /* 不同开本大小的页面样式 */
+.book-size-a3 {
+    width: 297mm;
+    min-height: 420mm;
+    max-height: 420mm;
+    padding: 15mm 10mm 10mm 10mm;
+}
+
 .book-size-a4 {
     width: 210mm;
     min-height: 297mm;
@@ -29,6 +36,27 @@
     width: 148mm;
     min-height: 210mm;
     max-height: 210mm;
+    padding: 15mm 10mm 10mm 10mm;
+}
+
+.book-size-legal {
+    width: 216mm;
+    min-height: 356mm;
+    max-height: 356mm;
+    padding: 15mm 10mm 10mm 10mm;
+}
+
+.book-size-letter {
+    width: 216mm;
+    min-height: 279mm;
+    max-height: 279mm;
+    padding: 15mm 10mm 10mm 10mm;
+}
+
+.book-size-tabloid {
+    width: 279mm;
+    min-height: 432mm;
+    max-height: 432mm;
     padding: 15mm 10mm 10mm 10mm;
 }
 
