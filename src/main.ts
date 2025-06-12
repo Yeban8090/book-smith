@@ -76,8 +76,8 @@ export default class BookSmithPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
         this.bookManager = new BookManager(this.app, this.settings);
         this.templateManager = new TemplateManager(this.settings);
-        this.imgTemplateManager = new ImgTemplateManager(this.app, this.settings);
         this.themeManager = new ThemeManager(this.app, this.settings);
+        this.imgTemplateManager = new ImgTemplateManager(this.app, this.themeManager);
     }
 
     async saveSettings() {
