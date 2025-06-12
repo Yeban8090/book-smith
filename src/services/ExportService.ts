@@ -1,6 +1,6 @@
 import { App, TFile, TFolder } from 'obsidian';
 import { Book, ChapterNode } from '../types/book';
-
+import * as fs from "fs/promises";
 
 // 导出格式接口
 export interface ExportStrategy {
@@ -284,126 +284,147 @@ export class HTMLToDocxExport {
     }
 }
 
-// HTMLToPdfExport.ts
-import * as fs from "fs/promises";
-// @ts-ignore
-import { BrowserWindow, dialog } from "@electron/remote";
+// HTML 转 PDF 导出策略 - 使用 better-export-pdf 的方法
 export class HTMLToPdfExport {
-  private rootPath: string;
+    private rootPath: string;
 
-  constructor(rootPath: string) {
-    this.rootPath = rootPath;
-  }
-
-  async exportHTML(app: App, book: Book, htmlContent: string): Promise<string> {
-    try {
-      const styles = this.getAllStyles();
-      const fullHtml = this.buildFullHTML(book, htmlContent, styles);
-      console.log(fullHtml);
-      const win = new BrowserWindow({ show: false });
-      await win.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(fullHtml)}`);
-
-      const printOptions = {
-        marginsType: 1,
-        pageSize: "A4",
-        printBackground: true,
-        landscape: false,
-        scale: 1.0,
-        displayHeaderFooter: true,
-        headerTemplate: `<div style="font-size:10px;text-align:center;width:100vw;"><span class="title"></span></div>`,
-        footerTemplate: `<div style="font-size:10px;text-align:center;width:100vw;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>`,
-      };
-
-      const pdfData = await win.webContents.printToPDF(printOptions);
-
-      // 构造一个 DOM 对象用于目录提取
-      const tempDoc = new DOMParser().parseFromString(fullHtml, "text/html");
-      const headings = this.getHeadingTree(tempDoc);
-      const finalPDF = await this.editPDF(pdfData, { headings });
-
-      const filePath = await this.getOutputFile(book.basic.title);
-      if (!filePath) return "cancelled";
-
-      await fs.writeFile(filePath, finalPDF);
-      return filePath;
-    } catch (err: any) {
-      console.error("PDF导出错误:", err);
-      throw new Error(`PDF导出失败: ${err.message}`);
+    constructor(rootPath: string) {
+        this.rootPath = rootPath;
     }
-  }
 
-  // 拼接完整 HTML（含样式）
-  private buildFullHTML(book: Book, htmlContent: string, styles: string[]): string {
-    return `
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <title>${book.basic.title}</title>
-        <style>${styles.join("\n")}</style>
-      </head>
-      <body>
-        <h1 id="book-title" class="__title__">${book.basic.title}</h1>
-        ${htmlContent}
-      </body>
-    </html>
-    `;
-  }
+    async exportHTML(app: App, book: Book, htmlContent: string): Promise<string> {
+        try {
+            // 获取所有样式表
+            const styles = this.getAllStyles();
 
-  // 获取所有样式（页面内 + 插件插入）
-  private getAllStyles(): string[] {
-    const cssTexts: string[] = [];
+            // 构建完整 HTML 页面（包含分页）
+            const fullHtml = `
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>${book.basic.title}</title>
+                <style>${styles.join("\n")}</style>
+              </head>
+              <body>
+                <div class="markdown-preview-view markdown-rendered">
+                  <h1 id="book-title" class="__title__">${book.basic.title}</h1>
+                  ${htmlContent}
+                </div>
+              </body>
+            </html>
+            `;
 
-    Array.from(document.styleSheets).forEach((sheet: any) => {
-      try {
-        if (sheet.cssRules) {
-          for (const rule of sheet.cssRules) {
-            cssTexts.push(rule.cssText);
-          }
+            //@ts-ignore
+            // 修改BrowserWindow配置
+            const win = new electron.remote.BrowserWindow({
+                show: true, // 可以设为true进行调试
+                width: 1024, // 增加窗口大小
+                height: 768,
+                webPreferences: {
+                    sandbox: false,
+                    nodeIntegration: true, // 启用Node集成
+                    contextIsolation: false // 禁用上下文隔离
+                }
+            });
+
+            await win.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(fullHtml)}`);
+
+            // 打印设置（自动分页）
+            const printOptions = {
+                marginsType: 1,
+                pageSize: "A4",
+                printBackground: true,
+                landscape: false,
+                scale: 1.0,
+                displayHeaderFooter: true,
+                headerTemplate: `<div style="font-size:10px;text-align:center;width:100vw;"><span class="title"></span></div>`,
+                footerTemplate: `<div style="font-size:10px;text-align:center;width:100vw;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>`
+            };
+
+            // 生成 PDF Buffer
+            const pdfBuffer = await win.webContents.printToPDF(printOptions);
+            console.log("PDF Buffer 大小:", pdfBuffer.length);
+
+            // 用 DOMParser 重建 DOM 供目录抽取（用于 editPDF）
+            const tempDoc = new DOMParser().parseFromString(fullHtml, "text/html");
+            const headings = this.getHeadingTree(tempDoc);
+
+            const finalPdf = await this.editPDF(pdfBuffer, {
+                headings,
+                displayMetadata: true,
+                maxLevel: 3
+            });
+
+            // 获取保存路径
+            const filePath = await this.getOutputFile(book.basic.title);
+            if (!filePath) return "cancelled";
+
+            // 写入 PDF 文件
+            await fs.writeFile(filePath, finalPdf);
+
+            // 关闭窗口
+            win.close();
+
+            return filePath;
+        } catch (err: any) {
+            console.error("PDF导出错误:", err);
+            throw new Error(`PDF导出失败: ${err.message}`);
         }
-      } catch (e) {
-        console.warn("样式读取失败：", e);
-      }
-    });
+    }
 
-    return cssTexts;
-  }
+    private getAllStyles(): string[] {
+        const cssTexts: string[] = [];
 
-  // 提取标题结构（用于 TOC 或编辑 PDF）
-  private getHeadingTree(doc: Document) {
-    const headings: any[] = [];
-    const headingElements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6");
+        Array.from(document.styleSheets).forEach((sheet: any) => {
+            try {
+                if (sheet.cssRules) {
+                    for (const rule of sheet.cssRules) {
+                        cssTexts.push(rule.cssText);
+                    }
+                }
+            } catch (e) {
+                console.warn("样式读取失败：", e);
+            }
+        });
 
-    headingElements.forEach((el) => {
-      const level = parseInt(el.tagName.substring(1));
-      headings.push({
-        level,
-        text: el.textContent,
-        id: el.id || crypto.randomUUID(),
-      });
+        return cssTexts;
+    }
 
-      if (!el.id) el.id = headings[headings.length - 1].id;
-    });
+    private getHeadingTree(doc: Document) {
+        const headings: any[] = [];
+        const headingElements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6");
 
-    return headings;
-  }
+        headingElements.forEach((el) => {
+            const level = parseInt(el.tagName.substring(1));
+            const id = el.id || crypto.randomUUID();
+            if (!el.id) el.id = id;
 
-  // 可选：添加目录或元信息（你可以引入 pdf-lib、HummusJS 等）
-  private async editPDF(data: Buffer, options: any): Promise<Buffer> {
-    // 简版：原样返回（你可替换为插入目录页逻辑）
-    return data;
-  }
+            headings.push({
+                level,
+                text: el.textContent,
+                id
+            });
+        });
 
-  // 打开保存对话框
-  private async getOutputFile(filename: string): Promise<string | null> {
-    const result = await dialog.showSaveDialog({
-      title: "导出 PDF 文件",
-      defaultPath: filename + ".pdf",
-      filters: [{ name: "PDF", extensions: ["pdf"] }],
-      properties: ["showOverwriteConfirmation", "createDirectory"],
-    });
+        return headings;
+    }
 
-    return result.canceled ? null : result.filePath;
-  }
+    private async editPDF(data: Buffer, options: any): Promise<Buffer> {
+        // 你可以在这里用 pdf-lib 添加封面页/目录页
+        return data;
+    }
+
+    private async getOutputFile(filename: string): Promise<string | null> {
+        //@ts-ignore
+        const result = await electron.remote.dialog.showSaveDialog({
+            title: "导出 PDF 文件",
+            defaultPath: filename + ".pdf",
+            filters: [{ name: "PDF", extensions: ["pdf"] }],
+            properties: ["showOverwriteConfirmation", "createDirectory"]
+        });
+
+        return result.canceled ? null : result.filePath;
+    }
 }
 
 // HTML 转 EPUB 导出策略
