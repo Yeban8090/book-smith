@@ -118,7 +118,7 @@ const toolViewTranslation: ToolViewTranslation = {
 
     // 导出发布
     EXPORT_PUBLISH: '导出发布',
-    DESIGN_TYPOGRAPHY: '设计排版',
+    DESIGN_TYPOGRAPHY: '生成电子书',
     GENERATE_EBOOK: '生成电子书',
     MORE_FEATURES: '更多功能...',
     MORE_FEATURES_MESSAGE: '更多功能等你一起共创',

@@ -119,7 +119,7 @@ const toolViewTranslation: ToolViewTranslation = {
 
     // 导出发布
     EXPORT_PUBLISH: 'Export & publish',
-    DESIGN_TYPOGRAPHY: 'Design & typography',
+    DESIGN_TYPOGRAPHY: 'Generate e-book',
     GENERATE_EBOOK: 'Generate e-book',
     MORE_FEATURES: 'More features...',
     MORE_FEATURES_MESSAGE: 'More features coming with your participation',
