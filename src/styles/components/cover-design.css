@@ -16,25 +16,63 @@
     justify-content: center;
     align-items: center;
     height: 100%;
+    width: 100%;
     padding: 40px;
     text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    box-sizing: border-box;
 }
 
 /* 封面标题默认样式 */
 .cover-title {
-    font-size: 32px;
+    font-size: 100px;
     font-weight: bold;
     color: #ffffff;
-    margin-bottom: 20px;
+    margin: 0;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    line-height: 1.2;
+    max-width: 90%;
+    word-wrap: break-word;
+}
+
+/* 封面副标题样式 */
+.cover-subtitle {
+    font-size: 50px;
+    color: #ffffff;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    line-height: 1.3;
+    max-width: 90%;
+    word-wrap: break-word;
 }
 
 /* 封面作者默认样式 */
 .cover-author {
-    font-size: 18px;
+    font-size: 50px;
     color: #ffffff;
     font-style: italic;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    margin: 0;
+    line-height: 1.3;
+    max-width: 90%;
+    word-wrap: break-word;
+}
+
+/* 封面描述样式 */
+.cover-description {
+    font-size: 14px;
+    color: #f0f0f0;
+    margin: 0;
+    max-width: 80%;
+    text-align: center;
+    font-style: italic;
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 /* 封面设计模态框样式 */
@@ -50,17 +88,21 @@
 
 .cover-preview-area {
     width: 100%;
-    height: 300px;
-    margin-bottom: 20px;
+    max-width: 300px; /* 限制最大宽度 */
+    margin: 0 auto 20px auto; /* 居中显示 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .cover-preview {
     width: 100%;
-    height: 100%;
+    height: auto; /* 改为自动高度 */
     border-radius: 8px;
     overflow: hidden;
     position: relative;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* aspect-ratio 将通过 JavaScript 动态设置 */
 }
 
 .cover-controls {

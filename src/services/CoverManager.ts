@@ -1,15 +1,5 @@
 import { App } from 'obsidian';
-
-export interface CoverSettings {
-    imageUrl: string;
-    scale: number;
-    position: { x: number; y: number };
-    titleStyle: string;
-    authorStyle: string;
-    backgroundColor: string;
-    overlay: boolean;
-    overlayOpacity: number;
-}
+import { CoverSettings, Book } from '../types/book';
 
 export class CoverManager {
     constructor(
@@ -35,27 +25,11 @@ export class CoverManager {
                     }
                 }
             });
-        } else {
-            // 如果没有背景图片，使用背景颜色
-            element.style.backgroundColor = settings.backgroundColor || '#ffffff';
         }
 
-        // 添加覆盖层以增强文字可读性
-        if (settings.overlay) {
-            const overlay = element.createDiv({ cls: 'cover-overlay' });
-            overlay.style.backgroundColor = `rgba(0, 0, 0, ${settings.overlayOpacity || 0.3})`;
-            overlay.style.position = 'absolute';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.right = '0';
-            overlay.style.bottom = '0';
-            overlay.style.zIndex = '1';
-        }
-
-        // 创建内容容器，确保在覆盖层之上
+        // 创建内容容器
         const contentContainer = element.createDiv({ cls: 'cover-content' });
         contentContainer.style.position = 'relative';
-        contentContainer.style.zIndex = '2';
         contentContainer.style.height = '100%';
         contentContainer.style.display = 'flex';
         contentContainer.style.flexDirection = 'column';
@@ -69,27 +43,47 @@ export class CoverManager {
 
     public clearCoverStyles(element: HTMLElement) {
         const style = element.getAttribute('style') || '';
-        const clearedStyle = style.replace(/background-image:[^;]+;|background-size:[^;]+;|background-position:[^;]+;|background-repeat:[^;]+;|background-color:[^;]+;/g, '');
+        const clearedStyle = style.replace(/background-image:[^;]+;|background-size:[^;]+;|background-position:[^;]+;|background-repeat:[^;]+;/g, '');
         element.setAttribute('style', clearedStyle);
         
-        // 移除覆盖层和内容容器
-        const overlay = element.querySelector('.cover-overlay');
+        // 移除内容容器
         const contentContainer = element.querySelector('.cover-content');
-        
-        if (overlay) overlay.remove();
         if (contentContainer) contentContainer.remove();
     }
 
-    public getDefaultCoverSettings(): CoverSettings {
+    public getDefaultCoverSettings(book?: Book): CoverSettings {
+        // 如果传入了书籍对象，优先使用书籍的封面配置
+        if (book?.basic.coverSettings) {
+            return book.basic.coverSettings;
+        }
+        
+        // 如果书籍有封面图片路径但没有完整配置，创建基础配置
+        if (book?.basic.cover) {
+            // 使用Obsidian的getResourcePath获取正确的图片URL
+            const imageUrl = this.app.vault.getResourcePath(this.app.vault.getAbstractFileByPath(book.basic.cover) as any);
+            
+            return {
+                imageUrl: imageUrl,
+                scale: 1,
+                position: { x: 0, y: 0 },
+                titleStyle: 'color: #333333; font-weight: bold;',
+                authorStyle: 'color: #666666; font-style: italic;',
+                bookSize: 'A4'
+            };
+        }
+        
+        // 返回完全默认的配置
         return {
             imageUrl: '',
             scale: 1,
             position: { x: 0, y: 0 },
-            titleStyle: 'font-size: 32px; font-weight: bold; color: #ffffff; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);',
-            authorStyle: 'font-size: 18px; color: #ffffff; font-style: italic; text-shadow: 0 1px 2px rgba(0,0,0,0.5);',
-            backgroundColor: '#1a1a1a',
-            overlay: true,
-            overlayOpacity: 0.4
+            titleStyle: 'font-size: 24px; color: #333333; font-weight: bold;',
+            authorStyle: 'font-size: 16px; color: #666666; font-style: italic;',
+            bookSize: 'A4'
         };
+    }
+
+    public getBookCoverSettings(book: Book): CoverSettings {
+        return this.getDefaultCoverSettings(book);
     }
 }
