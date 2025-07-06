@@ -5,20 +5,12 @@ import { i18n } from '../i18n/i18n';
 import { kofiImage } from '../assets/kofi3';
 
 export class DonateModal extends BaseModal {
-    private selectedAmount: number = 6;
-    private amounts = [
-        { value: 6, label: i18n.t('DONATE_AMOUNT_COFFEE'), icon: '☕️', feedback: i18n.t('DONATE_FEEDBACK_COFFEE') },
-        { value: 18, label: i18n.t('DONATE_AMOUNT_CHAPTER'), icon: '📖', feedback: i18n.t('DONATE_FEEDBACK_CHAPTER') },
-        { value: 66, label: i18n.t('DONATE_AMOUNT_FEATURE'), icon: '🎨', feedback: i18n.t('DONATE_FEEDBACK_FEATURE') }
-    ];
-
     constructor(container: HTMLElement) {
         super(container, i18n.t('DONATE_MODAL_TITLE'));
     }
 
     protected createContent() {
         this.createCommunityStats();
-        this.createAmountPanel();
         this.createPaymentChannels();
     }
 
@@ -38,29 +30,6 @@ export class DonateModal extends BaseModal {
         statsList.createEl('p', { 
             text: i18n.t('COMMUNITY_STATS_WORDS'),
             cls: 'stats-item'
-        });
-    }
-
-    private createAmountPanel() {
-        const panel = this.element.createDiv({ cls: 'book-smith-amount-panel' });
-        const presets = panel.createDiv({ cls: 'amount-presets' });
-        
-        this.amounts.forEach(amount => {
-            const btn = presets.createDiv({ cls: 'amount-btn' });
-            const content = btn.createDiv({ cls: 'amount-content' });
-            content.createSpan({ cls: 'amount-icon', text: amount.icon });
-            content.createSpan({ cls: 'amount-label', text: amount.label });
-            content.createSpan({ cls: 'amount-value', text: `${amount.value}${i18n.t('CURRENCY_UNIT')}` });
-            
-            if (amount.value === this.selectedAmount) {
-                btn.addClass('selected');
-            }
-            
-            btn.addEventListener('click', () => {
-                this.selectAmount(amount.value);
-                this.animateSelection(btn);
-                this.showNotice(amount.feedback);
-            });
         });
     }
 
@@ -132,20 +101,5 @@ export class DonateModal extends BaseModal {
         activeContent.addClass('active');
         inactiveTabs.forEach(tab => tab.removeClass('active'));
         inactiveContents.forEach(content => content.removeClass('active'));
-    }
-
-    private selectAmount(amount: number) {
-        this.selectedAmount = amount;
-        const buttons = this.element.querySelectorAll('.amount-btn');
-        buttons.forEach(btn => {
-            const valueText = btn.querySelector('.amount-value')?.textContent;
-            const value = valueText ? parseInt(valueText) : 0;
-            btn.toggleClass('selected', value === amount);
-        });
-    }
-
-    private animateSelection(btn: HTMLElement) {
-        btn.addClass('pulse');
-        setTimeout(() => btn.removeClass('pulse'), 1000);
     }
 }

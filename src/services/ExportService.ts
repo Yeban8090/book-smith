@@ -1,6 +1,7 @@
 import { App, TFile } from 'obsidian';
 import { Book, ChapterNode } from '../types/book';
 import { TypographySettings } from '../components/TypographyView';
+import { HeaderFooterTocSettings } from '../modals/HeaderFooterTocModal';
 import * as fs from "fs/promises";
 
 // 导出服务类
@@ -42,7 +43,7 @@ export interface ExportStrategy {
 // 导出选项接口
 export interface ExportOptions {
     selectedChapters?: ChapterNode[];
-    htmlContent?: string;
+    htmlContent?: HTMLElement;
     useTypography?: boolean;
     typographySettings?: TypographySettings;
 }
@@ -209,8 +210,17 @@ export class PdfExportStrategy implements ExportStrategy {
         }
     }
 
-    async exportHTML(book: Book, htmlContent: string, typographySettings: TypographySettings): Promise<string> {
+    async exportHTML(book: Book, htmlContent: HTMLElement, typographySettings: TypographySettings): Promise<string> {
         try {
+            // 0. 处理htmlContent
+            await PdfExportStrategy.processImages(htmlContent);
+            
+            // 0.5 生成目录（如果启用）- 使用准确页码计算
+            let tocHtml = '';
+            if (typographySettings.headerFooterToc?.tocEnabled) {
+                tocHtml = await this.generateAccurateTOC(typographySettings, htmlContent, book);
+            }
+
             // 1. 构建样式 CSS 字符串
             const style = `
                 body {
@@ -228,6 +238,12 @@ export class PdfExportStrategy implements ExportStrategy {
                     max-width: 720px;
                     margin: auto;
                 }
+                .table-of-contents {
+                    page-break-after: always;
+                }
+                .toc-item {
+                    page-break-inside: avoid;
+                }
                 @media print {
                     body {
                         -webkit-print-color-adjust: exact;
@@ -238,7 +254,7 @@ export class PdfExportStrategy implements ExportStrategy {
                 }
             `;
 
-            // 2. 构建完整 HTML 页面（包含分页）
+            // 2. 构建完整 HTML 页面（包含目录和分页）
             const fullHtml = `
             <html>
               <head>
@@ -247,7 +263,8 @@ export class PdfExportStrategy implements ExportStrategy {
                 <style>${style}</style>
               </head>
               <body>
-                ${htmlContent}
+                ${tocHtml}
+                ${htmlContent.innerHTML}
               </body>
             </html>
             `;
@@ -265,8 +282,6 @@ export class PdfExportStrategy implements ExportStrategy {
                 }
             });
 
-            // 等待页面加载完成
-            console.log('等待页面加载完成');
             const ready = new Promise<void>((resolve) => {
                 win.webContents.once("did-finish-load", resolve);
             });
@@ -283,75 +298,400 @@ export class PdfExportStrategy implements ExportStrategy {
                 printBackground: true,
                 landscape: false,
                 scale: 1.0,
-                displayHeaderFooter: true,
-                headerTemplate: `<div style="font-size:14px;text-align:center;width:100vw;"></div>`,
-                footerTemplate: `<div style="font-size:14px;text-align:center;width:100vw;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>`
+                displayHeaderFooter: typographySettings.headerFooterToc?.headerEnabled || typographySettings.headerFooterToc?.footerEnabled,
+                headerTemplate: this.buildHeaderTemplate(typographySettings.headerFooterToc, book),
+                footerTemplate: this.buildFooterTemplate(typographySettings.headerFooterToc, book),
             };
 
             // 5. 生成 PDF Buffer
             const bodyPdfBuffer = await win.webContents.printToPDF(printOptions);
             win.close();
 
+            // 替换第295-325行的代码
             const PDFLib = await import('pdf-lib');
 
-            const coverDoc = await PDFLib.PDFDocument.create();
-            const page = coverDoc.addPage();
-            const size = this.bookSizeMap[typographySettings.bookSize || "A4"];
-            page.setSize(size.width, size.height);
-            
-            page.drawRectangle({ x: 0, y: 0, width: page.getWidth(), height: page.getHeight(), color: PDFLib.rgb(0, 0, 0) });
-            page.drawText("Book", {
-                x: (page.getWidth() - 10) / 2,
-                y: page.getHeight() - 300, // 距离顶部100
-                size: 30,
-                color: PDFLib.rgb(1, 1, 1),
-              });
-            const coverBuffer = await coverDoc.save();
+            // 检查是否有封面图片数据
+            if (typographySettings.showCover && typographySettings.coverImageData) {
+                // 创建封面页
+                const coverDoc = await PDFLib.PDFDocument.create();
+                const page = coverDoc.addPage();
+                const size = this.bookSizeMap[typographySettings.bookSize || "A4"];
+                page.setSize(size.width, size.height);
 
-            const finalPdf = await PDFLib.PDFDocument.create();
-            const [coverPage] = await finalPdf.copyPages(await PDFLib.PDFDocument.load(coverBuffer), [0]);
-            finalPdf.addPage(coverPage);
+                try {
+                    // 处理base64图片数据
+                    const base64Data = typographySettings.coverImageData.split(',')[1]; // 移除 "data:image/xxx;base64," 前缀
+                    const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-            const bodyDoc = await PDFLib.PDFDocument.load(bodyPdfBuffer);
-            const bodyPages = await finalPdf.copyPages(bodyDoc, bodyDoc.getPageIndices());
-            bodyPages.forEach(p => finalPdf.addPage(p));
+                    // 根据图片类型嵌入图片
+                    let coverImage;
+                    if (typographySettings.coverImageData.includes('data:image/png')) {
+                        coverImage = await coverDoc.embedPng(imageBytes);
+                    } else if (typographySettings.coverImageData.includes('data:image/jpeg') || typographySettings.coverImageData.includes('data:image/jpg')) {
+                        coverImage = await coverDoc.embedJpg(imageBytes);
+                    } else {
+                        // 默认尝试PNG格式
+                        coverImage = await coverDoc.embedPng(imageBytes);
+                    }
 
-            const finalBuffer = await finalPdf.save();
+                    // 绘制封面图片
+                    page.drawImage(coverImage, {
+                        x: 0,
+                        y: 0,
+                        width: page.getWidth(),
+                        height: page.getHeight(),
+                    });
+                } catch (error) {
+                    console.error('封面图片处理失败，使用默认封面:', error);
+                    // 如果图片处理失败，绘制默认封面
+                    page.drawRectangle({
+                        x: 0,
+                        y: 0,
+                        width: page.getWidth(),
+                        height: page.getHeight(),
+                        color: PDFLib.rgb(0.2, 0.2, 0.2)
+                    });
+                    page.drawText("Book", {
+                        x: page.getWidth() / 2 - 50,
+                        y: page.getHeight() / 2,
+                        size: 30,
+                        color: PDFLib.rgb(1, 1, 1),
+                    });
+                }
 
-            const filePath = await this.getOutputFile(book.basic.title);
-            if (!filePath) return "cancelled";
-            await fs.writeFile(filePath, finalBuffer);
+                const coverBuffer = await coverDoc.save();
 
-            return filePath;
+                // 合并封面和内容PDF
+                const finalPdf = await PDFLib.PDFDocument.create();
+                const [coverPage] = await finalPdf.copyPages(await PDFLib.PDFDocument.load(coverBuffer), [0]);
+                finalPdf.addPage(coverPage);
 
+                const bodyDoc = await PDFLib.PDFDocument.load(bodyPdfBuffer);
+                const bodyPages = await finalPdf.copyPages(bodyDoc, bodyDoc.getPageIndices());
+                bodyPages.forEach(p => finalPdf.addPage(p));
+
+                const finalBuffer = await finalPdf.save();
+
+                const filePath = await this.getOutputFile(book.basic.title);
+                if (!filePath) return "cancelled";
+                await fs.writeFile(filePath, finalBuffer);
+
+                return filePath;
+            } else {
+                // 如果没有封面设置或不显示封面，创建简单的文本封面
+                const coverDoc = await PDFLib.PDFDocument.create();
+                const page = coverDoc.addPage();
+                const size = this.bookSizeMap[typographySettings.bookSize || "A4"];
+                page.setSize(size.width, size.height);
+
+                // 绘制默认封面
+                page.drawRectangle({
+                    x: 0,
+                    y: 0,
+                    width: page.getWidth(),
+                    height: page.getHeight(),
+                    color: PDFLib.rgb(0.1, 0.1, 0.1)
+                });
+
+                // 添加书名
+                const titleText = "Book";
+                page.drawText(titleText, {
+                    x: page.getWidth() / 2 - (titleText.length * 10),
+                    y: page.getHeight() / 2 + 50,
+                    size: 24,
+                    color: PDFLib.rgb(1, 1, 1),
+                });
+
+                // 添加作者信息
+                if (book.basic.author && book.basic.author.length > 0) {
+                    const authorText = book.basic.author.join(', ');
+                    page.drawText(authorText, {
+                        x: page.getWidth() / 2 - (authorText.length * 6),
+                        y: page.getHeight() / 2 - 50,
+                        size: 16,
+                        color: PDFLib.rgb(0.8, 0.8, 0.8),
+                    });
+                }
+
+                const coverBuffer = await coverDoc.save();
+
+                // 合并封面和内容PDF
+                const finalPdf = await PDFLib.PDFDocument.create();
+                const [coverPage] = await finalPdf.copyPages(await PDFLib.PDFDocument.load(coverBuffer), [0]);
+                finalPdf.addPage(coverPage);
+
+                const bodyDoc = await PDFLib.PDFDocument.load(bodyPdfBuffer);
+                const bodyPages = await finalPdf.copyPages(bodyDoc, bodyDoc.getPageIndices());
+                bodyPages.forEach(p => finalPdf.addPage(p));
+
+                const finalBuffer = await finalPdf.save();
+
+                const filePath = await this.getOutputFile(book.basic.title);
+                if (!filePath) return "cancelled";
+                await fs.writeFile(filePath, finalBuffer);
+
+                return filePath;
+            }
         } catch (err: any) {
             console.error("PDF导出错误:", err);
             throw new Error(`PDF导出失败: ${err.message}`);
         }
     }
 
-    private getHeadingTree(doc: Document) {
-        const headings: any[] = [];
-        const headingElements = doc.querySelectorAll("h1, h2, h3, h4, h5, h6");
+    private static async processImages(container: HTMLElement): Promise<void> {
+        const images = container.querySelectorAll('img');
+        const imageArray = Array.from(images);
 
-        headingElements.forEach((el) => {
-            const level = parseInt(el.tagName.substring(1));
-            const id = el.id || crypto.randomUUID();
-            if (!el.id) el.id = id;
+        for (const img of imageArray) {
+            try {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                    reader.onload = () => {
+                        img.src = reader.result as string;
+                        resolve(null);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error('图片转换失败:', error);
+            }
+        }
+    }
+    
+    // 添加页眉模板构建方法
+    private buildHeaderTemplate(settings?: HeaderFooterTocSettings, book?: Book): string {
+        if (!settings?.headerEnabled) return '';
 
-            headings.push({
-                level,
-                text: el.textContent,
-                id
-            });
+        return `
+            <div style="
+                width: 100%;
+                height: ${settings.headerHeight}px;
+                font-size: ${settings.headerFontSize}px;
+                color: ${settings.headerColor};
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 20px;
+                box-sizing: border-box;
+                border-bottom: 1px solid #ddd;
+            ">
+                <span style="flex: 1; text-align: left;">${this.replaceVariables(settings.headerLeft, book)}</span>
+                <span style="flex: 1; text-align: center;">${this.replaceVariables(settings.headerCenter, book)}</span>
+                <span style="flex: 1; text-align: right;">${this.replaceVariables(settings.headerRight, book)}</span>
+            </div>
+        `;
+    }
+
+    // 添加页脚模板构建方法
+    private buildFooterTemplate(settings?: HeaderFooterTocSettings, book?: Book): string {
+        if (!settings?.footerEnabled) return '';
+
+        return `
+            <div style="
+                width: 100%;
+                height: ${settings.footerHeight}px;
+                font-size: ${settings.footerFontSize}px;
+                color: ${settings.footerColor};
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0 20px;
+                box-sizing: border-box;
+                border-top: 1px solid #ddd;
+            ">
+                <span style="flex: 1; text-align: left;">${this.replaceVariables(settings.footerLeft)}</span>
+                <span style="flex: 1; text-align: center;">${this.replaceVariables(settings.footerCenter)}</span>
+                <span style="flex: 1; text-align: right;">${this.replaceVariables(settings.footerRight)}</span>
+            </div>
+        `;
+    }
+    // 添加变量替换方法
+    private replaceVariables(text: string, book?: Book, pageNumber?: number, totalPages?: number): string {
+        return text
+            .replace(/\{\{title\}\}/g, book?.basic.title || '书籍标题')
+            .replace(/\{\{author\}\}/g, book?.basic.author?.join(', ') || '作者')
+            .replace(/\{\{date\}\}/g, new Date().toLocaleDateString())
+            .replace(/\{\{pageNumber\}\}/g, pageNumber?.toString() || '<span class="pageNumber"></span>')
+            .replace(/\{\{totalPages\}\}/g, totalPages?.toString() || '<span class="totalPages"></span>');
+    }
+
+    // 新增：生成准确页码的目录
+private async generateAccurateTOC(typographySettings: TypographySettings, htmlContent: HTMLElement, book: Book): Promise<string> {
+    const settings = typographySettings.headerFooterToc;
+    if (!settings?.tocEnabled) return '';
+
+    // 获取标题到页码的映射
+    const headingPageMapping = await this.getHeadingPageMapping(typographySettings, htmlContent, book);
+    
+    if (headingPageMapping.length === 0) return '';
+
+    let tocHtml = `
+        <div class="table-of-contents" style="
+            page-break-after: always;
+            font-family: ${settings.tocFontFamily || 'serif'};
+            font-size: ${settings.tocFontSize}px;
+            color: ${settings.tocColor || '#000000'};
+            margin: 40px 0;
+        ">
+            <h1 style="text-align: center; margin-bottom: 30px;">${settings.tocTitle}</h1>
+            <div class="toc-content">
+    `;
+
+    headingPageMapping.forEach(heading => {
+        const indent = (heading.level - 1) * (settings.tocIndent || settings.tocIndentSize || 20);
+        tocHtml += `
+            <div class="toc-item" style="
+                margin-left: ${indent}px;
+                margin-bottom: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+            ">
+                <span class="toc-text">${heading.text}</span>
+                <span class="toc-dots" style="
+                    flex: 1;
+                    border-bottom: 1px dotted #ccc;
+                    margin: 0 10px;
+                    height: 1px;
+                    align-self: center;
+                "></span>
+                <span class="toc-page">${heading.pageNumber}</span>
+            </div>
+        `;
+    });
+
+    tocHtml += `
+            </div>
+        </div>
+    `;
+
+    return tocHtml;
+}
+
+// 新增：获取标题页码映射
+private async getHeadingPageMapping(typographySettings: TypographySettings, htmlContent: HTMLElement, book: Book): Promise<Array<{ level: number, text: string, id: string, pageNumber: number }>> {
+    const settings = typographySettings.headerFooterToc;
+    
+    // 1. 构建用于页码计算的完整HTML（不包含目录）
+    const style = `
+        body {
+            font-family: ${typographySettings.fontFamily || 'serif'};
+            font-size: ${typographySettings.fontSize || '16px'};
+            line-height: ${typographySettings.lineHeight || '1.75'};
+            margin: ${typographySettings.margin || '2cm'};
+            padding: 0;
+            box-sizing: border-box;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+        }
+        .markdown-preview-view {
+            max-width: 720px;
+            margin: auto;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    `;
+
+    const measureHtml = `
+        <html>
+            <head>
+                <meta charset="utf-8">
+                <title>${book.basic.title}</title>
+                <style>${style}</style>
+            </head>
+            <body>
+                ${htmlContent.innerHTML}
+            </body>
+        </html>
+    `;
+
+    // 2. 创建临时窗口进行页码计算
+    //@ts-ignore
+    const measureWin = new electron.remote.BrowserWindow({
+        show: false, // 设置为 true 可调试
+        width: 1024,
+        height: 768,
+        webPreferences: {
+            sandbox: false,
+            contextIsolation: false,
+            nodeIntegration: true,
+        }
+    });
+
+    try {
+        // 3. 加载HTML并等待完成
+        const ready = new Promise<void>((resolve) => {
+            measureWin.webContents.once("did-finish-load", resolve);
         });
+        await measureWin.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(measureHtml)}`);
+        await ready;
+        await new Promise((r) => setTimeout(r, 300)); // 等待样式生效
 
-        return headings;
-    }
+        // 4. 设置打印参数（与最终PDF相同）
+        const printOptions = {
+            marginsType: 1,
+            pageSize: typographySettings.bookSize || "A4",
+            printBackground: true,
+            landscape: false,
+            scale: 1.0,
+            displayHeaderFooter: settings?.headerEnabled || settings?.footerEnabled,
+            headerTemplate: this.buildHeaderTemplate(settings, book),
+            footerTemplate: this.buildFooterTemplate(settings, book),
+        };
 
-    private async editPDF(data: Buffer, options: any): Promise<Buffer> {
-        return data;
+        // 5. 执行JavaScript获取标题页码信息
+        const headingData = await measureWin.webContents.executeJavaScript(`
+            (async () => {
+                const headings = [];
+                const headingElements = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                const maxLevel = ${settings?.tocMaxLevel || 3};
+                
+                // 模拟打印环境的页面高度计算
+                const printOptions = ${JSON.stringify(printOptions)};
+                const pageHeight = window.innerHeight;
+                const margin = parseFloat('${typographySettings.margin || '2cm'}'.replace('cm', '')) * 37.8; // cm to px
+                const contentHeight = pageHeight - (margin * 2);
+                
+                headingElements.forEach((el, index) => {
+                    const level = parseInt(el.tagName.substring(1));
+                    if (level <= maxLevel) {
+                        const rect = el.getBoundingClientRect();
+                        const elementTop = rect.top + window.pageYOffset;
+                        
+                        // 计算页码（考虑页边距）
+                        const pageNumber = Math.max(1, Math.ceil((elementTop - margin) / contentHeight) + 1);
+                        
+                        const id = el.id || \`heading-\${index}\`;
+                        if (!el.id) el.id = id;
+                        
+                        headings.push({
+                            level,
+                            text: el.textContent?.trim() || '',
+                            id,
+                            pageNumber
+                        });
+                    }
+                });
+                
+                return headings;
+            })()
+        `);
+
+        return headingData;
+    } finally {
+        measureWin.close();
     }
+}
 
     private async getOutputFile(filename: string): Promise<string | null> {
         //@ts-ignore

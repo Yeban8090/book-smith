@@ -1,12 +1,43 @@
+
 // 书籍基本信息
 export interface BookBasicInfo {
     title: string;                // 书名
     subtitle?: string;            // 副标题
     author: string[];            // 作者（支持多作者）
     cover?: string;              // 封面图片路径
+    coverSettings?: CoverSettings; // 封面设计配置
     desc?: string;               // 书籍简介
     uuid: string;                // 唯一标识符
     created_at: string;          // 创建时间
+}
+export interface CoverSettings {
+    imageUrl: string;
+    scale: number;
+    position: { x: number; y: number };
+    titleStyle: string;
+    authorStyle: string;
+    bookSize?: string; // 开本大小
+    // 新增：文本内容和位置信息
+    customTitle?: string;  // 自定义书名文本
+    customAuthor?: string; // 自定义作者文本
+    customSubtitle?: string; // 自定义副标题文本
+    titlePosition?: { x: number; y: number }; // 书名位置
+    authorPosition?: { x: number; y: number }; // 作者位置
+    subtitlePosition?: { x: number; y: number }; // 副标题位置
+    // 新增：详细样式配置
+    titleStyleConfig?: TextStyleConfig;
+    authorStyleConfig?: TextStyleConfig;
+    subtitleStyleConfig?: TextStyleConfig;
+}
+
+// 新增：文本样式配置接口
+export interface TextStyleConfig {
+    fontSize: number;        // 字体大小
+    color: string;          // 文字颜色
+    fontWeight: 'normal' | 'bold'; // 字体粗细
+    fontStyle: 'normal' | 'italic'; // 字体样式
+    textShadow?: string;    // 文字阴影
+    fontFamily?: string;    // 字体族
 }
 
 // 章节节点结构

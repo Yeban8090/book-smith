@@ -1,15 +1,14 @@
 import { App, setIcon, Notice, TFile, MarkdownRenderer } from 'obsidian';
 import { BookManager } from "../services/BookManager";
-import { Book, ChapterNode } from "../types/book";
+import * as htmlToImage from 'html-to-image';
+import { Book, CoverSettings, ChapterNode } from "../types/book";
 import { ExportService } from "../services/ExportService";
 import { i18n } from "../i18n/i18n";
 import BookSmithPlugin from '../main';
-import { ImgTemplateManager, ImgTemplate } from '../services/ImgTemplateManager';
-import { ThemeManager } from '../services/ThemeManager';
-import { CoverManager, CoverSettings } from '../services/CoverManager';
+import { CoverManager } from '../services/CoverManager';
 import { CoverSettingModal } from '../modals/CoverSettingModal';
 import { ExportModal } from '../modals/ExportModal';
-
+import { HeaderFooterTocSettings, HeaderFooterTocModal } from '../modals/HeaderFooterTocModal';
 export interface TypographySettings {
     fontFamily: string;
     fontSize: string;
@@ -17,25 +16,26 @@ export interface TypographySettings {
     margin: string;
     templateId: string;
     themeId: string;
-    coverSettings?: CoverSettings; // 封面设置
-    showCover: boolean; // 是否显示封面
-    bookSize: string; // 新增：书籍开本大小
+    coverSettings?: CoverSettings;
+    showCover: boolean;
+    bookSize: string;
+    coverImageData?: string; // 新增：封面图片的 base64 数据
+    headerFooterToc?: HeaderFooterTocSettings;
 }
 
 export class TypographyView {
     private container: HTMLElement;
     private bookManager: BookManager;
     private exportService: ExportService;
-    private imgTemplateManager: ImgTemplateManager;
-    private themeManager: ThemeManager;
+
     private coverManager: CoverManager;
     private books: Book[] = [];
     private selectedBook: Book | null = null;
     private previewElement: HTMLElement | null = null;
     private coverPreviewElement: HTMLElement | null = null;
-    private currentTemplate: ImgTemplate | null = null;
-    private coverSettings: CoverSettings | null = null;
 
+    private coverSettings: CoverSettings | null = null;
+    private headerFooterTocSettings: HeaderFooterTocSettings | null = null; // 添加这行
     // 自定义选择器引用
     private customBookSelect: HTMLElement | null = null;
     private customTemplateSelect: HTMLElement | null = null;
@@ -56,8 +56,7 @@ export class TypographyView {
     ) {
         this.bookManager = new BookManager(app, plugin.settings);
         this.exportService = new ExportService(app, plugin.settings);
-        this.themeManager = new ThemeManager(app, plugin.settings);
-        this.imgTemplateManager = new ImgTemplateManager(app, this.themeManager);
+       
         this.coverManager = new CoverManager(app);
         this.rootPath = plugin.settings.defaultBookPath || ''; // 初始化根路径
         this.createUI();
@@ -72,11 +71,12 @@ export class TypographyView {
         try {
             // 加载所有书籍
             this.books = await this.bookManager.getAllBooks();
+            
+            // 初始化默认的页眉页脚设置
+            this.initializeDefaultHeaderFooterTocSettings();
 
             // 初始化各个选择器
             this.initializeBookSelect();
-            // this.initializeTemplateSelect();
-            // this.initializeThemeSelect();
             this.initializeFontSelect();
             this.initializeFontSizeControls();
             this.initializeBookSizeSelect(); // 新增初始化开本大小选择器
@@ -84,7 +84,7 @@ export class TypographyView {
             // 更新预览
             this.updatePreview();
         } catch (error) {
-            console.error('加载书籍失败:', error);
+            console.error('初始化排版视图失败:', error);
         }
     }
 
@@ -316,92 +316,38 @@ export class TypographyView {
         this.customBookSelect.querySelector('.book-smith-select')?.addEventListener('change', async (e: any) => {
             const value = e.detail.value;
             this.selectedBook = this.books.find(book => book.basic.uuid === value) || null;
+
+            // 先清空封面预览元素
+            if (this.coverPreviewElement) {
+                this.coverPreviewElement.empty();
+            }
+
+            // 使用CoverManager智能加载封面配置
+            if (this.selectedBook) {
+                this.coverSettings = this.coverManager.getBookCoverSettings(this.selectedBook);
+            } else {
+                this.coverSettings = null;
+            }
+
             this.updatePreview();
         });
 
-        // 如果有书籍，选择第一本
+        // 如果有书籍，选择第一本并加载其封面配置
         if (bookOptions.length > 0) {
             const select = this.customBookSelect.querySelector('.book-smith-select');
             if (select) {
                 (select as HTMLElement).setAttribute('data-value', bookOptions[0].value);
                 this.selectedBook = this.books[0];
+
+                // 初始化时也清空封面预览元素
+                if (this.coverPreviewElement) {
+                    this.coverPreviewElement.empty();
+                }
+
+                // 使用CoverManager智能加载封面配置
+                this.coverSettings = this.coverManager.getBookCoverSettings(this.selectedBook);
+
                 this.updatePreview();
-            }
-        }
-    }
-
-    // 2. 模板选择器
-    private createTemplateSelector(parent: HTMLElement) {
-        this.customTemplateSelect = this.createCustomSelect(
-            parent,
-            'book-smith-template-select',
-            [{ value: '', text: i18n.t('LOADING') || '加载中...' }]
-        );
-        this.customTemplateSelect.id = 'template-select';
-    }
-
-    // 初始化模板选择器
-    private async initializeTemplateSelect() {
-        if (!this.customTemplateSelect) return;
-
-        // 获取模板选项
-        const templateOptions = await this.getTemplateOptions();
-
-        // 更新选择器选项
-        this.updateCustomSelectOptions(this.customTemplateSelect, templateOptions);
-
-        // 添加事件监听
-        this.customTemplateSelect.querySelector('.book-smith-select')?.addEventListener('change', async (e: any) => {
-            const value = e.detail.value;
-            this.currentTemplate = this.imgTemplateManager.getTemplate(value) || null;
-            this.updatePreview();
-        });
-
-        // 默认选择第一个模板
-        if (templateOptions.length > 0) {
-            const select = this.customTemplateSelect.querySelector('.book-smith-select');
-            if (select) {
-                (select as HTMLElement).setAttribute('data-value', templateOptions[0].value);
-                this.currentTemplate = this.imgTemplateManager.getTemplate(templateOptions[0].value) || null;
-            }
-        }
-    }
-
-    // 3. 主题选择器
-    private createThemeSelector(parent: HTMLElement) {
-        this.customThemeSelect = this.createCustomSelect(
-            parent,
-            'book-smith-theme-select',
-            [{ value: '', text: i18n.t('LOADING') || '加载中...' }]
-        );
-        this.customThemeSelect.id = 'theme-select';
-    }
-
-    // 初始化主题选择器
-    private async initializeThemeSelect() {
-        if (!this.customThemeSelect) return;
-
-        // 获取主题选项
-        const themes = await this.getThemeOptions();
-
-        // 更新选择器选项
-        this.updateCustomSelectOptions(this.customThemeSelect, themes);
-
-        // 添加事件监听
-        this.customThemeSelect.querySelector('.book-smith-select')?.addEventListener('change', async (e: any) => {
-            const value = e.detail.value;
-            this.themeManager.setCurrentTheme(value);
-            if (this.previewElement) {
-                this.themeManager.applyTheme(this.previewElement);
-            }
-        });
-
-        // 默认选择第一个主题
-        if (themes.length > 0) {
-            const select = this.customThemeSelect.querySelector('.book-smith-select');
-            if (select) {
-                (select as HTMLElement).setAttribute('data-value', themes[0].value);
-                this.themeManager.setCurrentTheme(themes[0].value);
             }
         }
     }
@@ -484,9 +430,6 @@ export class TypographyView {
             // 更新输入框值
             this.fontSizeInput.value = currentSize.toString();
 
-            // 更新主题管理器中的字体大小
-            this.themeManager.setFontSize(currentSize);
-
             // 更新预览
             this.updatePreview();
         };
@@ -520,23 +463,6 @@ export class TypographyView {
         this.fontSizeInput.addEventListener('input', updateFontSize);
     }
 
-    // 获取选项方法
-    private async getThemeOptions() {
-        const themes = this.themeManager.getVisibleThemes();
-        return themes.map(theme => ({
-            value: theme.id,
-            text: theme.name
-        }));
-    }
-
-    private async getTemplateOptions() {
-        const templates = this.imgTemplateManager.getVisibleTemplates();
-        return templates.map(template => ({
-            value: template.id,
-            text: template.name
-        }));
-    }
-
     // 开本大小选择器
     private createBookSizeSelector(parent: HTMLElement) {
         const bookSizeOptions = [
@@ -563,18 +489,29 @@ export class TypographyView {
         // 添加事件监听
         this.customBookSizeSelect.querySelector('.book-smith-select')?.addEventListener('change', () => {
             this.updatePreview();
+            // 如果显示封面，也更新封面预览
+            const coverToggle = document.querySelector('.cover-toggle-input') as HTMLInputElement;
+            if (coverToggle?.checked) {
+                this.updateCoverPreview();
+            }
         });
     }
 
     // 获取排版设置
-    private getTypographySettings(): TypographySettings {
+    private async getTypographySettings(): Promise<TypographySettings> {
         // 获取封面开关状态
         const coverToggle = this.parentEl.querySelector('.cover-toggle-input') as HTMLInputElement;
         const showCover = coverToggle ? coverToggle.checked : true;
 
+        // 如果显示封面，转换封面为图片
+        let coverImageData: string | undefined;
+        if (showCover && this.coverSettings) {
+            coverImageData = (await this.convertCoverToImage()) || undefined;
+        }
+
         // 获取字体系列
         const fontFamily = (this.customFontSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default';
-        
+
         // 获取实际的字体CSS定义
         const fontFamilyCSS = this.getFontFamilyCSS(fontFamily);
 
@@ -587,7 +524,9 @@ export class TypographyView {
             themeId: (this.customThemeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default',
             coverSettings: this.coverSettings || undefined,
             showCover: showCover,
-            bookSize: (this.customBookSizeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'a4'
+            bookSize: (this.customBookSizeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'a4',
+            coverImageData: coverImageData || undefined, // 新增封面图片数据
+            headerFooterToc: this.headerFooterTocSettings || undefined // 新增页眉页脚目录设置
         };
     }
 
@@ -649,7 +588,10 @@ export class TypographyView {
         const settings = this.getTypographySettings();
 
         // 更新预览样式
-        this.updatePreviewStyle(settings);
+        // 等待 settings Promise 解析完成后再更新样式
+        settings.then(resolvedSettings => {
+            this.updatePreviewStyle(resolvedSettings);
+        });
 
         // 渲染所有内容
         await this.renderAllContent(this.previewElement);
@@ -780,7 +722,7 @@ export class TypographyView {
             type: 'checkbox',
             cls: 'cover-toggle-input'
         }) as HTMLInputElement;
-        coverToggle.checked = false; // 默认显示封面
+        coverToggle.checked = true; // 默认不显示封面
 
         coverToggle.addEventListener('change', () => {
             this.updatePreview();
@@ -793,6 +735,15 @@ export class TypographyView {
         });
 
         coverDesignBtn.addEventListener('click', () => this.openCoverDesigner());
+
+        // 页眉页脚和目录设置按钮
+        const headerFooterTocButton = coverToggleContainer.createEl('button', {
+            text: '页眉页脚和目录',
+            cls: 'cover-design-btn'
+        });
+        headerFooterTocButton.addEventListener('click', () => {
+            this.openHeaderFooterTocModal();
+        });
     }
 
     // 打开封面设计器
@@ -802,106 +753,247 @@ export class TypographyView {
             return;
         }
 
+        // 使用CoverManager获取当前的封面配置
+        const currentCoverSettings = this.coverSettings || this.coverManager.getBookCoverSettings(this.selectedBook);
+
+        // 获取当前选择的开本大小并添加到封面配置中
+        const currentBookSize = this.getSelectedBookSize();
+        if (currentBookSize) {
+            currentCoverSettings.bookSize = currentBookSize;
+        }
+
         new CoverSettingModal(
             this.app,
-            (settings) => {
+            async (settings) => {
                 this.coverSettings = settings;
-                this.updatePreview();
+                if (!this.selectedBook) {
+                    new Notice('请先选择一本书籍');
+                    return;
+                }
+
+                // 保存封面设计到书籍元数据
+                try {
+                    await this.bookManager.updateBook(this.selectedBook.basic.uuid, {
+                        basic: {
+                            ...this.selectedBook.basic,
+                            coverSettings: settings,
+                            // 如果设计中包含图片，也更新cover字段
+                            cover: settings.imageUrl || this.selectedBook.basic.cover
+                        }
+                    });
+
+                    // 更新当前选中的书籍对象
+                    this.selectedBook.basic.coverSettings = settings;
+                    if (settings.imageUrl) {
+                        this.selectedBook.basic.cover = settings.imageUrl;
+                    }
+
+                    this.updatePreview();
+                    new Notice('封面设计已保存');
+                } catch (error) {
+                    console.error('保存封面设计失败:', error);
+                    new Notice('保存封面设计失败');
+                }
             },
             this.parentEl,
             this.coverManager,
-            this.coverSettings || undefined,
+            currentCoverSettings,
             this.selectedBook.basic.title,
-            this.selectedBook.basic.author
+            this.selectedBook.basic.author,
+            this.selectedBook.basic.subtitle
         ).open();
+    }
+
+    // 新增方法：获取当前选择的开本大小
+    private getSelectedBookSize(): string {
+        const bookSizeSelect = this.customBookSizeSelect?.querySelector('.book-smith-select') as HTMLElement;
+        return bookSizeSelect?.getAttribute('data-value') || 'A4';
+    }
+
+    // 新增方法：初始化默认的页眉页脚设置
+    private initializeDefaultHeaderFooterTocSettings() {
+        this.headerFooterTocSettings = {
+            headerEnabled: true,
+            headerLeft: '{{title}}',
+            headerCenter: '',
+            headerRight: '{{author}}',
+            headerFontSize: 12,
+            headerColor: '#000000',
+            headerHeight: 15,
+            
+            footerEnabled: true,
+            footerLeft: '',
+            footerCenter: '',
+            footerRight: '{{pageNumber}}/{{totalPages}}',
+            footerFontSize: 12,
+            footerColor: '#000000',
+            footerHeight: 20,
+            
+            tocEnabled: true,
+            tocTitle: '目录',
+            tocMaxLevel: 3,
+            tocFontSize: 14,
+            tocFontFamily: 'serif',
+            tocColor: '#000000',
+            tocLineHeight: 1.5,
+            tocIndentSize: 20,
+            tocIndent: 20,
+            tocPageBreak: true
+        };
+    }
+
+    private async openHeaderFooterTocModal() {
+        const currentSettings = await this.getTypographySettings();
+        const modal = new HeaderFooterTocModal(
+            this.plugin,
+            currentSettings.headerFooterToc || {},
+            (settings) => {
+                // 保存设置并更新预览
+                this.headerFooterTocSettings = settings;
+                this.updatePreview();
+            }
+        );
+        modal.open();
     }
 
     // 添加封面预览更新方法
     private updateCoverPreview() {
         if (!this.coverPreviewElement || !this.selectedBook) return;
 
-        // 清除现有内容
+        // 清除现有内容（确保彻底清空）
         this.coverPreviewElement.empty();
+        // 清空背景图和所有样式
+        this.coverPreviewElement.style.backgroundImage = '';
+        this.coverPreviewElement.style.background = '';
+        this.coverPreviewElement.removeAttribute('style');
 
-        // 应用封面样式
-        if (this.coverSettings) {
-            const contentContainer = this.coverManager.applyCoverStyles(this.coverPreviewElement, this.coverSettings);
+        // 获取封面配置（如果没有当前配置，从CoverManager获取）
+        const coverSettings = this.coverSettings || this.coverManager.getBookCoverSettings(this.selectedBook);
 
-            // 添加标题和作者
-            if (contentContainer) {
-                // 添加书名
+        // 获取当前选择的开本大小并应用到封面配置
+        const currentBookSize = this.getSelectedBookSize();
+        if (currentBookSize) {
+            coverSettings.bookSize = currentBookSize;
+        }
+
+        // 应用开本大小样式到预览元素
+        this.applyBookSizeToPreview(this.coverPreviewElement, coverSettings.bookSize || 'A4');
+
+        const contentContainer = this.coverManager.applyCoverStyles(this.coverPreviewElement, coverSettings);
+
+        // 添加书籍信息
+        if (contentContainer) {
+            // 使用自定义文本和位置
+            const titleText = coverSettings.customTitle || this.selectedBook.basic.title;
+            const subtitleText = coverSettings.customSubtitle || this.selectedBook.basic.subtitle;
+            const authorText = coverSettings.customAuthor || (this.selectedBook.basic.author ? this.selectedBook.basic.author.join(', ') : '');
+
+            // 添加书名
+            if (titleText) {
                 const titleEl = contentContainer.createEl('div', {
                     cls: 'cover-title',
-                    text: this.selectedBook.basic.title
+                    text: titleText
                 });
-                titleEl.setAttribute('style', this.coverSettings.titleStyle);
 
-                // 添加副标题
-                if (this.selectedBook.basic.subtitle) {
-                    const subtitleEl = contentContainer.createEl('div', {
-                        cls: 'cover-subtitle',
-                        text: this.selectedBook.basic.subtitle
-                    });
-                    subtitleEl.setAttribute('style', 'font-size: 18px; color: #ffffff; margin-top: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);');
+                let titleStyle = '';
+                if (coverSettings.titleStyleConfig) {
+                    titleStyle = this.buildStyleString(coverSettings.titleStyleConfig);
+                } else {
+                    titleStyle = coverSettings.titleStyle || '';
                 }
-
-                // 添加作者信息
-                if (this.selectedBook.basic.author && this.selectedBook.basic.author.length > 0) {
-                    const authorEl = contentContainer.createEl('div', {
-                        cls: 'cover-author',
-                        text: this.selectedBook.basic.author.join(', ')
-                    });
-                    authorEl.setAttribute('style', this.coverSettings.authorStyle);
-                }
-
-                // 添加描述信息
-                if (this.selectedBook.basic.desc) {
-                    const descriptionEl = contentContainer.createEl('div', {
-                        cls: 'cover-description',
-                        text: this.selectedBook.basic.desc
-                    });
-                    descriptionEl.setAttribute('style', 'font-size: 14px; color: #f0f0f0; margin-top: 20px; max-width: 80%; text-align: center; font-style: italic;');
-                }
+                titleEl.setAttribute('style', titleStyle + `position: absolute; left: ${coverSettings.titlePosition?.x || 50}%; top: ${coverSettings.titlePosition?.y || 30}%; transform: translate(-50%, -50%); z-index: 10;`);
             }
-        } else {
-            // 使用默认封面样式
-            const defaultSettings = this.coverManager.getDefaultCoverSettings();
-            const contentContainer = this.coverManager.applyCoverStyles(this.coverPreviewElement, defaultSettings);
 
-            // 添加标题和作者
-            if (contentContainer) {
-                const titleEl = contentContainer.createEl('div', {
-                    cls: 'cover-title',
-                    text: this.selectedBook.basic.title
+            // 添加副标题
+            if (subtitleText) {
+                const subtitleEl = contentContainer.createEl('div', {
+                    cls: 'cover-subtitle',
+                    text: subtitleText
                 });
-                titleEl.setAttribute('style', defaultSettings.titleStyle);
 
-                // 添加副标题
-                if (this.selectedBook.basic.subtitle) {
-                    const subtitleEl = contentContainer.createEl('div', {
-                        cls: 'cover-subtitle',
-                        text: this.selectedBook.basic.subtitle
-                    });
-                    subtitleEl.setAttribute('style', 'font-size: 18px; color: #ffffff; margin-top: 10px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);');
+                let subtitleStyle = '';
+                if (coverSettings.subtitleStyleConfig) {
+                    subtitleStyle = this.buildStyleString(coverSettings.subtitleStyleConfig);
+                } else {
+                    subtitleStyle = 'font-size: 18px; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);';
                 }
-
-                if (this.selectedBook.basic.author && this.selectedBook.basic.author.length > 0) {
-                    const authorEl = contentContainer.createEl('div', {
-                        cls: 'cover-author',
-                        text: this.selectedBook.basic.author.join(', ')
-                    });
-                    authorEl.setAttribute('style', defaultSettings.authorStyle);
-                }
-
-                // 添加描述信息
-                if (this.selectedBook.basic.desc) {
-                    const descriptionEl = contentContainer.createEl('div', {
-                        cls: 'cover-description',
-                        text: this.selectedBook.basic.desc
-                    });
-                    descriptionEl.setAttribute('style', 'font-size: 14px; color: #f0f0f0; margin-top: 20px; max-width: 80%; text-align: center; font-style: italic;');
-                }
+                subtitleEl.setAttribute('style', subtitleStyle + `position: absolute; left: ${coverSettings.subtitlePosition?.x || 50}%; top: ${coverSettings.subtitlePosition?.y || 50}%; transform: translate(-50%, -50%); z-index: 10;`);
             }
+
+            // 添加作者信息
+            if (authorText) {
+                const authorEl = contentContainer.createEl('div', {
+                    cls: 'cover-author',
+                    text: authorText
+                });
+
+                let authorStyle = '';
+                if (coverSettings.authorStyleConfig) {
+                    authorStyle = this.buildStyleString(coverSettings.authorStyleConfig);
+                } else {
+                    authorStyle = coverSettings.authorStyle || '';
+                }
+                authorEl.setAttribute('style', authorStyle + `position: absolute; left: ${coverSettings.authorPosition?.x || 50}%; top: ${coverSettings.authorPosition?.y || 70}%; transform: translate(-50%, -50%); z-index: 10;`);
+            }
+        }
+    }
+
+    private buildStyleString(styleConfig: any): string {
+        return `font-size: ${styleConfig.fontSize}px; color: ${styleConfig.color}; font-weight: ${styleConfig.fontWeight}; font-style: ${styleConfig.fontStyle}; text-shadow: ${styleConfig.textShadow || 'none'}; `;
+    }
+
+    // 新增方法：应用开本大小到预览
+    private applyBookSizeToPreview(element: HTMLElement, bookSize: string) {
+        const sizeMap: Record<string, { aspectRatio: string }> = {
+            'A4': { aspectRatio: '210/297' },
+            'A5': { aspectRatio: '148/210' },
+            'A3': { aspectRatio: '297/420' },
+            'Legal': { aspectRatio: '8.5/14' },
+            'Letter': { aspectRatio: '8.5/11' },
+            'Tabloid': { aspectRatio: '11/17' }
+        };
+
+        const size = sizeMap[bookSize] || sizeMap['A4'];
+        element.style.aspectRatio = size.aspectRatio;
+        element.style.width = '100%';
+        element.style.height = 'auto';
+    }
+
+    // 新增方法：将封面转换为图片
+    private async convertCoverToImage(): Promise<string | null> {
+        if (!this.coverPreviewElement || !this.coverSettings) {
+            return null;
+        }
+
+        try {
+            // 确保浏览器完成重绘并等待资源加载
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // 配置导出选项
+            const exportConfig = {
+                quality: 1,
+                pixelRatio: 2, // 提高分辨率
+                backgroundColor: '#333333', // 默认背景色
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left'
+                }
+            };
+
+            try {
+                // 首选方法：直接转换为 DataURL
+                const dataUrl = await htmlToImage.toPng(this.coverPreviewElement, exportConfig);
+                return dataUrl;
+            } catch (err) {
+                console.warn('toPng 失败，尝试备用方法', err);
+
+                // 备用方法：使用 toCanvas 然后转换为 DataURL
+                const canvas = await htmlToImage.toCanvas(this.coverPreviewElement, exportConfig);
+                return canvas.toDataURL('image/png', 0.9);
+            }
+        } catch (error) {
+            console.error('封面转图片失败:', error);
+            return null;
         }
     }
 
@@ -935,16 +1027,14 @@ export class TypographyView {
             }
 
             let useTypography = false;
-            let htmlContent: string | undefined;
+            let htmlContent: HTMLElement | undefined;
             let typographySettings: any | undefined;
 
             if (format !== "txt") {
                 useTypography = true;
-                typographySettings = this.getTypographySettings();
-                const tempContainer = document.createElement("div");
+                typographySettings = await this.getTypographySettings(); // 改为 await
                 if (this.previewElement) {
-                    tempContainer.innerHTML = this.previewElement.innerHTML;
-                    htmlContent = tempContainer.innerHTML;
+                    htmlContent = this.previewElement.cloneNode(true) as HTMLElement;
                 }
             }
 
