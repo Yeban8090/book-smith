@@ -1,5 +1,6 @@
 import { App, setIcon, Notice, TFile, MarkdownRenderer } from 'obsidian';
 import { BookManager } from "../services/BookManager";
+import * as htmlToImage from 'html-to-image';
 import { Book, CoverSettings, ChapterNode } from "../types/book";
 import { ExportService } from "../services/ExportService";
 import { i18n } from "../i18n/i18n";
@@ -17,9 +18,10 @@ export interface TypographySettings {
     margin: string;
     templateId: string;
     themeId: string;
-    coverSettings?: CoverSettings; // 封面设置
-    showCover: boolean; // 是否显示封面
-    bookSize: string; // 新增：书籍开本大小
+    coverSettings?: CoverSettings;
+    showCover: boolean;
+    bookSize: string;
+    coverImageData?: string; // 新增：封面图片的 base64 数据
 }
 
 export class TypographyView {
@@ -594,10 +596,16 @@ export class TypographyView {
     }
 
     // 获取排版设置
-    private getTypographySettings(): TypographySettings {
+    private async getTypographySettings(): Promise<TypographySettings> {
         // 获取封面开关状态
         const coverToggle = this.parentEl.querySelector('.cover-toggle-input') as HTMLInputElement;
         const showCover = coverToggle ? coverToggle.checked : true;
+
+        // 如果显示封面，转换封面为图片
+        let coverImageData: string | undefined;
+        if (showCover && this.coverSettings) {
+            coverImageData = (await this.convertCoverToImage()) || undefined;
+        }
 
         // 获取字体系列
         const fontFamily = (this.customFontSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default';
@@ -614,7 +622,8 @@ export class TypographyView {
             themeId: (this.customThemeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'default',
             coverSettings: this.coverSettings || undefined,
             showCover: showCover,
-            bookSize: (this.customBookSizeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'a4'
+            bookSize: (this.customBookSizeSelect?.querySelector('.book-smith-select') as HTMLElement)?.getAttribute('data-value') || 'a4',
+            coverImageData: coverImageData // 新增封面图片数据
         };
     }
 
@@ -676,7 +685,10 @@ export class TypographyView {
         const settings = this.getTypographySettings();
 
         // 更新预览样式
-        this.updatePreviewStyle(settings);
+        // 等待 settings Promise 解析完成后再更新样式
+        settings.then(resolvedSettings => {
+            this.updatePreviewStyle(resolvedSettings);
+        });
 
         // 渲染所有内容
         await this.renderAllContent(this.previewElement);
@@ -909,7 +921,6 @@ export class TypographyView {
         // 应用开本大小样式到预览元素
         this.applyBookSizeToPreview(this.coverPreviewElement, coverSettings.bookSize || 'A4');
         
-        console.log('使用封面配置:', coverSettings);
         const contentContainer = this.coverManager.applyCoverStyles(this.coverPreviewElement, coverSettings);
 
         // 添加书籍信息
@@ -990,6 +1001,44 @@ export class TypographyView {
         element.style.height = 'auto';
     }
 
+    // 新增方法：将封面转换为图片
+    private async convertCoverToImage(): Promise<string | null> {
+        if (!this.coverPreviewElement || !this.coverSettings) {
+            return null;
+        }
+
+        try {
+            // 确保浏览器完成重绘并等待资源加载
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // 配置导出选项
+            const exportConfig = {
+                quality: 1,
+                pixelRatio: 4, // 提高分辨率
+                backgroundColor: '#333333', // 默认背景色
+                style: {
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left'
+                }
+            };
+
+            try {
+                // 首选方法：直接转换为 DataURL
+                const dataUrl = await htmlToImage.toPng(this.coverPreviewElement, exportConfig);
+                return dataUrl;
+            } catch (err) {
+                console.warn('toPng 失败，尝试备用方法', err);
+                
+                // 备用方法：使用 toCanvas 然后转换为 DataURL
+                const canvas = await htmlToImage.toCanvas(this.coverPreviewElement, exportConfig);
+                return canvas.toDataURL('image/png', 0.9);
+            }
+        } catch (error) {
+            console.error('封面转图片失败:', error);
+            return null;
+        }
+    }
+
 
     // 导出功能
     private async exportWithTypography() {
@@ -1025,7 +1074,7 @@ export class TypographyView {
 
             if (format !== "txt") {
                 useTypography = true;
-                typographySettings = this.getTypographySettings();
+                typographySettings = await this.getTypographySettings(); // 改为 await
                 if (this.previewElement) {
                     htmlContent = this.previewElement.cloneNode(true) as HTMLElement;
                 }

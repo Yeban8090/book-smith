@@ -292,38 +292,131 @@ export class PdfExportStrategy implements ExportStrategy {
             const bodyPdfBuffer = await win.webContents.printToPDF(printOptions);
             win.close();
 
+            // 替换第295-325行的代码
             const PDFLib = await import('pdf-lib');
 
-            const coverDoc = await PDFLib.PDFDocument.create();
-            const page = coverDoc.addPage();
-            const size = this.bookSizeMap[typographySettings.bookSize || "A4"];
-            page.setSize(size.width, size.height);
-            
-            page.drawRectangle({ x: 0, y: 0, width: page.getWidth(), height: page.getHeight(), color: PDFLib.rgb(0, 0, 0) });
-            page.drawText("Book", {
-                x: (page.getWidth() - 10) / 2,
-                y: page.getHeight() - 300, // 距离顶部100
-                size: 30,
-                color: PDFLib.rgb(1, 1, 1),
-              });
-            const coverBuffer = await coverDoc.save();
+            // 检查是否有封面图片数据
+            if (typographySettings.showCover && typographySettings.coverImageData) {
+                // 创建封面页
+                const coverDoc = await PDFLib.PDFDocument.create();
+                const page = coverDoc.addPage();
+                const size = this.bookSizeMap[typographySettings.bookSize || "A4"];
+                page.setSize(size.width, size.height);
 
-            const finalPdf = await PDFLib.PDFDocument.create();
-            const [coverPage] = await finalPdf.copyPages(await PDFLib.PDFDocument.load(coverBuffer), [0]);
-            finalPdf.addPage(coverPage);
+                try {
+                    // 处理base64图片数据
+                    const base64Data = typographySettings.coverImageData.split(',')[1]; // 移除 "data:image/xxx;base64," 前缀
+                    const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-            const bodyDoc = await PDFLib.PDFDocument.load(bodyPdfBuffer);
-            const bodyPages = await finalPdf.copyPages(bodyDoc, bodyDoc.getPageIndices());
-            bodyPages.forEach(p => finalPdf.addPage(p));
+                    // 根据图片类型嵌入图片
+                    let coverImage;
+                    if (typographySettings.coverImageData.includes('data:image/png')) {
+                        coverImage = await coverDoc.embedPng(imageBytes);
+                    } else if (typographySettings.coverImageData.includes('data:image/jpeg') || typographySettings.coverImageData.includes('data:image/jpg')) {
+                        coverImage = await coverDoc.embedJpg(imageBytes);
+                    } else {
+                        // 默认尝试PNG格式
+                        coverImage = await coverDoc.embedPng(imageBytes);
+                    }
 
-            const finalBuffer = await finalPdf.save();
+                    // 绘制封面图片
+                    page.drawImage(coverImage, {
+                        x: 0,
+                        y: 0,
+                        width: page.getWidth(),
+                        height: page.getHeight(),
+                    });
+                } catch (error) {
+                    console.error('封面图片处理失败，使用默认封面:', error);
+                    // 如果图片处理失败，绘制默认封面
+                    page.drawRectangle({
+                        x: 0,
+                        y: 0,
+                        width: page.getWidth(),
+                        height: page.getHeight(),
+                        color: PDFLib.rgb(0.2, 0.2, 0.2)
+                    });
+                    page.drawText("Book", {
+                        x: page.getWidth() / 2 - 50,
+                        y: page.getHeight() / 2,
+                        size: 30,
+                        color: PDFLib.rgb(1, 1, 1),
+                    });
+                }
 
-            const filePath = await this.getOutputFile(book.basic.title);
-            if (!filePath) return "cancelled";
-            await fs.writeFile(filePath, finalBuffer);
+                const coverBuffer = await coverDoc.save();
 
-            return filePath;
+                // 合并封面和内容PDF
+                const finalPdf = await PDFLib.PDFDocument.create();
+                const [coverPage] = await finalPdf.copyPages(await PDFLib.PDFDocument.load(coverBuffer), [0]);
+                finalPdf.addPage(coverPage);
 
+                const bodyDoc = await PDFLib.PDFDocument.load(bodyPdfBuffer);
+                const bodyPages = await finalPdf.copyPages(bodyDoc, bodyDoc.getPageIndices());
+                bodyPages.forEach(p => finalPdf.addPage(p));
+
+                const finalBuffer = await finalPdf.save();
+
+                const filePath = await this.getOutputFile(book.basic.title);
+                if (!filePath) return "cancelled";
+                await fs.writeFile(filePath, finalBuffer);
+
+                return filePath;
+            } else {
+                // 如果没有封面设置或不显示封面，创建简单的文本封面
+                const coverDoc = await PDFLib.PDFDocument.create();
+                const page = coverDoc.addPage();
+                const size = this.bookSizeMap[typographySettings.bookSize || "A4"];
+                page.setSize(size.width, size.height);
+
+                // 绘制默认封面
+                page.drawRectangle({
+                    x: 0,
+                    y: 0,
+                    width: page.getWidth(),
+                    height: page.getHeight(),
+                    color: PDFLib.rgb(0.1, 0.1, 0.1)
+                });
+
+                // 添加书名
+                const titleText = "Book";
+                page.drawText(titleText, {
+                    x: page.getWidth() / 2 - (titleText.length * 10),
+                    y: page.getHeight() / 2 + 50,
+                    size: 24,
+                    color: PDFLib.rgb(1, 1, 1),
+                });
+
+                // 添加作者信息
+                if (book.basic.author && book.basic.author.length > 0) {
+                    const authorText = book.basic.author.join(', ');
+                    page.drawText(authorText, {
+                        x: page.getWidth() / 2 - (authorText.length * 6),
+                        y: page.getHeight() / 2 - 50,
+                        size: 16,
+                        color: PDFLib.rgb(0.8, 0.8, 0.8),
+                    });
+                }
+
+                const coverBuffer = await coverDoc.save();
+
+                // 合并封面和内容PDF
+                const finalPdf = await PDFLib.PDFDocument.create();
+                const [coverPage] = await finalPdf.copyPages(await PDFLib.PDFDocument.load(coverBuffer), [0]);
+                finalPdf.addPage(coverPage);
+
+                const bodyDoc = await PDFLib.PDFDocument.load(bodyPdfBuffer);
+                const bodyPages = await finalPdf.copyPages(bodyDoc, bodyDoc.getPageIndices());
+                bodyPages.forEach(p => finalPdf.addPage(p));
+
+                const finalBuffer = await finalPdf.save();
+
+                const filePath = await this.getOutputFile(book.basic.title);
+                if (!filePath) return "cancelled";
+                await fs.writeFile(filePath, finalBuffer);
+
+                return filePath;
+            }
         } catch (err: any) {
             console.error("PDF导出错误:", err);
             throw new Error(`PDF导出失败: ${err.message}`);
@@ -333,7 +426,7 @@ export class PdfExportStrategy implements ExportStrategy {
     private static async processImages(container: HTMLElement): Promise<void> {
         const images = container.querySelectorAll('img');
         const imageArray = Array.from(images);
-        
+
         for (const img of imageArray) {
             try {
                 const response = await fetch(img.src);
