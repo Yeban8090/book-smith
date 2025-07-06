@@ -935,16 +935,14 @@ export class TypographyView {
             }
 
             let useTypography = false;
-            let htmlContent: string | undefined;
+            let htmlContent: HTMLElement | undefined;
             let typographySettings: any | undefined;
 
             if (format !== "txt") {
                 useTypography = true;
                 typographySettings = this.getTypographySettings();
-                const tempContainer = document.createElement("div");
                 if (this.previewElement) {
-                    tempContainer.innerHTML = this.previewElement.innerHTML;
-                    htmlContent = tempContainer.innerHTML;
+                    htmlContent = this.previewElement.cloneNode(true) as HTMLElement;
                 }
             }
 

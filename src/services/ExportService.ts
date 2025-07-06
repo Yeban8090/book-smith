@@ -42,7 +42,7 @@ export interface ExportStrategy {
 // 导出选项接口
 export interface ExportOptions {
     selectedChapters?: ChapterNode[];
-    htmlContent?: string;
+    htmlContent?: HTMLElement;
     useTypography?: boolean;
     typographySettings?: TypographySettings;
 }
@@ -209,8 +209,10 @@ export class PdfExportStrategy implements ExportStrategy {
         }
     }
 
-    async exportHTML(book: Book, htmlContent: string, typographySettings: TypographySettings): Promise<string> {
+    async exportHTML(book: Book, htmlContent: HTMLElement, typographySettings: TypographySettings): Promise<string> {
         try {
+            //0.处理htmlContent
+            await PdfExportStrategy.processImages(htmlContent);
             // 1. 构建样式 CSS 字符串
             const style = `
                 body {
@@ -247,7 +249,7 @@ export class PdfExportStrategy implements ExportStrategy {
                 <style>${style}</style>
               </head>
               <body>
-                ${htmlContent}
+                ${htmlContent.innerHTML}
               </body>
             </html>
             `;
@@ -265,8 +267,6 @@ export class PdfExportStrategy implements ExportStrategy {
                 }
             });
 
-            // 等待页面加载完成
-            console.log('等待页面加载完成');
             const ready = new Promise<void>((resolve) => {
                 win.webContents.once("did-finish-load", resolve);
             });
@@ -327,6 +327,29 @@ export class PdfExportStrategy implements ExportStrategy {
         } catch (err: any) {
             console.error("PDF导出错误:", err);
             throw new Error(`PDF导出失败: ${err.message}`);
+        }
+    }
+
+    private static async processImages(container: HTMLElement): Promise<void> {
+        const images = container.querySelectorAll('img');
+        const imageArray = Array.from(images);
+        
+        for (const img of imageArray) {
+            try {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                await new Promise((resolve, reject) => {
+                    reader.onload = () => {
+                        img.src = reader.result as string;
+                        resolve(null);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error('图片转换失败:', error);
+            }
         }
     }
 
