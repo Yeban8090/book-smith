@@ -22,7 +22,7 @@ export class BookSelectionModal extends Modal {
         contentEl.empty();
 
         // 设置模态框标题
-        contentEl.createEl('h2', { text: i18n.t('SELECT_BOOK') || '选择要导出的书籍' });
+        contentEl.createEl('h2', { text: '选择要导出的书籍' });
 
         // 加载书籍列表
         await this.loadBooks();
@@ -43,7 +43,7 @@ export class BookSelectionModal extends Modal {
 
         // 导出按钮
         new ButtonComponent(buttonContainer)
-            .setButtonText(i18n.t('EXPORT') || '导出')
+            .setButtonText('导出设置')
             .setCta()
             .onClick(() => {
                 this.handleExport();
