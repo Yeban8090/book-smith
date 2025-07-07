@@ -7,7 +7,7 @@ import { ContactModal } from '../modals/ContactModal';
 import BookSmithPlugin from '../main';
 import { i18n } from '../i18n/i18n';
 import { TypographyView } from '../components/TypographyView';
-
+import { BookSelectionModal } from '../modals/BookSelectionModal';
 interface ToolItem {
     icon: string;
     text: string;
@@ -231,25 +231,7 @@ export class ToolView extends ItemView {
 
     // 添加进入排版模式的方法
     private enterTypographyMode() {
-        if (!this.normalView) return;
-        this.normalView.empty();
-        
-        this.typographyView = new TypographyView(
-            this.app,
-            this.plugin,
-            this.normalView,
-            () => {
-                this.typographyView?.remove();
-                this.typographyView = null;
-                if (this.normalView) {
-                    this.normalView.empty();
-                    this.createNormalView(this.normalView);
-                }
-            }
-        );
-        
-        // 初始化视图（加载书籍等）
-        this.typographyView.initialize();
+        new BookSelectionModal(this.app, this.plugin).open();
     }
 
     // 修改 onClose 方法，确保所有视图都被正确关闭

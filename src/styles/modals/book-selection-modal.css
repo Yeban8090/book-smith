@@ -1,0 +1,76 @@
+/* 书籍选择模态框样式 */
+.book-selection-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 20px 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+}
+
+.book-selection-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.book-selection-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.book-selection-item.selected {
+    background-color: var(--background-modifier-active-hover);
+}
+
+.book-selection-item:last-child {
+    border-bottom: none;
+}
+
+.book-selection-radio {
+    margin-right: 12px;
+    margin-top: 2px;
+}
+
+.book-selection-info {
+    flex: 1;
+}
+
+.book-selection-title {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.book-selection-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.book-selection-details span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.book-selection-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.book-selection-hint {
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.book-selection-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--background-modifier-border);
+}
