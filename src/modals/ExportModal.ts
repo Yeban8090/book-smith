@@ -92,19 +92,19 @@ export class ExportModal extends Modal {
         const { contentEl } = this;
         const mainContent = contentEl.createDiv({ cls: 'export-modal-main centered' });
         this.mainContent = mainContent;
-    
+
         // 左侧预览区域 - 只在选择PDF格式时显示
         this.previewContainer = mainContent.createDiv({ cls: 'export-preview-panel' });
         this.updatePreviewVisibility();
-    
+
         // 右侧设置区域
         const settingsPanel = mainContent.createDiv({ cls: 'export-settings-panel' });
         this.createSettingsContent(settingsPanel);
     }
-    
+
     private updateLayoutMode() {
         if (!this.mainContent) return;
-        
+
         if (this.selectedFormat && this.selectedFormat == 'pdf') {
             this.mainContent.removeClass('centered');
             this.mainContent.addClass('split-layout');
@@ -113,12 +113,13 @@ export class ExportModal extends Modal {
             this.mainContent.addClass('centered');
         }
     }
-    
+
     private updatePreviewVisibility() {
         if (!this.previewContainer) return;
-        
+    
         if (this.selectedFormat === 'pdf') {
             this.previewContainer.style.display = 'flex';
+            // 只创建预览区域结构，不立即开始渲染
             this.createPreviewArea();
         } else {
             this.previewContainer.style.display = 'none';
@@ -144,7 +145,7 @@ export class ExportModal extends Modal {
         if (this.selectedFormat !== 'pdf') {
             return;
         }
-        
+    
         this.previewContainer.empty();
         this.cleanupWebview();
     
@@ -152,29 +153,60 @@ export class ExportModal extends Modal {
         previewHeader.createEl('h3', { text: 'PDF导出预览', cls: 'preview-title' });
     
         const previewContent = this.previewContainer.createDiv({ cls: 'preview-content' });
+        
+        // 初始状态：显示等待开始渲染的提示
+        this.showPreviewState('waiting', previewContent);
+    }
     
-        if (this.isRendering) {
-            const loading = previewContent.createDiv({ cls: 'preview-loading' });
-            loading.innerHTML = `
-                <div class="preview-loading-spinner"></div>
-                <div class="preview-loading-text">正在渲染预览...</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 0%"></div>
-                </div>
-                <div class="progress-text">准备中...</div>
-                <div class="progress-file"></div>
-            `;
-        } else if (this.webviewReady) {
-            // 如果webview已经准备好，显示它
-            if (this.webview) {
-                previewContent.appendChild(this.webview);
-            }
-        } else {
-            const error = previewContent.createDiv({ cls: 'preview-error' });
-            error.innerHTML = `
-                <div class="preview-error-icon">❌</div>
-                <div class="preview-error-text">渲染失败，请重试</div>
-            `;
+    // 新增：统一的预览状态管理方法
+    private showPreviewState(state: 'waiting' | 'loading' | 'ready' | 'error', container?: HTMLElement, errorMessage?: string) {
+        const previewContent = container || this.previewContainer.querySelector('.preview-content') as HTMLElement;
+        if (!previewContent) return;
+        
+        previewContent.empty();
+        
+        switch (state) {
+            case 'waiting':
+                const waiting = previewContent.createDiv({ cls: 'preview-waiting' });
+                waiting.innerHTML = `
+                    <div class="preview-waiting-icon">📄</div>
+                    <div class="preview-waiting-text">点击开始渲染预览</div>
+                `;
+                break;
+                
+            case 'loading':
+                const loading = previewContent.createDiv({ cls: 'preview-loading' });
+                loading.innerHTML = `
+                    <div class="preview-loading-spinner"></div>
+                    <div class="preview-loading-text">正在渲染预览...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">准备中...</div>
+                    <div class="progress-file"></div>
+                `;
+                break;
+                
+            case 'ready':
+                if (this.webview) {
+                    previewContent.appendChild(this.webview);
+                }
+                break;
+                
+            case 'error':
+                const error = previewContent.createDiv({ cls: 'preview-error' });
+                error.innerHTML = `
+                    <div class="preview-error-icon">❌</div>
+                    <div class="preview-error-text">${errorMessage || '渲染失败，请重试'}</div>
+                    <button class="preview-retry-btn">重新渲染</button>
+                `;
+                
+                // 添加重试按钮事件
+                const retryBtn = error.querySelector('.preview-retry-btn') as HTMLButtonElement;
+                retryBtn?.addEventListener('click', () => {
+                    this.startRenderPreview();
+                });
+                break;
         }
     }
 
@@ -200,54 +232,78 @@ export class ExportModal extends Modal {
     }
 
     private async startRenderPreview() {
-        if (!this.selectedFormat || this.isRendering) return;
+        if (this.isRendering) {
+            new Notice('渲染进行中，请稍候...');
+            return;
+        }
     
-        this.stopRendering();
-    
+        // 重置状态
         this.isRendering = true;
         this.webviewReady = false;
-        this.abortController = new AbortController();
+        this.cleanupWebview();
+        
+        // 显示加载状态
+        const previewContent = this.previewContainer.querySelector('.preview-content') as HTMLElement;
+        if (!previewContent) {
+            this.createPreviewArea(); // 确保预览区域已创建
+        }
+        
+        previewContent.empty();
+        
+        // 添加加载指示器
+        const loading = previewContent.createDiv({ cls: 'preview-loading' });
+        loading.innerHTML = `
+            <div class="preview-loading-spinner"></div>
+            <div class="preview-loading-text">正在渲染预览...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">准备中...</div>
+            <div class="progress-file"></div>
+        `;
+        
         this.updateExportButtonState();
         this.updateFormatButtonsState();
-        this.createPreviewArea();
+    
+        // 创建中止控制器
+        this.abortController = new AbortController();
     
         try {
-            // 创建webview
+            // 创建 webview 并立即添加到 DOM（但设为隐藏）
             this.webview = this.createWebview();
-            const previewContent = this.previewContainer.querySelector('.preview-content');
-            if (previewContent) {
-                previewContent.empty();
-                previewContent.appendChild(this.webview);
-            }
-
-            // 使用BookRenderService的新方法直接渲染到webview
-            const config: RenderConfig = {
+            this.webview.style.opacity = '0';
+            previewContent.appendChild(this.webview);
+            
+            // 渲染配置
+            const renderConfig: RenderConfig = {
                 showTitle: this.renderSettings.showTitle,
-                scale: this.renderSettings.scale,
+                scale: this.renderSettings.scale / 100,
                 displayHeader: this.renderSettings.displayHeader,
                 displayFooter: this.renderSettings.displayFooter,
                 cssSnippet: this.renderSettings.cssSnippet,
-                abortSignal: this.abortController.signal,
                 onProgress: (current: number, total: number, fileName: string) => {
                     this.updateRenderProgress(current, total, fileName);
                 }
             };
     
-            // 直接渲染到webview，无需中间对象
+            // 执行渲染 - 现在 webview 已在 DOM 中，dom-ready 事件会正常触发
             await this.bookRenderService.renderToWebview(
                 this.webview,
                 this.selectedBook,
                 this.plugin.settings.defaultBookPath,
-                config
+                renderConfig
             );
     
-            if (this.abortController.signal.aborted) {
-                console.log('Rendering was aborted after completion');
-                return;
+            // 渲染成功
+            if (!this.abortController.signal.aborted) {
+                this.webviewReady = true;
+                
+                // 移除加载指示器并显示 webview
+                loading.remove();
+                this.webview.style.opacity = '1';
+                
+                console.log('Rendering completed successfully');
             }
-
-            this.webviewReady = true;
-            console.log('Rendering completed successfully');
     
         } catch (error) {
             if (this.abortController?.signal.aborted || error.message === 'Render aborted') {
@@ -256,7 +312,24 @@ export class ExportModal extends Modal {
             }
     
             console.error('Render failed:', error);
+            this.webviewReady = false;
+            
             if (this.isRendering) {
+                // 显示错误信息
+                previewContent.empty();
+                const errorEl = previewContent.createDiv({ cls: 'preview-error' });
+                errorEl.innerHTML = `
+                    <div class="preview-error-icon">❌</div>
+                    <div class="preview-error-text">${error.message || '渲染失败，请重试'}</div>
+                    <button class="preview-retry-btn">重新渲染</button>
+                `;
+                
+                // 添加重试按钮事件
+                const retryBtn = errorEl.querySelector('.preview-retry-btn') as HTMLButtonElement;
+                retryBtn?.addEventListener('click', () => {
+                    this.startRenderPreview();
+                });
+                
                 new Notice('渲染失败，请检查控制台错误信息');
             }
         } finally {
@@ -264,7 +337,6 @@ export class ExportModal extends Modal {
                 this.isRendering = false;
                 this.updateFormatButtonsState();
                 
-                // 延迟更新按钮状态，确保webview已经设置完成
                 setTimeout(() => {
                     this.updateExportButtonState();
                 }, 100);
@@ -302,13 +374,13 @@ export class ExportModal extends Modal {
     private updateExportButtonState() {
         if (this.exportBtn) {
             let canExport: boolean;
-            
+
             if (this.selectedFormat === 'pdf') {
                 canExport = !!(this.selectedFormat && !this.isRendering && this.webviewReady);
             } else {
                 canExport = !!this.selectedFormat && !this.isRendering;
             }
-            
+
             this.exportBtn.disabled = !canExport;
             this.exportBtn.textContent = this.isRendering ? '渲染中...' : '导出';
         }
@@ -421,8 +493,12 @@ export class ExportModal extends Modal {
                 this.updateSettingsArea();
                 this.updatePreviewVisibility();
                 
+                // PDF 格式自动开始渲染
                 if (format.key === 'pdf') {
-                    this.startRenderPreview();
+                    // 延迟一点时间，确保 UI 更新完成
+                    setTimeout(() => {
+                        this.startRenderPreview();
+                    }, 50);
                 } else {
                     this.cleanupWebview();
                 }
@@ -431,7 +507,10 @@ export class ExportModal extends Modal {
             });
         });
     }
-
+    private updateLayoutAndPreview() {
+        this.updateLayoutMode();
+        this.updatePreviewVisibility();
+    }
     private createSettingsArea(container: HTMLElement) {
         const settingsSection = container.createDiv({ cls: 'export-settings-section' });
 
@@ -557,11 +636,11 @@ export class ExportModal extends Modal {
         try {
             const filename = this.selectedBook.basic.title || 'exported-book';
             const outputFile = await this.getOutputFile(filename);
-            
+
             if (!outputFile) {
                 return; // 用户取消了保存
             }
-            
+
             // PDF 导出选项
             const printOptions: electron.PrintToPDFOptions = {
                 pageSize: this.exportSettings.bookSize as any || 'A4',
@@ -575,23 +654,23 @@ export class ExportModal extends Modal {
                 headerTemplate: this.renderSettings.displayHeader ? '<span></span>' : '',
                 footerTemplate: this.renderSettings.displayFooter ? '<span class="pageNumber"></span>' : ''
             };
-            
+
 
             // 使用 webview 生成 PDF
             const pdfBuffer = await this.webview.printToPDF(printOptions);
-            
+
             // 保存文件
             await fs.writeFile(outputFile, pdfBuffer);
-            
+
             new Notice('PDF 导出成功！');
-            
+
             // 询问是否打开文件
             const shouldOpen = confirm('PDF 导出成功！是否打开文件？');
             if (shouldOpen) {
                 // @ts-ignore
                 electron.remote.shell.openPath(outputFile);
             }
-            
+
             this.close();
         } catch (error) {
             console.error('PDF export failed:', error);

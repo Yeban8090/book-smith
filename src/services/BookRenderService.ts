@@ -157,10 +157,6 @@ export class BookRenderService {
         const view = leaf.view as MarkdownView;
         const data: string = view?.data || await app.vault.cachedRead(file);
         
-        if (!data) {
-            console.warn(`Data is empty for file: ${file.path}`);
-        }
-
         const frontMatter = this.getFrontMatter(file);
         const cssclasses = this.extractCssClasses(frontMatter);
         

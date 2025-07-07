@@ -67,6 +67,7 @@
     background: var(--background-primary);
     overflow: hidden;
     transition: all 0.3s ease;
+    margin: 24px 0 24px 0;
 }
 
 /* 居中布局时隐藏预览面板 */
@@ -90,7 +91,6 @@
 .preview-content {
     flex: 1;
     overflow: auto;
-    padding: 20px;
     scroll-behavior: smooth;
 }
 
@@ -201,7 +201,7 @@
     background: var(--export-secondary);
     border-radius: var(--export-radius);
     border: 1px solid var(--export-border);
-    margin-bottom: 24px;
+    margin: 24px 0 24px 0;
     transition: all 0.2s ease;
 }
 
