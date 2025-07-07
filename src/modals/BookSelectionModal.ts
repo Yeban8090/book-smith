@@ -145,7 +145,7 @@ export class BookSelectionModal extends Modal {
 
         try {
             this.close();
-            const bookRenderService = new BookRenderService(this.plugin);
+            const bookRenderService = new BookRenderService(this.app);
             // 创建并打开导出模态框 - 修正参数顺序
             const exportModal = new ExportModal(
                 this.app,

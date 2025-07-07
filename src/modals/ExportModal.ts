@@ -1,6 +1,6 @@
 import { Notice, App, Modal, ButtonComponent } from "obsidian";
 import { i18n } from "../i18n/i18n";
-import { BookRenderService, RenderConfig, RenderedBook } from "../services/BookRenderService";
+import { BookRenderService, RenderConfig } from "../services/BookRenderService";
 import { Book } from "../types/book";
 import { HeaderFooterTocModal } from "./HeaderFooterTocModal";
 import { CoverSettingModal } from "./CoverSettingModal";
@@ -27,7 +27,6 @@ export class ExportModal extends Modal {
     private exportBtn: HTMLButtonElement;
     private isRendering: boolean = false;
     private abortController: AbortController | null = null;
-    private renderedBook: RenderedBook | null = null;
     private webview: electron.WebviewTag | null = null;
     private webviewReady: boolean = false;
 
@@ -141,208 +140,6 @@ export class ExportModal extends Modal {
         return webview;
     }
 
-    private getAllStyles(): string[] {
-        const cssTexts: string[] = [];
-        
-        // 添加主题相关的样式注释
-        cssTexts.push('/* ---------- Obsidian Theme Styles ---------- */');
-    
-        Array.from(document.styleSheets).forEach((sheet) => {
-            // @ts-ignore
-            const id = sheet.ownerNode?.id;
-            // @ts-ignore
-            const href = sheet.ownerNode?.href;
-            
-            // 跳过Svelte样式，但保留所有主题相关样式
-            if (id?.startsWith('svelte-')) {
-                return;
-            }
-            
-            const division = `/* ----------${id ? `id:${id}` : href ? `href:${href}` : 'inline'}---------- */`;
-            cssTexts.push(division);
-            
-            try {
-                Array.from(sheet?.cssRules ?? []).forEach((rule) => {
-                    cssTexts.push(rule.cssText);
-                });
-            } catch (error) {
-                console.error('Error reading CSS rules:', error);
-                // 对于跨域样式表，尝试获取基本信息
-                if (href) {
-                    cssTexts.push(`/* External stylesheet: ${href} */`);
-                }
-            }
-        });
-        
-        // 获取当前主题的body类名并添加相关样式
-        const bodyClasses = Array.from(document.body.classList);
-        const themeClasses = bodyClasses.filter(cls => 
-            cls.includes('theme-') || 
-            cls.includes('dark') || 
-            cls.includes('light')
-        );
-        
-        if (themeClasses.length > 0) {
-            cssTexts.push(`/* ---------- Current Theme Classes: ${themeClasses.join(', ')} ---------- */`);
-        }
-        
-        // 添加补丁样式
-        cssTexts.push(...this.getPatchStyles());
-        
-        return cssTexts;
-    }
-
-    private getPatchStyles(): string[] {
-        const CSS_PATCH = `
-    /* ---------- css patch ---------- */
-    body {
-      overflow: auto !important;
-    }
-    @media print {
-      .print .markdown-preview-view {
-        height: auto !important;
-      }
-      .md-print-anchor, .blockid {
-        white-space: pre !important;
-        border: none !important;
-        display: inline-block !important;
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        right: 0 !important;
-        outline: 0 !important;
-        background: 0 0 !important;
-        text-decoration: initial !important;
-        text-shadow: initial !important;
-      }
-      table {
-        break-inside: auto;
-      }
-      tr {
-        break-inside: avoid;
-        break-after: auto;
-      }
-    }
-    img.__canvas__ {
-      width: 100% !important;
-      height: 100% !important;
-    }
-    .book-chapter {
-      margin-bottom: 2em;
-    }
-    `;
-        
-        return [CSS_PATCH, ...this.getPrintStyles()];
-    }
-
-    private getPrintStyles(): string[] {
-        const cssTexts: string[] = [];
-        
-        Array.from(document.styleSheets).forEach((sheet) => {
-            try {
-                const cssRules = sheet?.cssRules ?? [];
-                Array.from(cssRules).forEach((rule) => {
-                    if (rule.constructor.name === "CSSMediaRule") {
-                        if ((rule as CSSMediaRule).conditionText === "print") {
-                            const res = rule.cssText.replace(/@media print\s*\{(.+)\}/g, "$1");
-                            cssTexts.push(res);
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error('Error reading print styles:', error);
-            }
-        });
-        
-        return cssTexts;
-    }
-
-    private makeWebviewJs(doc: Document): string {
-        // 获取当前主题相关的类名
-        const currentBodyClasses = Array.from(document.body.classList);
-        const currentHtmlClasses = Array.from(document.documentElement.classList);
-        
-        // 获取重要的data属性
-        const themeAttr = document.documentElement.getAttribute('data-theme') || '';
-        const modeAttr = document.documentElement.getAttribute('data-mode') || '';
-        
-        return `
-            // 设置基本内容
-            document.body.innerHTML = decodeURIComponent(\`${encodeURIComponent(doc.body.innerHTML)}\`);
-            document.head.innerHTML = decodeURIComponent(\`${encodeURIComponent(doc.head.innerHTML)}\`);
-            
-            // 复制原始属性
-            document.body.setAttribute("class", \`${doc.body.getAttribute("class") || ''}\`);
-            document.body.setAttribute("style", \`${doc.body.getAttribute("style") || ''}\`);
-            
-            // 动态应用当前主题的类名到body
-            ${currentBodyClasses.map(cls => 
-                cls.includes('theme-') || cls.includes('dark') || cls.includes('light') || cls.includes('obsidian-app')
-                    ? `document.body.classList.add('${cls}');`
-                    : ''
-            ).filter(Boolean).join('\n        ')}
-            
-            // 动态应用当前主题的类名到html
-            ${currentHtmlClasses.map(cls => 
-                `document.documentElement.classList.add('${cls}');`
-            ).join('\n        ')}
-            
-            // 设置重要的data属性
-            ${themeAttr ? `document.documentElement.setAttribute('data-theme', '${themeAttr}');` : ''}
-            ${modeAttr ? `document.documentElement.setAttribute('data-mode', '${modeAttr}');` : ''}
-            
-            document.title = \`${doc.title}\`;
-        `;
-    }
-
-    private async setupWebview(doc: Document) {
-        if (!this.webview) return;
-    
-        return new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error('Webview setup timeout'));
-            }, 10000);
-    
-            this.webview!.addEventListener('dom-ready', async () => {
-                try {
-                    clearTimeout(timeout);
-                    
-                    // 1. 先注入所有基础样式
-                    const styles = this.getAllStyles();
-                    for (const css of styles) {
-                        await this.webview!.insertCSS(css);
-                    }
-                    
-                    // 2. 处理自定义CSS片段（如果有的话）
-                    if (this.renderSettings.cssSnippet && this.renderSettings.cssSnippet !== '0') {
-                        try {
-                            // 这里需要实现CSS片段读取逻辑
-                            await this.webview!.insertCSS(this.renderSettings.cssSnippet);
-                        } catch (error) {
-                            console.warn('Failed to load CSS snippet:', error);
-                        }
-                    }
-                    
-                    // 3. 注入内容
-                    await this.webview!.executeJavaScript(this.makeWebviewJs(doc));
-                    
-                    // 4. 最后再次注入补丁样式，确保优先级
-                    const patchStyles = this.getPatchStyles();
-                    for (const css of patchStyles) {
-                        await this.webview!.insertCSS(css);
-                    }
-                    
-                    this.webviewReady = true;
-                    this.updateExportButtonState();
-                    resolve();
-                } catch (error) {
-                    clearTimeout(timeout);
-                    reject(error);
-                }
-            });
-        });
-    }
-
     private createPreviewArea() {
         if (this.selectedFormat !== 'pdf') {
             return;
@@ -367,8 +164,11 @@ export class ExportModal extends Modal {
                 <div class="progress-text">准备中...</div>
                 <div class="progress-file"></div>
             `;
-        } else if (this.renderedBook) {
-            this.displayRenderedContent(previewContent);
+        } else if (this.webviewReady) {
+            // 如果webview已经准备好，显示它
+            if (this.webview) {
+                previewContent.appendChild(this.webview);
+            }
         } else {
             const error = previewContent.createDiv({ cls: 'preview-error' });
             error.innerHTML = `
@@ -399,22 +199,28 @@ export class ExportModal extends Modal {
         }
     }
 
-    // 移除重复的方法：getAllStyles, getPatchStyles, getPrintStyles, makeWebviewJs
-    
     private async startRenderPreview() {
         if (!this.selectedFormat || this.isRendering) return;
-        
+    
         this.stopRendering();
     
         this.isRendering = true;
-        this.renderedBook = null;
+        this.webviewReady = false;
         this.abortController = new AbortController();
         this.updateExportButtonState();
         this.updateFormatButtonsState();
         this.createPreviewArea();
     
         try {
-            const renderService = new BookRenderService(this.app);
+            // 创建webview
+            this.webview = this.createWebview();
+            const previewContent = this.previewContainer.querySelector('.preview-content');
+            if (previewContent) {
+                previewContent.empty();
+                previewContent.appendChild(this.webview);
+            }
+
+            // 使用BookRenderService的新方法直接渲染到webview
             const config: RenderConfig = {
                 showTitle: this.renderSettings.showTitle,
                 scale: this.renderSettings.scale,
@@ -427,7 +233,9 @@ export class ExportModal extends Modal {
                 }
             };
     
-            this.renderedBook = await renderService.renderBook(
+            // 直接渲染到webview，无需中间对象
+            await this.bookRenderService.renderToWebview(
+                this.webview,
                 this.selectedBook,
                 this.plugin.settings.defaultBookPath,
                 config
@@ -437,8 +245,9 @@ export class ExportModal extends Modal {
                 console.log('Rendering was aborted after completion');
                 return;
             }
-    
-            console.log('Render completed, updating preview...', this.renderedBook);
+
+            this.webviewReady = true;
+            console.log('Rendering completed successfully');
     
         } catch (error) {
             if (this.abortController?.signal.aborted || error.message === 'Render aborted') {
@@ -454,36 +263,12 @@ export class ExportModal extends Modal {
             if (!this.abortController?.signal.aborted) {
                 this.isRendering = false;
                 this.updateFormatButtonsState();
-                this.createPreviewArea(); // 这会触发 displayRenderedContent
+                
                 // 延迟更新按钮状态，确保webview已经设置完成
                 setTimeout(() => {
                     this.updateExportButtonState();
                 }, 100);
             }
-        }
-    }
-
-    private async displayRenderedContent(container: HTMLElement) {
-        if (!this.renderedBook?.doc) return;
-        
-        container.empty();
-        
-        try {
-            this.webview = this.createWebview();
-            container.appendChild(this.webview);
-            
-            // 使用BookRenderService的setupWebview方法
-            await this.bookRenderService.setupWebview(this.webview, this.renderedBook.doc);
-            
-            this.webviewReady = true;
-            this.updateExportButtonState();
-        } catch (error) {
-            console.error('Error setting up webview:', error);
-            const errorDiv = container.createDiv({ cls: 'preview-error' });
-            errorDiv.innerHTML = `
-                <div class="preview-error-icon">❌</div>
-                <div class="preview-error-text">设置预览时出错: ${error.message}</div>
-            `;
         }
     }
 
@@ -519,7 +304,7 @@ export class ExportModal extends Modal {
             let canExport: boolean;
             
             if (this.selectedFormat === 'pdf') {
-                canExport = !!(this.selectedFormat && !this.isRendering && this.renderedBook && this.webviewReady);
+                canExport = !!(this.selectedFormat && !this.isRendering && this.webviewReady);
             } else {
                 canExport = !!this.selectedFormat && !this.isRendering;
             }
@@ -639,7 +424,6 @@ export class ExportModal extends Modal {
                 if (format.key === 'pdf') {
                     this.startRenderPreview();
                 } else {
-                    this.renderedBook = null;
                     this.cleanupWebview();
                 }
                 
@@ -765,7 +549,7 @@ export class ExportModal extends Modal {
     }
 
     private async exportToPdf() {
-        if (!this.webview || !this.webviewReady || !this.renderedBook) {
+        if (!this.webview || !this.webviewReady) {
             new Notice('PDF 预览未准备就绪，请稍候');
             return;
         }
@@ -781,7 +565,7 @@ export class ExportModal extends Modal {
             // PDF 导出选项
             const printOptions: electron.PrintToPDFOptions = {
                 pageSize: this.exportSettings.bookSize as any || 'A4',
-                printBackground: true,
+                printBackground: false,
                 landscape: false,
                 scale: this.renderSettings.scale / 100,
                 margins: {
