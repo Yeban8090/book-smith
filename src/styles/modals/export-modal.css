@@ -159,7 +159,6 @@
     flex: 1;
     overflow: auto;
     height: 100%;
-    display: flex;
     flex-direction: column;
     scroll-behavior: smooth;
 }
@@ -200,7 +199,8 @@
 /* 预览内容区域 */
 .preview-content {
     flex: 1;
-    overflow: visible;
+    height: inherit;
+    overflow: hidden;
     scroll-behavior: smooth;
 }
 
@@ -477,7 +477,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
 }
 
 .export-toggle-input {
@@ -493,7 +492,7 @@
 }
 
 .export-setting-button {
-    width: 100%;
+    width: 50%;
     padding: 8px 16px;
     border: 1px solid var(--export-border);
     border-radius: 4px;
@@ -507,46 +506,6 @@
 .export-setting-button:hover {
     background: var(--background-modifier-hover);
     border-color: var(--export-primary);
-}
-
-/* 优化后的选择框样式 */
-.export-setting-select {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid var(--export-border);
-    border-radius: 6px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 12px;
-    padding-right: 40px;
-}
-
-.export-setting-select:hover {
-    border-color: var(--export-primary);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-}
-
-.export-setting-select:focus {
-    outline: none;
-    border-color: var(--export-primary);
-    box-shadow: 0 0 0 3px rgba(var(--export-primary), 0.1);
-    transform: translateY(-1px);
-}
-
-.export-setting-select option {
-    padding: 8px 12px;
-    background: var(--background-primary);
-    color: var(--text-normal);
 }
 
 /* 信息卡片 */
@@ -706,29 +665,7 @@
     height: auto;
 }
 
-/* 滚动条样式 */
-.export-modal-content::-webkit-scrollbar,
-.preview-scroll-container::-webkit-scrollbar {
-    width: 6px;
-}
 
-.export-modal-content::-webkit-scrollbar-track,
-.preview-scroll-container::-webkit-scrollbar-track {
-    background: var(--background-secondary);
-    border-radius: 3px;
-}
-
-.export-modal-content::-webkit-scrollbar-thumb,
-.preview-scroll-container::-webkit-scrollbar-thumb {
-    background: var(--text-faint);
-    border-radius: 3px;
-    transition: background 0.2s ease;
-}
-
-.export-modal-content::-webkit-scrollbar-thumb:hover,
-.preview-scroll-container::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
@@ -802,4 +739,141 @@
         flex-direction: column;
         text-align: center;
     }
+}
+/* 封面容器背景图片样式 */
+.cover-container {
+    background-size: 100%;
+    background-position: 0px 0px;
+    background-repeat: no-repeat;
+}
+
+/* 封面内容容器样式 */
+.cover-content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+}
+
+/* 封面标题样式 */
+.cover-title {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* 封面副标题默认样式 */
+.cover-subtitle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    font-size: 18px;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 封面作者样式 */
+.cover-author {
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* PDF 设置部分样式 */
+.export-setting-icon {
+    font-size: 18px;
+}
+
+.export-setting-title {
+    font-size: 15px;
+}
+
+/* 尺寸选择容器 */
+.size-select-container {
+    display: flex;
+    align-items: center;
+}
+
+/* 尺寸选择下拉框 */
+.export-setting-select {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--export-border);
+    background-color: var(--background-primary);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* PDF 设置卡片 */
+.export-setting-card {
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 封面控制容器 */
+.cover-controls-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+/* 封面切换开关 */
+.export-setting-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 封面复选框 */
+.export-toggle-input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* 封面标签 */
+.export-toggle-label {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* 设置按钮 */
+.export-setting-button {
+    width: auto;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: var(--export-secondary);
+    border: 1px solid var(--export-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 页眉页脚目录按钮容器 */
+.header-footer-toc-button-container {
+    display: flex;
+    justify-content: center;
+}
+
+/* 页眉页脚目录按钮 */
+.header-footer-toc-button {
+    width: 100%;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: var(--export-secondary);
+    border: 1px solid var(--export-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }

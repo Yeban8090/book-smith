@@ -672,7 +672,7 @@ export class BookRenderService {
                 font-family: ${settings.tocFontFamily || 'serif'};
                 font-size: ${settings.tocFontSize}px;
                 color: ${settings.tocColor || '#000000'};
-                margin: 40px 0;
+                margin: 20px 0;
                 line-height: ${settings.tocLineHeight};
             ">
                 <h1 style="text-align: center; margin-bottom: 30px;">${settings.tocTitle}</h1>

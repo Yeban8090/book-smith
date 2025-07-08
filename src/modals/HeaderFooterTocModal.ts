@@ -52,7 +52,7 @@ export class HeaderFooterTocModal extends Modal {
             headerLeft: '{{title}}',
             headerCenter: '',
             headerRight: '{{author}}',
-            headerFontSize: 12,
+            headerFontSize: 15,
             headerColor: '#000000',
             headerHeight: 15,
             
@@ -60,14 +60,14 @@ export class HeaderFooterTocModal extends Modal {
             footerLeft: '',
             footerCenter: '',
             footerRight: '{{pageNumber}}/{{totalPages}}',
-            footerFontSize: 12,
+            footerFontSize: 15,
             footerColor: '#000000',
             footerHeight: 20,
             
             tocEnabled: true,
             tocTitle: '目录',
             tocMaxLevel: 3,
-            tocFontSize: 14,
+            tocFontSize: 15,
             tocFontFamily: 'serif',     // 新增默认值
             tocColor: '#000000',        // 新增默认值
             tocLineHeight: 1.5,

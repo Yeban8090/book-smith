@@ -200,26 +200,14 @@ export class ExportModal extends Modal {
         if (this.exportSettings.showCover && this.exportSettings.cover) {
             const coverPreviewContainer = scrollContainer.createDiv({ cls: 'cover-preview-container' });
             coverPreviewContainer.style.display = 'none'; // 初始隐藏，等待渲染完成后显示
-            coverPreviewContainer.style.marginBottom = '20px';
-            coverPreviewContainer.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-
+            
             // 创建封面预览标题
             const coverPreviewHeader = coverPreviewContainer.createDiv({ cls: 'cover-preview-header' });
-            coverPreviewHeader.style.padding = '8px 12px';
-            coverPreviewHeader.style.borderBottom = '1px solid #e0e0e0';
-            coverPreviewHeader.style.display = 'flex';
-            coverPreviewHeader.style.justifyContent = 'space-between';
-            coverPreviewHeader.style.alignItems = 'center';
 
             coverPreviewHeader.createEl('span', { text: '封面预览', cls: 'cover-preview-title' });
 
             // 添加封面预览内容区域
             this.coverPreviewElement = coverPreviewContainer.createDiv({ cls: 'cover-preview-content' });
-            this.coverPreviewElement.style.padding = '15px';
-            this.coverPreviewElement.style.display = 'flex';
-            this.coverPreviewElement.style.justifyContent = 'center';
-            // 移除背景色设置
-            // this.coverPreviewElement.style.backgroundColor = '#f5f5f5';
 
             // 更新封面预览
             this.updateCoverPreview();
@@ -241,32 +229,20 @@ export class ExportModal extends Modal {
 
         // 创建封面预览内部容器
         const coverContainer = this.coverPreviewElement.createDiv({ cls: 'cover-container' });
-        coverContainer.style.maxWidth = '250px';
-        coverContainer.style.maxHeight = '350px';
-        coverContainer.style.overflow = 'hidden';
-        coverContainer.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-
+        
         // 应用开本大小样式
-        this.applyBookSizeStyles(coverContainer, this.exportSettings.cover.bookSize || this.exportSettings.bookSize || 'A4');
+        this.applyBookSizeStyles(coverContainer, this.exportSettings.bookSize || 'A4');
 
         // 设置背景图片
         if (this.exportSettings.cover.imageUrl) {
             coverContainer.style.backgroundImage = `url(${this.exportSettings.cover.imageUrl})`;
             coverContainer.style.backgroundSize = `${this.exportSettings.cover.scale * 100}%`;
             coverContainer.style.backgroundPosition = `${this.exportSettings.cover.position.x}px ${this.exportSettings.cover.position.y}px`;
-            coverContainer.style.backgroundRepeat = 'no-repeat';
         }
 
         // 创建内容容器
         const contentContainer = coverContainer.createDiv({ cls: 'cover-content' });
-        contentContainer.style.position = 'relative';
-        contentContainer.style.height = '100%';
-        contentContainer.style.display = 'flex';
-        contentContainer.style.flexDirection = 'column';
-        contentContainer.style.justifyContent = 'center';
-        contentContainer.style.alignItems = 'center';
-        contentContainer.style.padding = '20px';
-        contentContainer.style.textAlign = 'center';
+
 
         // 添加书籍信息
         const settings = this.exportSettings.cover;
@@ -287,7 +263,12 @@ export class ExportModal extends Modal {
             } else {
                 titleStyle = settings.titleStyle || '';
             }
-            titleEl.setAttribute('style', titleStyle + `position: absolute; left: ${settings.titlePosition?.x || 50}%; top: ${settings.titlePosition?.y || 30}%; transform: translate(-50%, -50%); z-index: 10;`);
+            // 只保留动态位置设置
+            titleEl.style.left = `${settings.titlePosition?.x || 50}%`;
+            titleEl.style.top = `${settings.titlePosition?.y || 30}%`;
+            if (titleStyle) {
+                titleEl.setAttribute('style', titleStyle + `left: ${settings.titlePosition?.x || 50}%; top: ${settings.titlePosition?.y || 30}%; position: absolute; transform: translate(-50%, -50%); z-index: 10;`);
+            }
         }
 
         // 添加副标题
@@ -298,9 +279,14 @@ export class ExportModal extends Modal {
             if (settings.subtitleStyleConfig) {
                 subtitleStyle = this.buildStyleString(settings.subtitleStyleConfig);
             } else {
-                subtitleStyle = 'font-size: 18px; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);';
+                subtitleStyle = '';
             }
-            subtitleEl.setAttribute('style', subtitleStyle + `position: absolute; left: ${settings.subtitlePosition?.x || 50}%; top: ${settings.subtitlePosition?.y || 50}%; transform: translate(-50%, -50%); z-index: 10;`);
+            // 只保留动态位置设置
+            subtitleEl.style.left = `${settings.subtitlePosition?.x || 50}%`;
+            subtitleEl.style.top = `${settings.subtitlePosition?.y || 50}%`;
+            if (subtitleStyle) {
+                subtitleEl.setAttribute('style', subtitleStyle + `left: ${settings.subtitlePosition?.x || 50}%; top: ${settings.subtitlePosition?.y || 50}%; position: absolute; transform: translate(-50%, -50%); z-index: 10;`);
+            }
         }
 
         // 添加作者信息
@@ -313,7 +299,12 @@ export class ExportModal extends Modal {
             } else {
                 authorStyle = settings.authorStyle || '';
             }
-            authorEl.setAttribute('style', authorStyle + `position: absolute; left: ${settings.authorPosition?.x || 50}%; top: ${settings.authorPosition?.y || 70}%; transform: translate(-50%, -50%); z-index: 10;`);
+            // 只保留动态位置设置
+            authorEl.style.left = `${settings.authorPosition?.x || 50}%`;
+            authorEl.style.top = `${settings.authorPosition?.y || 70}%`;
+            if (authorStyle) {
+                authorEl.setAttribute('style', authorStyle + `left: ${settings.authorPosition?.x || 50}%; top: ${settings.authorPosition?.y || 70}%; position: absolute; transform: translate(-50%, -50%); z-index: 10;`);
+            }
         }
     }
     // 统一的预览状态管理方法，处理不同状态（等待、加载中、就绪、错误）
@@ -641,7 +632,7 @@ export class ExportModal extends Modal {
 
         const formats = [
             { key: 'pdf', label: 'PDF', icon: '📄', desc: '便携文档格式' },
-            { key: 'txt', label: 'TXT', icon: '📝', desc: '纯文本格式' },
+            // { key: 'txt', label: 'TXT', icon: '📝', desc: '纯文本格式' },
             { key: 'docx', label: 'DOCX', icon: '📋', desc: 'Word文档格式' }
         ];
 
@@ -744,12 +735,17 @@ export class ExportModal extends Modal {
             const sizeCard = container.createDiv({ cls: 'export-setting-card' });
 
             const sizeHeader = sizeCard.createDiv({ cls: 'export-setting-header' });
+            sizeHeader.style.marginBottom = '16px';
             sizeHeader.innerHTML = `
-                <span class="export-setting-icon">📏</span>
-                <span class="export-setting-title">开本大小</span>
+                <span class="export-setting-icon" style="font-size: 18px;">📏</span>
+                <span class="export-setting-title" style="font-size: 15px;">开本大小</span>
             `;
 
-            const sizeSelect = sizeCard.createEl('select', { cls: 'export-setting-select' });
+            const sizeSelectContainer = sizeCard.createDiv();
+
+            const sizeSelect = sizeSelectContainer.createEl('select', { cls: 'export-setting-select' });
+
+
             const sizes = ['A4', 'A5', 'A3', 'Letter', 'Legal', 'Tabloid'];
             sizes.forEach(size => {
                 const option = sizeSelect.createEl('option', { value: size, text: size });
@@ -758,25 +754,48 @@ export class ExportModal extends Modal {
 
             sizeSelect.addEventListener('change', () => {
                 this.exportSettings.bookSize = sizeSelect.value;
+                
+                // 更新封面预览
+                if (this.exportSettings.showCover && this.webviewReady) {
+                    this.updateCoverPreview();
+                }
             });
         }
     }
 
     // 创建 PDF 特定设置（封面设置、页眉页脚目录设置）
     private createPdfSettings(container: HTMLElement) {
-        // PDF 特定设置
+        // PDF 特定设置 - 封面卡片
         const coverCard = container.createDiv({ cls: 'export-setting-card' });
 
         const coverHeader = coverCard.createDiv({ cls: 'export-setting-header' });
         coverHeader.innerHTML = `
-            <span class="export-setting-icon">🎨</span>
-            <span class="export-setting-title">封面设置</span>
+            <span class="export-setting-icon" style="font-size: 18px;">🎨</span>
+            <span class="export-setting-title" style="font-size: 15px;">封面设置</span>
         `;
 
-        const coverToggle = coverCard.createDiv({ cls: 'export-setting-toggle' });
+        // 创建一个包含复选框和按钮的容器，使用flex布局
+        const coverControlsContainer = coverCard.createDiv({ cls: 'cover-controls-container' });
+
+
+        // 创建包含封面选项
+        const coverToggle = coverControlsContainer.createDiv({ cls: 'export-setting-toggle' });
+
+
         const coverCheckbox = coverToggle.createEl('input', { type: 'checkbox', attr: { id: 'cover-toggle' } });
+
+
         coverToggle.createEl('label', { text: '包含封面', attr: { for: 'cover-toggle' } });
+
+
         coverCheckbox.checked = this.exportSettings.showCover !== false; // 修改为默认选中
+
+        // 创建自定义封面按钮
+        const coverSettingButton = coverControlsContainer.createEl('button', {
+            cls: 'export-setting-button',
+            text: '自定义封面'
+        });
+
 
         coverCheckbox.addEventListener('change', () => {
             this.exportSettings.showCover = coverCheckbox.checked;
@@ -786,13 +805,6 @@ export class ExportModal extends Modal {
             if (coverPreviewContainer) {
                 (coverPreviewContainer as HTMLElement).style.display = (this.exportSettings.showCover && this.webviewReady) ? 'block' : 'none';
             }
-        });
-
-        // 添加封面设置按钮
-        const coverButtonContainer = coverCard.createDiv({ cls: 'export-setting-button-container' });
-        const coverSettingButton = coverButtonContainer.createEl('button', {
-            cls: 'export-setting-button',
-            text: '自定义封面'
         });
 
         coverSettingButton.addEventListener('click', () => {
@@ -816,17 +828,20 @@ export class ExportModal extends Modal {
             coverModal.open();
         });
 
-        // 页眉页脚目录设置
+
+        // 页眉页脚目录设置卡片
         const headerFooterTocCard = container.createDiv({ cls: 'export-setting-card' });
 
         const headerFooterTocHeader = headerFooterTocCard.createDiv({ cls: 'export-setting-header' });
+
         headerFooterTocHeader.innerHTML = `
-            <span class="export-setting-icon">📑</span>
-            <span class="export-setting-title">页眉页脚目录设置</span>
+            <span class="export-setting-icon" style="font-size: 18px;">📑</span>
+            <span class="export-setting-title" style="font-size: 15px;">页眉页脚目录设置</span>
         `;
 
         // 添加页眉页脚目录设置按钮
-        const headerFooterTocButtonContainer = headerFooterTocCard.createDiv({ cls: 'export-setting-button-container' });
+        const headerFooterTocButtonContainer = headerFooterTocCard.createDiv();
+
         const headerFooterTocButton = headerFooterTocButtonContainer.createEl('button', {
             cls: 'export-setting-button',
             text: '自定义页眉页脚和目录'
@@ -904,7 +919,7 @@ export class ExportModal extends Modal {
             let headerTemplate = '';
             if (this.renderSettings.displayHeader && this.exportSettings.headerFooterToc?.headerEnabled) {
                 headerTemplate = `
-                <div style="font-size: ${this.exportSettings.headerFooterToc?.headerFontSize || 12}px; color: ${this.exportSettings.headerFooterToc.headerColor || '#000000'}; width: 100%; display: flex; justify-content: space-between; padding: 0 10px; box-sizing: border-box; border-bottom: 1px solid #ddd;">
+                <div style="font-size: ${this.exportSettings.headerFooterToc?.headerFontSize || 15}px; color: ${this.exportSettings.headerFooterToc.headerColor || '#000000'}; width: 100%; display: flex; justify-content: space-between; padding: 10px 50px; box-sizing: border-box; border-bottom: 1px solid #ddd;">
                     <div style="text-align: left;">${this.processVariables(this.exportSettings.headerFooterToc.headerLeft || '')}</div>
                     <div style="text-align: center;">${this.processVariables(this.exportSettings.headerFooterToc.headerCenter || '')}</div>
                     <div style="text-align: right;">${this.processVariables(this.exportSettings.headerFooterToc.headerRight || '')}</div>
@@ -916,7 +931,7 @@ export class ExportModal extends Modal {
             let footerTemplate = '';
             if (this.renderSettings.displayFooter && this.exportSettings.headerFooterToc?.footerEnabled) {
                 footerTemplate = `
-                <div style="font-size: ${this.exportSettings.headerFooterToc.footerFontSize || 12}px; color: ${this.exportSettings.headerFooterToc.footerColor || '#000000'}; width: 100%; display: flex; justify-content: space-between; padding: 0 10px;padding: 0 10px; box-sizing: border-box; border-top: 1px solid #ddd;">
+                <div style="font-size: ${this.exportSettings.headerFooterToc.footerFontSize || 15}px; color: ${this.exportSettings.headerFooterToc.footerColor || '#000000'}; width: 100%; display: flex; justify-content: space-between; padding: 10px 50px;  box-sizing: border-box; border-top: 1px solid #ddd;">
                 <span style="flex: 1; text-align: left;">${this.processVariables(this.exportSettings.headerFooterToc.footerLeft || '')}</span>
                 <span style="flex: 1; text-align: center;">${this.processVariables(this.exportSettings.headerFooterToc.footerCenter || '')}</span>
                 <span style="flex: 1; text-align: right;">${this.processVariables(this.exportSettings.headerFooterToc.footerRight || '').replace('{{pageNumber}}', '<span class="pageNumber"></span>').replace('{{totalPages}}', '<span class="totalPages"></span>')}</span>
@@ -936,11 +951,15 @@ export class ExportModal extends Modal {
                 landscape: false,
                 scale: this.renderSettings.scale / 100,
                 margins: {
-                    marginType: 'default'
+                    top: 1,      // 加大页眉区域空间
+                    bottom: 1,
+                    left: 0.6,
+                    right: 0
                 },
                 displayHeaderFooter: this.renderSettings.displayHeader || this.renderSettings.displayFooter,
                 headerTemplate: headerTemplate,
-                footerTemplate: footerTemplate
+                footerTemplate: footerTemplate,
+                generateDocumentOutline: true
             };
 
             // 使用 webview 生成 PDF
