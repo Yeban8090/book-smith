@@ -64,26 +64,6 @@ export class BookRenderService {
                     const { data, docs } = await this.getAllFiles(book, rootPath, config);
                     await this.renderFiles(data, docs, config);
 
-                    // 处理封面
-                    if (config.showCover && config.coverSettings) {
-
-                        // 生成封面 HTML
-                        const coverHtml = this.generateCover(config.coverSettings, book);
-
-                        // 将封面插入到文档的开头
-                        if (coverHtml) {
-                            const doc = this.docs[0].doc;
-                            const contentEl = doc.querySelector('.markdown-preview-view');
-                            if (contentEl) {
-                                const coverContainer = doc.createElement('div');
-                                coverContainer.innerHTML = coverHtml;
-                                const firstChild = coverContainer.firstChild;
-                                if (firstChild) {
-                                    contentEl.insertBefore(firstChild, contentEl.firstChild);
-                                }
-                            }
-                        }
-                    }
                     // 2. 如果启用了目录，生成目录 HTML
                     let tocHtml = '';
                     if (config.headerFooterToc?.tocEnabled) {
@@ -106,22 +86,20 @@ export class BookRenderService {
                     }
 
                     // 5. 将目录和渲染好的文档注入到webview
+                    // 先处理目录，将其插入到内容最前面
                     if (tocHtml) {
-                        // 将目录插入到文档的开头
                         const doc = this.docs[0].doc;
                         const contentEl = doc.querySelector('.markdown-preview-view');
                         if (contentEl) {
                             const tocContainer = doc.createElement('div');
                             tocContainer.innerHTML = tocHtml;
-                            const firstChild = tocContainer.firstChild;
-                            if (firstChild) {
-                                contentEl.insertBefore(firstChild, contentEl.firstChild);
-                            }
+                            contentEl.insertBefore(tocContainer, contentEl.firstChild);
                         }
                     }
 
                     await this.appendWebview(webview, this.docs[0]);
 
+                    
                     // 6. 注入补丁样式
                     const patchStyles = this.getPatchStyles();
                     for (const css of patchStyles) {
@@ -135,133 +113,6 @@ export class BookRenderService {
                 }
             });
         });
-    }
-
-    /**
- * 生成封面 HTML
- * @param settings 封面设置
- * @param book 书籍信息
- * @returns 封面 HTML 字符串
- */
-    private generateCover(settings: CoverSettings, book: Book): string {
-        if (!settings) return '';
-
-        // 创建临时容器元素
-        const tempContainer = document.createElement('div');
-        tempContainer.className = 'book-cover';
-        // 添加分页符样式
-        tempContainer.style.pageBreakAfter = 'always';
-        tempContainer.style.breakAfter = 'page';
-        // 设置开本大小样式
-        this.applyBookSizeStyles(tempContainer, settings.bookSize || 'A4');
-
-        // 设置背景图片
-        if (settings.imageUrl) {
-            tempContainer.style.backgroundImage = `url(${settings.imageUrl})`;
-            tempContainer.style.backgroundSize = `${settings.scale * 100}%`;
-            tempContainer.style.backgroundPosition = `${settings.position.x}px ${settings.position.y}px`;
-            tempContainer.style.backgroundRepeat = 'no-repeat';
-        }
-
-        // 创建内容容器
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'cover-content';
-        contentContainer.style.position = 'relative';
-        contentContainer.style.height = '100%';
-        contentContainer.style.display = 'flex';
-        contentContainer.style.flexDirection = 'column';
-        contentContainer.style.justifyContent = 'center';
-        contentContainer.style.alignItems = 'center';
-        contentContainer.style.padding = '40px';
-        contentContainer.style.textAlign = 'center';
-        tempContainer.appendChild(contentContainer);
-
-        // 添加书籍信息
-        // 使用自定义文本和位置
-        const titleText = settings.customTitle || book.basic.title;
-        const subtitleText = settings.customSubtitle || book.basic.subtitle;
-        const authorText = settings.customAuthor || (book.basic.author ? book.basic.author.join(', ') : '');
-
-        // 添加书名
-        if (titleText) {
-            const titleEl = document.createElement('div');
-            titleEl.className = 'cover-title';
-            titleEl.textContent = titleText;
-
-            let titleStyle = '';
-            if (settings.titleStyleConfig) {
-                titleStyle = this.buildStyleString(settings.titleStyleConfig);
-            } else {
-                titleStyle = settings.titleStyle || '';
-            }
-            titleEl.setAttribute('style', titleStyle + `position: absolute; left: ${settings.titlePosition?.x || 50}%; top: ${settings.titlePosition?.y || 30}%; transform: translate(-50%, -50%); z-index: 10;`);
-            contentContainer.appendChild(titleEl);
-        }
-
-        // 添加副标题
-        if (subtitleText) {
-            const subtitleEl = document.createElement('div');
-            subtitleEl.className = 'cover-subtitle';
-            subtitleEl.textContent = subtitleText;
-
-            let subtitleStyle = '';
-            if (settings.subtitleStyleConfig) {
-                subtitleStyle = this.buildStyleString(settings.subtitleStyleConfig);
-            } else {
-                subtitleStyle = 'font-size: 18px; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);';
-            }
-            subtitleEl.setAttribute('style', subtitleStyle + `position: absolute; left: ${settings.subtitlePosition?.x || 50}%; top: ${settings.subtitlePosition?.y || 50}%; transform: translate(-50%, -50%); z-index: 10;`);
-            contentContainer.appendChild(subtitleEl);
-        }
-
-        // 添加作者信息
-        if (authorText) {
-            const authorEl = document.createElement('div');
-            authorEl.className = 'cover-author';
-            authorEl.textContent = authorText;
-
-            let authorStyle = '';
-            if (settings.authorStyleConfig) {
-                authorStyle = this.buildStyleString(settings.authorStyleConfig);
-            } else {
-                authorStyle = settings.authorStyle || '';
-            }
-            authorEl.setAttribute('style', authorStyle + `position: absolute; left: ${settings.authorPosition?.x || 50}%; top: ${settings.authorPosition?.y || 70}%; transform: translate(-50%, -50%); z-index: 10;`);
-            contentContainer.appendChild(authorEl);
-        }
-
-        // 返回生成的 HTML
-        return tempContainer.outerHTML;
-    }
-
-    /**
-     * 构建样式字符串
-     * @param styleConfig 样式配置
-     * @returns 样式字符串
-     */
-    private buildStyleString(styleConfig: any): string {
-        return `font-size: ${styleConfig.fontSize}px; color: ${styleConfig.color}; font-weight: ${styleConfig.fontWeight}; font-style: ${styleConfig.fontStyle}; text-shadow: ${styleConfig.textShadow || 'none'}; `;
-    }
-
-    /**
-     * 应用开本大小样式
-     * @param element 目标元素
-     * @param bookSize 开本大小
-     */
-    private applyBookSizeStyles(element: HTMLElement, bookSize: string) {
-        const sizeMap: Record<string, { aspectRatio: string }> = {
-            'A4': { aspectRatio: '210/297' },
-            'A5': { aspectRatio: '148/210' },
-            'A3': { aspectRatio: '297/420' },
-            'Legal': { aspectRatio: '8.5/14' },
-            'Letter': { aspectRatio: '8.5/11' },
-            'Tabloid': { aspectRatio: '11/17' }
-        };
-
-        const size = sizeMap[bookSize] || sizeMap['A4'];
-        element.style.aspectRatio = size.aspectRatio;
-        element.style.width = '100%';
-        element.style.height = 'auto';
     }
 
     /**
