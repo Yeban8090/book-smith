@@ -74,7 +74,32 @@
 .export-modal-main.centered .export-preview-panel {
     display: none;
 }
+.preview-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
 
+.preview-render-btn {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.preview-render-btn:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
+.preview-render-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .preview-header {
     padding: 16px 20px;
     border-bottom: 1px solid var(--export-border);

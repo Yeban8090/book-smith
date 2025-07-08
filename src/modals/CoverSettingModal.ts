@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from 'obsidian';
+import { App, Modal, Setting, Notice } from 'obsidian';
 import { CoverManager } from '../services/CoverManager';
 import { i18n } from '../i18n/i18n';
 import { CoverSettings, TextStyleConfig } from '../types/book';
@@ -146,6 +146,10 @@ export class CoverSettingModal extends Modal {
                 authorStyleConfig: this.authorStyleConfig,
                 subtitleStyleConfig: this.subtitleStyleConfig
             });
+            
+            // 添加提示
+            new Notice('封面设置已更新，请点击"重新渲染"按钮查看效果');
+            
             this.close();
         });
     }
