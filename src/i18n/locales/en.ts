@@ -22,6 +22,14 @@ const commonTranslation: CommonTranslation = {
     OPEN_BOOK_PANEL: 'Open book panel',
     OPEN_TOOL_PANEL: 'Open tool panel',
     OPEN_ALL_PANELS: 'Open all panels',
+
+    PREFACE: 'Preface',
+    OUTLINE: 'Outline',
+    VOLUME_1: 'Volume 1',
+    CHAPTER_1: 'Chapter 1',
+    CHAPTER_2: 'Chapter 2',
+    AFTERWORD: 'Afterword',
+    TEMPLATE_OPTIONS_DESC: 'Standard structure with preface, outline, chapters and afterword'
 };
 
 // 书籍管理视图翻译
@@ -479,7 +487,7 @@ const translation: Translation = {
     ...modalTranslation,
     ...managerTranslation,
     ...toolbarModalTranslation,
-   ...componentTranslation
+    ...componentTranslation
 };
 
 

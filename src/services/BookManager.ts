@@ -221,8 +221,50 @@ export class BookManager {
     }
 
     private async getTemplateStructure(templateType: string): Promise<ChapterTree> {
-        return this.templateManager.getTemplate(templateType);
+    const template = this.templateManager.getTemplate(templateType);
+    
+    // 如果是默认模板，应用国际化
+    if (templateType === 'default') {
+        // 深拷贝模板结构以避免修改原始模板
+        const localizedTemplate = JSON.parse(JSON.stringify(template));
+        
+        // 更新模板结构中的节点标题
+        const updateNodeTitles = (nodes: ChapterNode[]) => {
+            for (const node of nodes) {
+                // 根据节点 id 或原始标题进行翻译
+                if (node.id === 'preface') {
+                    node.title = i18n.t('PREFACE');
+                    node.path = `${i18n.t('PREFACE')}.md`;
+                } else if (node.id === 'outline') {
+                    node.title = i18n.t('OUTLINE');
+                    node.path = `${i18n.t('OUTLINE')}.md`;
+                } else if (node.id === 'volume1') {
+                    node.title = i18n.t('VOLUME_1');
+                    node.path = i18n.t('VOLUME_1');
+                } else if (node.id === 'chapter1') {
+                    node.title = i18n.t('CHAPTER_1');
+                    node.path = `${i18n.t('VOLUME_1')}/${i18n.t('CHAPTER_1')}.md`;
+                } else if (node.id === 'chapter2') {
+                    node.title = i18n.t('CHAPTER_2');
+                    node.path = `${i18n.t('VOLUME_1')}/${i18n.t('CHAPTER_2')}.md`;
+                } else if (node.id === 'afterword') {
+                    node.title = i18n.t('AFTERWORD');
+                    node.path = `${i18n.t('AFTERWORD')}.md`;
+                }
+                
+                // 递归处理子节点
+                if (node.children) {
+                    updateNodeTitles(node.children);
+                }
+            }
+        };
+        
+        updateNodeTitles(localizedTemplate.tree);
+        return localizedTemplate;
     }
+    
+    return template;
+}
 
     private async createInitialStructure(folder: TFolder, structure: ChapterTree): Promise<void> {
         const createNode = async (node: ChapterNode) => {

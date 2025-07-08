@@ -21,6 +21,14 @@ const commonTranslation: CommonTranslation = {
     OPEN_BOOK_PANEL: '打开书籍管理面板',
     OPEN_TOOL_PANEL: '打开工具面板',
     OPEN_ALL_PANELS: '打开所有面板',
+
+    PREFACE: '前言',
+    OUTLINE: '大纲',
+    VOLUME_1: '第一卷',
+    CHAPTER_1: '第一章',
+    CHAPTER_2: '第二章',
+    AFTERWORD: '后记',
+    TEMPLATE_OPTIONS_DESC: '包含前言、大纲、正文卷章和后记的标准结构',
 };
 
 // 书籍管理视图翻译
@@ -392,10 +400,10 @@ const toolbarModalTranslation: ToolbarModalTranslation = {
     SELECT_BOOK_FIRST: '请先选择一本书籍',
     EXPORT_SUCCESS: '导出成功',
     EXPORT_FAILED: '导出失败: ',
-    FORMAT  : '格式',
+    FORMAT: '格式',
     CUSTOM_SIZE: '自定义大小',
     SELECT_EXPORT_FORMAT: '选择导出格式',
-    
+
     // CoverModal
     DESIGN_COVER: '设计封面',
     SHOW_COVER: '显示封面',
@@ -479,7 +487,7 @@ const translation: Translation = {
     ...modalTranslation,
     ...managerTranslation,
     ...toolbarModalTranslation,
-   ...componentTranslation
+    ...componentTranslation
 };
 
 export default translation;
