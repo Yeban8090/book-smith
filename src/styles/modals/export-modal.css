@@ -1,135 +1,879 @@
-/* 导出模态框样式 */
-.book-smith-modal-content {
-    padding: 20px;
+/* 导出模态框主体样式 */
+.export-modal {
+    --export-primary: var(--interactive-accent);
+    --export-primary-hover: var(--interactive-accent-hover);
+    --export-secondary: var(--background-secondary);
+    --export-border: var(--background-modifier-border);
+    --export-radius: 8px;
+    --export-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.export-modal .modal {
+    max-width: 50vw;
+    width: 50vw;
+    height: 70vh;
+    max-height: 70vh;
+}
+
+/* 模态框头部 */
+.export-modal-header {
+    position: relative;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--export-border);
+    background: linear-gradient(135deg, var(--background-primary) 0%, var(--background-secondary) 100%);
+}
+
+.export-modal-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-normal);
+    text-align: center;
+}
+
+/* 隐藏关闭按钮 */
+.export-modal-close {
+    display: none;
+}
+
+/* 模态框内容 */
+.export-modal-content {
+    padding: 24px;
+    max-height: calc(70vh - 120px);
+    overflow-y: auto;
+}
+
+/* 模态框底部 */
+.export-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--export-border);
+    background: var(--background-primary);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 主要内容区域 - 支持动态布局切换 */
+.export-modal-main {
+    display: flex;
+    gap: 20px;
+    height: calc(70vh - 120px);
+    transition: all 0.3s ease;
+}
+
+/* 未选择格式时的居中布局 */
+.export-modal-main.centered {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 选择格式后的左右分栏布局 */
+.export-modal-main.split-layout {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+/* 右侧设置面板 */
+.export-settings-panel {
+    flex: 0 0 400px;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    overflow-y: auto;
+    padding-right: 8px;
+    transition: all 0.3s ease;
 }
 
-/* 标题样式 */
-.book-smith-modal-header h2 {
-    font-size: 18px;
-    text-align: center;
-    margin: 0;
-    padding-bottom: 10px;
-    color: var(--text-normal);
+/* 居中布局时的设置面板 */
+.export-modal-main.centered .export-settings-panel {
+    flex: none;
+    width: 100%;
+    max-width: 600px;
+    padding-right: 0;
 }
 
-/* 导出内容区域 */
-.export-content {
+/* 左侧预览面板 */
+.export-preview-panel {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    padding: 0;
+    border: 1px solid var(--export-border);
+    border-radius: var(--export-radius);
+    background: var(--background-primary);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin: 24px 0;
 }
 
-/* 导出标题 */
-.export-title {
+/* 居中布局时隐藏预览面板 */
+.export-modal-main.centered .export-preview-panel {
+    display: none;
+}
+
+/* 预览头部 */
+.preview-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--export-border);
+    background: var(--background-secondary);
+}
+
+.preview-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.preview-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+/* 预览渲染按钮 */
+.preview-render-btn {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease;
+}
+
+.preview-render-btn:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
+.preview-render-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 预览滚动容器 - 包含封面和内容 */
+.preview-scroll-container {
+    flex: 1;
+    overflow: auto;
+    height: 100%;
+    flex-direction: column;
+    scroll-behavior: smooth;
+}
+
+/* 封面预览容器 */
+.cover-preview-container {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: var(--export-radius);
+    background: var(--background-primary);
+    overflow: hidden;
+}
+
+/* 封面预览标题 */
+.cover-preview-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--export-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--background-secondary);
+}
+
+.cover-preview-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+/* 封面预览内容 */
+.cover-preview-content {
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+/* 预览内容区域 */
+.preview-content {
+    flex: 1;
+    height: inherit;
+    overflow: hidden;
+    scroll-behavior: smooth;
+}
+
+/* 预览状态样式 - 合并相似的状态样式 */
+.preview-placeholder,
+.preview-loading,
+.preview-error,
+.preview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.preview-placeholder-icon,
+.preview-error-icon,
+.preview-empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.preview-placeholder-text,
+.preview-error-text,
+.preview-empty-text {
     font-size: 16px;
     text-align: center;
+}
+
+.preview-loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--background-modifier-border);
+    border-top: 3px solid var(--export-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.preview-loading-text {
+    font-size: 16px;
+}
+
+/* 渲染内容包装器 */
+.rendered-content-wrapper {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    position: relative;
+}
+
+.rendered-content-wrapper .markdown-preview-view {
+    padding: 0;
+    margin: 0;
+}
+
+/* 书籍信息卡片 */
+.export-book-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: var(--export-secondary);
+    border-radius: var(--export-radius);
+    border: 1px solid var(--export-border);
+    margin: 24px 0;
+    transition: all 0.2s ease;
+}
+
+.export-book-card:hover {
+    box-shadow: var(--export-shadow);
+    transform: translateY(-2px);
+}
+
+.export-book-icon {
+    font-size: 32px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--export-primary);
+    border-radius: 50%;
+    color: white;
+}
+
+.export-book-details {
+    flex: 1;
+}
+
+.export-book-title {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
     color: var(--text-normal);
+}
+
+.export-book-author {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.export-book-desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-faint);
+    line-height: 1.4;
+}
+
+/* 章节标题 */
+.export-section-title {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-section-title::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: var(--export-primary);
+    border-radius: 2px;
+}
+
+/* 格式选择区域 */
+.export-format-section {
+    margin-bottom: 32px;
+}
+
+.export-format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.export-format-card {
+    padding: 16px;
+    border: 2px solid var(--export-border);
+    border-radius: var(--export-radius);
+    background: var(--background-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.export-format-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.export-format-card:hover {
+    border-color: var(--export-primary);
+    transform: translateY(-4px);
+    box-shadow: var(--export-shadow);
+}
+
+.export-format-card:hover::before {
+    left: 100%;
+}
+
+.export-format-card.selected {
+    border-color: var(--export-primary);
+    background: var(--export-primary);
+    color: white;
+    transform: translateY(-4px);
+    box-shadow: var(--export-shadow);
+}
+
+.export-format-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.export-format-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.export-format-desc {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* 设置区域 */
+.export-settings-section {
+    margin-bottom: 32px;
+}
+
+.export-settings-content {
+    min-height: 120px;
+}
+
+.export-settings-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.export-placeholder-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.export-placeholder-text {
+    font-size: 14px;
+}
+
+.export-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+/* 设置卡片 */
+.export-setting-card {
+    padding: 20px;
+    border: 1px solid var(--export-border);
+    border-radius: var(--export-radius);
+    background: var(--background-primary);
+    transition: all 0.2s ease;
+}
+
+.export-setting-card:hover {
+    border-color: var(--export-primary);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.export-setting-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.export-setting-icon {
+    font-size: 16px;
+}
+
+.export-setting-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+/* 设置控件样式 */
+.export-setting-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.export-toggle-input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.export-toggle-label {
+    font-size: 14px;
+    color: var(--text-normal);
+    cursor: pointer;
+}
+
+.export-setting-button {
+    width: 50%;
+    padding: 8px 16px;
+    border: 1px solid var(--export-border);
+    border-radius: 4px;
+    background: var(--export-secondary);
+    color: var(--text-normal);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.export-setting-button:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--export-primary);
+}
+
+/* 信息卡片 */
+.export-info-card {
+    background: var(--background-secondary);
+    border-color: var(--text-accent);
+}
+
+.export-info-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* 按钮组 */
+.export-button-group {
+    display: flex;
+    gap: 12px;
+}
+
+.export-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    position: relative;
+    overflow: hidden;
+}
+
+.export-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+.export-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.export-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.export-btn-secondary {
+    background: var(--export-secondary);
+    color: var(--text-normal);
+    border: 1px solid var(--export-border);
+}
+
+.export-btn-secondary:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--export-primary);
+    transform: translateY(-2px);
+}
+
+.export-btn-primary {
+    background: var(--export-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.export-btn-primary:hover {
+    background: var(--export-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.export-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 隐藏旧的action-section */
+.export-action-section {
+    display: none;
+}
+
+/* 进度条样式 */
+.preview-progress {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--background-modifier-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--interactive-accent);
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.progress-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-align: center;
     margin-bottom: 5px;
 }
 
-/* 分隔线 */
-.export-divider {
-    border: none;
-    height: 1px;
-    background-color: var(--background-modifier-border);
-    margin: 0 0 10px 0;
-}
-
-/* 格式选择容器 */
-.export-formats-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    margin: 10px;
-}
-
-/* 格式按钮样式 */
-.export-format-btn {
-    padding: 12px 20px;
-    background-color: var(--background-secondary);
-    color: var(--text-normal);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    font-size: 0.95em;
-}
-
-.export-format-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
-    background-color: var(--background-modifier-border);
-}
-
-.export-format-btn.selected {
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
-}
-
-/* 按钮容器 */
-.export-buttons-container {
-    display: flex;
-    justify-content: right;
-    gap: 10px;
-}
-
-/* 取消按钮 */
-.export-cancel-btn {
-    padding: 10px 16px;
-    background-color: var(--background-secondary);
-    color: var(--text-normal);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
+.progress-file {
+    font-size: 12px;
+    color: var(--text-faint);
     text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.export-cancel-btn:hover {
-    background-color: var(--background-modifier-hover);
-    transform: translateY(-2px);
+/* 预览文档样式 */
+.preview-document {
+    font-size: 14px;
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding: 0 !important;
 }
 
-/* 确认按钮 */
-.export-confirm-btn {
-    padding: 10px 16px;
-    background-color: var(--interactive-accent-hover);
-    color: var(--text-on-accent);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    text-align: center;
+.preview-document h1,
+.preview-document h2,
+.preview-document h3,
+.preview-document h4,
+.preview-document h5,
+.preview-document h6 {
+    color: var(--text-normal);
+    margin-top: 1em;
+    margin-bottom: 0.5em;
 }
 
-.export-confirm-btn:hover {
-    background-color: var(--interactive-accent-hover);
-    opacity: 0.9;
-    transform: translateY(-2px);
+.preview-document p {
+    margin-bottom: 1em;
 }
 
-/* 导出模态框标题 */
-.book-smith-modal-header {
+.preview-document img {
+    max-width: 100%;
+    height: auto;
+}
+
+
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .export-modal .modal {
+        width: 85vw;
+        height: 80vh;
+    }
+    
+    .export-settings-panel {
+        flex: 0 0 350px;
+    }
+}
+
+@media (max-width: 900px) {
+    .export-modal-main {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .export-preview-panel {
+        height: 400px;
+    }
+    
+    .export-settings-panel {
+        flex: none;
+    }
+    
+    .preview-scroll-container {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .export-modal .modal {
+        width: 95vw;
+        margin: 10px;
+    }
+    
+    .export-modal-content {
+        padding: 16px;
+    }
+    
+    .export-modal-footer {
+        padding: 12px 16px;
+    }
+    
+    .export-format-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .export-settings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-button-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .export-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .export-format-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .export-book-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+/* 封面容器背景图片样式 */
+.cover-container {
+    background-size: 100%;
+    background-position: 0px 0px;
+    background-repeat: no-repeat;
+}
+
+/* 封面内容容器样式 */
+.cover-content {
     position: relative;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--background-modifier-border);
-    margin-bottom: 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
 }
 
-/* 选择导出格式标题 */
-.export-title {
-    font-size: 16px;
-    text-align: center;
-    margin: 0 0 15px 0;
-    color: var(--text-normal);
+/* 封面标题样式 */
+.cover-title {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* 封面副标题默认样式 */
+.cover-subtitle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    font-size: 18px;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 封面作者样式 */
+.cover-author {
+    position: absolute;
+    left: 50%;
+    top: 70%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+/* PDF 设置部分样式 */
+.export-setting-icon {
+    font-size: 18px;
+}
+
+.export-setting-title {
+    font-size: 15px;
+}
+
+/* 尺寸选择容器 */
+.size-select-container {
+    display: flex;
+    align-items: center;
+}
+
+/* 尺寸选择下拉框 */
+.export-setting-select {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--export-border);
+    background-color: var(--background-primary);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* PDF 设置卡片 */
+.export-setting-card {
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 封面控制容器 */
+.cover-controls-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+/* 封面切换开关 */
+.export-setting-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 封面复选框 */
+.export-toggle-input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* 封面标签 */
+.export-toggle-label {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* 设置按钮 */
+.export-setting-button {
+    width: auto;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: var(--export-secondary);
+    border: 1px solid var(--export-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* 页眉页脚目录按钮容器 */
+.header-footer-toc-button-container {
+    display: flex;
+    justify-content: center;
+}
+
+/* 页眉页脚目录按钮 */
+.header-footer-toc-button {
+    width: 100%;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: var(--export-secondary);
+    border: 1px solid var(--export-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
 }

@@ -15,7 +15,7 @@ export class BookManager {
     }
 
     async createBook(
-        basicInfo: Omit<BookBasicInfo, 'uuid' | 'created_at'>, 
+        basicInfo: Omit<BookBasicInfo, 'uuid' | 'created_at'>,
         templateType: string = 'default',
         targetTotalWords: number = 0
     ): Promise<Book> {
@@ -144,16 +144,16 @@ export class BookManager {
                 ...updates.basic
             },
             structure: {
-               ...book.structure,
-               ...updates.structure
+                ...book.structure,
+                ...updates.structure
             },
             stats: {
-               ...book.stats,
-               ...updates.stats
+                ...book.stats,
+                ...updates.stats
             },
             export: {
-               ...book.export,
-               ...updates.export
+                ...book.export,
+                ...updates.export
             }
         };
 
@@ -206,7 +206,7 @@ export class BookManager {
         try {
             const configFile = this.app.vault.getAbstractFileByPath(configPath);
             const jsonContent = JSON.stringify(book, null, 2);
-            
+
             if (configFile instanceof TFile) {
                 // 如果文件已存在，使用 modify 方法
                 await this.app.vault.modify(configFile, jsonContent);
@@ -221,7 +221,49 @@ export class BookManager {
     }
 
     private async getTemplateStructure(templateType: string): Promise<ChapterTree> {
-        return this.templateManager.getTemplate(templateType);
+        const template = this.templateManager.getTemplate(templateType);
+
+        // 如果是默认模板，应用国际化
+        if (templateType === 'default') {
+            // 深拷贝模板结构以避免修改原始模板
+            const localizedTemplate = JSON.parse(JSON.stringify(template));
+
+            // 更新模板结构中的节点标题
+            const updateNodeTitles = (nodes: ChapterNode[]) => {
+                for (const node of nodes) {
+                    // 根据节点 id 或原始标题进行翻译
+                    if (node.id === 'preface') {
+                        node.title = i18n.t('PREFACE');
+                        node.path = `${i18n.t('PREFACE')}.md`;
+                    } else if (node.id === 'outline') {
+                        node.title = i18n.t('OUTLINE');
+                        node.path = `${i18n.t('OUTLINE')}.md`;
+                    } else if (node.id === 'volume1') {
+                        node.title = i18n.t('VOLUME_1');
+                        node.path = i18n.t('VOLUME_1');
+                    } else if (node.id === 'chapter1') {
+                        node.title = i18n.t('CHAPTER_1');
+                        node.path = `${i18n.t('VOLUME_1')}/${i18n.t('CHAPTER_1')}.md`;
+                    } else if (node.id === 'chapter2') {
+                        node.title = i18n.t('CHAPTER_2');
+                        node.path = `${i18n.t('VOLUME_1')}/${i18n.t('CHAPTER_2')}.md`;
+                    } else if (node.id === 'afterword') {
+                        node.title = i18n.t('AFTERWORD');
+                        node.path = `${i18n.t('AFTERWORD')}.md`;
+                    }
+
+                    // 递归处理子节点
+                    if (node.children) {
+                        updateNodeTitles(node.children);
+                    }
+                }
+            };
+
+            updateNodeTitles(localizedTemplate.tree);
+            return localizedTemplate;
+        }
+
+        return template;
     }
 
     private async createInitialStructure(folder: TFolder, structure: ChapterTree): Promise<void> {
@@ -250,15 +292,15 @@ export class BookManager {
     }
 
     // 在 BookManager 类中添加这个方法
-    
+
     async importBookFromFolder(folderName: string): Promise<Book> {
         try {
             // 获取文件夹内的文件结构
             const folderPath = `${this.settings.defaultBookPath}/${folderName}`;
-            
+
             // 创建书籍结构
             const structure = await this.buildFolderStructure(folderPath, '');
-            
+
             // 创建新书籍对象，确保符合 Book 接口定义
             const newBook: Book = {
                 basic: {
@@ -287,13 +329,13 @@ export class BookManager {
                     include_cover: true
                 }
             };
-            
+
             // 保存书籍配置
             const bookFolder = this.app.vault.getAbstractFileByPath(folderPath);
             if (!(bookFolder instanceof TFolder)) {
                 throw new Error(i18n.t('BOOK_FOLDER_NOT_FOUND'));
             }
-            
+
             await this.saveBookConfig(bookFolder, newBook);
             return newBook;
         } catch (error) {
@@ -301,26 +343,26 @@ export class BookManager {
             throw new Error(i18n.t('IMPORT_BOOK_FAILED'));
         }
     }
-    
+
     // 构建文件夹结构的辅助方法
     private async buildFolderStructure(folderPath: string, parentPath: string = ''): Promise<ChapterNode[]> {
         const structure: ChapterNode[] = [];
         let order = 0;
-        
+
         const folderContents = await this.app.vault.adapter.list(folderPath);
-        
+
         // 处理文件
         for (const filePath of folderContents.files) {
             // 只处理markdown文件
             if (!filePath.endsWith('.md')) continue;
-            
+
             const fileName = filePath.split('/').pop() || '';
             // 过滤掉隐藏文件和配置文件
             if (fileName.startsWith('.')) continue;
-            
+
             const title = fileName.replace('.md', '');
             const relativePath = parentPath ? `${parentPath}/${fileName}` : fileName;
-            
+
             structure.push({
                 id: uuidv4(),
                 title: title,
@@ -332,24 +374,24 @@ export class BookManager {
                 last_modified: new Date().toISOString()
             });
         }
-        
+
         // 处理文件夹
         for (const subFolderPath of folderContents.folders) {
             const folderName = subFolderPath.split('/').pop() || '';
-            
+
             // 过滤掉隐藏文件夹和特殊系统文件夹
-            if (folderName.startsWith('.') || 
-                folderName === '__MACOSX' || 
+            if (folderName.startsWith('.') ||
+                folderName === '__MACOSX' ||
                 folderName === 'node_modules') continue;
-            
+
             const relativePath = parentPath ? `${parentPath}/${folderName}` : folderName;
-            
+
             // 递归获取子文件夹内容
             const children = await this.buildFolderStructure(
-                subFolderPath, 
+                subFolderPath,
                 relativePath
             );
-            
+
             structure.push({
                 id: uuidv4(),
                 title: folderName,
@@ -363,7 +405,7 @@ export class BookManager {
                 is_expanded: true
             });
         }
-        
+
         return structure;
     }
 }
