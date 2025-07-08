@@ -6,7 +6,6 @@ import { CommunityModal } from '../modals/CommunityModal';
 import { ContactModal } from '../modals/ContactModal';
 import BookSmithPlugin from '../main';
 import { i18n } from '../i18n/i18n';
-import { TypographyView } from '../components/TypographyView';
 import { BookSelectionModal } from '../modals/BookSelectionModal';
 interface ToolItem {
     icon: string;
@@ -19,7 +18,6 @@ interface ToolItem {
 export class ToolView extends ItemView {
     private normalView: HTMLElement | null = null;
     private focusView: FocusToolView | null = null;
-    private typographyView: TypographyView | null = null;
 
     constructor(leaf: WorkspaceLeaf, private plugin: BookSmithPlugin) {
         super(leaf);
@@ -240,10 +238,6 @@ export class ToolView extends ItemView {
             this.focusView.remove();
             this.focusView = null;
         }
-        
-        if (this.typographyView) {
-            this.typographyView.remove();
-            this.typographyView = null;
-        }
+    
     }
 }
