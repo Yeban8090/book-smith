@@ -116,6 +116,7 @@ Book Smith is a writing management plugin designed for Obsidian, helping authors
 - PDF preview and export require Electron and are available only on desktop; the mobile experience still needs validation on a device
 - Book folder suggestions support settings opened in a separate window
 - PDF table-of-contents numbers come from the printed pages and match body headers/footers, including the contents pages and excluding the separately inserted cover. Missing resources, missing chapters, or outdated previews stop export with an error
+- If the client does not provide complete table-of-contents destinations, export keeps the contents links and omits their page numbers; body footer numbering remains available
 - Books and chapters are stored in your vault; cross-device synchronization depends on your vault sync setup
 - Creating, copying, deleting, excluding, or restoring chapters recalculates totals without counting those operations as daily writing
 - Rewrites with the same word count do not count as additions; historical date keys and net-change records are preserved

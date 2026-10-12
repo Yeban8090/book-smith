@@ -1,8 +1,9 @@
-import { App, Component, MarkdownRenderer, TFile } from 'obsidian';
+import { App, Component, MarkdownRenderer, MarkdownView, TFile } from 'obsidian';
 import { Book, ChapterNode, CoverSettings } from '../types/book';
 import { HeaderFooterTocSettings } from '../modals/HeaderFooterTocModal';
 import type * as electron from 'electron';
 import { escapeHtml } from '../utils/pdfExport';
+import { VaultImageService } from './VaultImageService';
 
 export interface RenderConfig {
     showTitle: boolean;
@@ -40,6 +41,7 @@ export class BookRenderService {
     private docs: DocType[] = [];
     private scale = 1;
     private sourceFiles = new Map<string, { mtime: number; size: number }>();
+    private images: VaultImageService;
 
     assertSourceUnchanged() {
         for (const [path, snapshot] of this.sourceFiles) {
@@ -50,7 +52,7 @@ export class BookRenderService {
         }
     }
 
-    constructor(private app: App) { }
+    constructor(private app: App) { this.images = new VaultImageService(app); }
 
     /**
      * 主要渲染方法 - 基于 obsidian-better-export-pdf 架构
@@ -94,9 +96,7 @@ export class BookRenderService {
 
                     // 3. 注入所有样式
                     const styles = this.getAllStyles();
-                    for (const css of styles) {
-                        await webview.insertCSS(css);
-                    }
+                    await webview.insertCSS(styles.join('\n'));
 
                     // 4. 处理自定义CSS片段
                     if (config?.cssSnippet && config.cssSnippet !== '0') {
@@ -168,13 +168,19 @@ export class BookRenderService {
     ): Promise<void> {
         const totalFiles = data.length;
 
-        // 按章节顺序渲染，避免长文同时打开大量临时视图和占用内存。
-        let _docs = [...docs];
-        for (let index = 0; index < data.length; index++) {
-            if (config.abortSignal?.aborted) throw new Error('Render aborted');
-            _docs.push(await this.renderMarkdown(data[index]));
-            config.onProgress?.(index + 1, totalFiles, data[index].file.basename);
-        }
+        // 恢复 1.0.6 的并发文件预览流程，结果按输入顺序合并。
+        let completed = 0;
+        config.onProgress?.(0, totalFiles, '正在打开章节文件…');
+        const results = await Promise.allSettled(data.map(async param => {
+            const doc = await this.renderMarkdown(param);
+            config.onProgress?.(++completed, totalFiles, param.file.basename);
+            return doc;
+        }));
+        const rendered = results.map(result => {
+            if (result.status === 'rejected') throw result.reason;
+            return result.value;
+        });
+        let _docs = [...docs, ...rendered];
 
         // 合并所有文档为一个完整的书籍文档
         _docs = this.mergeDoc(_docs);
@@ -188,8 +194,6 @@ export class BookRenderService {
     private async renderMarkdown({ app, file, config, book, extra }: ParamType): Promise<DocType> {
         if (config.abortSignal?.aborted) throw new Error('Render aborted');
         this.sourceFiles.set(file.path, { mtime: file.stat.mtime, size: file.stat.size });
-        const data = await app.vault.read(file);
-
         const frontMatter = this.getFrontMatter(file);
         const cssclasses = this.extractCssClasses(frontMatter);
 
@@ -197,7 +201,13 @@ export class BookRenderService {
         comp.load();
 
         const printEl = document.body.createDiv('print');
+        const leaf = app.workspace.getLeaf(true);
         try {
+            // 恢复文件视图上下文；不切换用户当前正在编辑的标签页。
+            await leaf.openFile(file, { active: false });
+            if (typeof leaf.loadIfDeferred === 'function') await leaf.loadIfDeferred();
+            const data = leaf.view instanceof MarkdownView ? leaf.view.getViewData() : await app.vault.cachedRead(file);
+            if (config.abortSignal?.aborted) throw new Error('Render aborted');
             const viewEl = printEl.createDiv({
                 cls: 'markdown-preview-view markdown-rendered ' + cssclasses.join(' '),
             });
@@ -219,9 +229,32 @@ export class BookRenderService {
             // 处理块引用
             const processedData = this.processBlockReferences(data || '', file);
 
-            // 使用公开渲染 API，不再借助抛异常截取渲染结果。
-            const rendered = viewEl.createDiv();
-            await MarkdownRenderer.render(app, processedData, rendered, file.path, comp);
+            // 恢复旧版捕获渲染片段再后处理的方式，避免执行两遍后处理。
+            const captured = new Error('Book Smith render fragment captured');
+            const fragment = this.createRenderFragment(captured);
+            const promises: Promise<unknown>[] = [];
+            try {
+                await MarkdownRenderer.render(app, processedData, fragment as unknown as HTMLElement, file.path, comp);
+            } catch (error) {
+                if (error !== captured) throw error;
+            }
+            const rendered = document.createDocumentFragment();
+            for (const item of fragment.children) rendered.createDiv({}, el => el.appendChild(item));
+            viewEl.appendChild(rendered);
+            // Obsidian 的旧版 PDF 预览流程使用该内部后处理入口。
+            // @ts-ignore
+            await MarkdownRenderer.postProcess(app, {
+                docId: this.generateDocId(16),
+                sourcePath: file.path,
+                frontmatter: {},
+                promises,
+                addChild: (child: Component) => comp.addChild(child),
+                getSectionInfo: () => null,
+                containerEl: viewEl,
+                el: viewEl,
+                displayMode: true,
+            });
+            await Promise.all(promises);
             if (config.abortSignal?.aborted) throw new Error('Render aborted');
 
             // 修复内部链接
@@ -229,6 +262,7 @@ export class BookRenderService {
 
             // 等待动态内容渲染
             await this.fixWaitRender(data || '', viewEl, config.abortSignal);
+            await this.images.embedImages(viewEl, file.path);
 
             // 修复canvas为图片
             this.fixCanvasToImage(viewEl);
@@ -243,6 +277,7 @@ export class BookRenderService {
         } finally {
             printEl.remove();
             comp.unload();
+            leaf.detach();
         }
     }
 
@@ -422,6 +457,23 @@ export class BookRenderService {
     }
 
     /**
+     * 捕获 Obsidian 渲染结果，仅中断默认后处理；真实异常继续向上传递。
+     */
+    private createRenderFragment(captured: Error) {
+        return {
+            children: [] as Element[],
+            appendChild(element: DocumentFragment): never {
+                this.children = Array.from(element.children);
+                throw captured;
+            },
+        };
+    }
+
+    private generateDocId(length: number): string {
+        return Array.from({ length }, () => ((16 * Math.random()) | 0).toString(16)).join('');
+    }
+
+    /**
      * 修复内部链接
      */
     private fixInternalLinks(printEl: HTMLElement, file: TFile): void {
@@ -438,8 +490,9 @@ export class BookRenderService {
      * 等待动态内容渲染
      */
     private async fixWaitRender(data: string, viewEl: HTMLElement, signal?: AbortSignal): Promise<void> {
-        const dynamic = data.includes('```dataview') || data.includes('```gEvent') || data.includes('![[');
-        await this.waitForDomChange(viewEl, dynamic ? 2000 : 200, signal);
+        const dynamic = data.includes('```dataview') || data.includes('```gEvent') ||
+            /!\[\[(?![^\]]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:\|[^\]]*)?\]\])/i.test(data);
+        if (dynamic) await this.waitForDomChange(viewEl, 2000, signal);
     }
 
     /**
@@ -609,7 +662,7 @@ export class BookRenderService {
                         justify-content: space-between;
                         align-items: baseline;
                     ">
-                        <a class="toc-text" href="#${escapeHtml(heading.id)}">${escapeHtml(heading.text)}</a>
+                        <a class="toc-text" data-heading-id="${escapeHtml(heading.id)}">${escapeHtml(heading.text)}</a>
                         <span class="toc-dots" style="
                             flex: 1;
                             border-bottom: 1px dotted #ccc;
@@ -617,7 +670,7 @@ export class BookRenderService {
                             height: 1px;
                             align-self: center;
                         "></span>
-                        <span class="toc-page" data-heading-id="${escapeHtml(heading.id)}">000000</span>
+                        <a class="toc-page" href="#${escapeHtml(heading.id)}" data-heading-id="${escapeHtml(heading.id)}" style="white-space: nowrap;">000000</a>
                     </div>
                 `;
             }
