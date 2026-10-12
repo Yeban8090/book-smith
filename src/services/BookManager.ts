@@ -1,5 +1,5 @@
 import { App, TFolder, TFile } from 'obsidian';
-import { Book, BookBasicInfo, ChapterTree, ChapterNode } from '../types/book';
+import { Book, BookBasicInfo, ChapterTree, ChapterNode, BookStats } from '../types/book';
 import { v4 as uuidv4 } from 'uuid';
 import { TemplateManager } from './TemplateManager';
 import { BookSmithSettings } from '../settings/settings';
@@ -7,11 +7,23 @@ import { i18n } from '../i18n/i18n';
 
 export class BookManager {
     private templateManager: TemplateManager;
-    private rootPath: string;
+    private statsCalculator?: (book: Book, editedFilePath?: string) => Promise<BookStats>;
+    private bookSavedCallbacks = new Set<(book: Book) => void>();
+    private updateQueue: Promise<unknown> = Promise.resolve();
+
+    private get rootPath(): string { return this.settings.defaultBookPath; }
+
+    setStatsCalculator(calculator: (book: Book, editedFilePath?: string) => Promise<BookStats>) {
+        this.statsCalculator = calculator;
+    }
+
+    onBookSaved(callback: (book: Book) => void) {
+        this.bookSavedCallbacks.add(callback);
+        return () => this.bookSavedCallbacks.delete(callback);
+    }
 
     constructor(private app: App, private settings: BookSmithSettings) {
         this.templateManager = new TemplateManager(settings);
-        this.rootPath = this.settings.defaultBookPath;
     }
 
     async createBook(
@@ -60,7 +72,8 @@ export class BookManager {
 
             // 创建初始文件结构
             await this.createInitialStructure(bookFolder, book.structure);
-
+            if (this.statsCalculator) book.stats = await this.statsCalculator(book);
+            await this.saveBookConfig(bookFolder, book);
             return book;
         } catch (error) {
             // 清理失败的创建
@@ -123,7 +136,13 @@ export class BookManager {
         return books.find(book => book.basic.uuid === uuid) || null;
     }
 
-    async updateBook(uuid: string, updates: Partial<Book>): Promise<Book> {
+    updateBook(uuid: string, updates: Partial<Book>, editedFilePath?: string): Promise<Book> {
+        const pending = this.updateQueue.then(() => this.saveBookUpdate(uuid, updates, editedFilePath));
+        this.updateQueue = pending.catch(() => undefined);
+        return pending;
+    }
+
+    private async saveBookUpdate(uuid: string, updates: Partial<Book>, editedFilePath?: string): Promise<Book> {
         const book = await this.getBookById(uuid);
         if (!book) {
             throw new Error(i18n.t('BOOK_NOT_FOUND'));
@@ -166,7 +185,15 @@ export class BookManager {
             await this.app.vault.rename(folder, newBookPath);
         }
 
+        if (this.statsCalculator) {
+            // 历史写作记录以刚读取的配置为准，防止旧界面对象覆盖新记录。
+            updatedBook.stats.daily_words = book.stats.daily_words;
+            updatedBook.stats.chapter_words = book.stats.chapter_words;
+            updatedBook.stats.last_writing_date = book.stats.last_writing_date;
+            updatedBook.stats = await this.statsCalculator(updatedBook, editedFilePath);
+        }
         await this.saveBookConfig(folder, updatedBook);
+        this.bookSavedCallbacks.forEach(callback => callback(updatedBook));
         return updatedBook;
     }
 
@@ -336,6 +363,7 @@ export class BookManager {
                 throw new Error(i18n.t('BOOK_FOLDER_NOT_FOUND'));
             }
 
+            if (this.statsCalculator) newBook.stats = await this.statsCalculator(newBook);
             await this.saveBookConfig(bookFolder, newBook);
             return newBook;
         } catch (error) {

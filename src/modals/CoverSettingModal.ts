@@ -81,6 +81,19 @@ export class CoverSettingModal extends Modal {
             this.subtitleStyleConfig = { ...this.subtitleStyleConfig, ...initialSettings.subtitleStyleConfig };
         }
 
+        if (!initialSettings?.imageUrl) {
+            for (const [config, saved] of [
+                [this.titleStyleConfig, initialSettings?.titleStyleConfig],
+                [this.subtitleStyleConfig, initialSettings?.subtitleStyleConfig],
+                [this.authorStyleConfig, initialSettings?.authorStyleConfig]
+            ] as Array<[TextStyleConfig, TextStyleConfig | undefined]>) {
+                if (!saved) {
+                    config.color = '#30343b';
+                    config.textShadow = 'none';
+                }
+            }
+        }
+
         if (initialSettings) {
             this.imageUrl = initialSettings.imageUrl;
             this.scale = initialSettings.scale;
@@ -98,13 +111,18 @@ export class CoverSettingModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('book-smith-cover-modal');
+        this.modalEl.addClass('book-smith-cover-dialog');
 
+        const header = contentEl.createDiv({ cls: 'cover-dialog-header' });
+        header.createEl('h2', { text: i18n.t('COVER_DESIGN') || '封面设计' });
+        header.createEl('p', { text: '调整封面文字与样式，拖动预览中的文字即可改变位置。' });
         const container = contentEl.createEl('div', { cls: 'cover-settings-container' });
-        container.createEl('h3', { text: i18n.t('COVER_DESIGN') || '封面设计' });
 
         // 预览区域
         const previewArea = container.createEl('div', { cls: 'cover-preview-area' });
+        previewArea.createEl('div', { cls: 'cover-preview-label', text: '封面预览' });
         this.previewElement = previewArea.createEl('div', { cls: 'cover-preview' });
+        previewArea.createEl('p', { cls: 'cover-preview-hint', text: '拖动文字调整位置' });
 
         // 控制区域
         const controlsArea = container.createEl('div', { cls: 'cover-controls' });
@@ -124,7 +142,7 @@ export class CoverSettingModal extends Modal {
 
         const applyButton = buttonContainer.createEl('button', {
             text: i18n.t('APPLY') || '应用',
-            cls: 'cover-apply-button'
+            cls: 'cover-apply-button mod-cta'
         });
         // 更新 onOpen 方法中的 applyButton 点击事件
         applyButton.addEventListener('click', () => {
@@ -148,15 +166,16 @@ export class CoverSettingModal extends Modal {
             });
             
             // 添加提示
-            new Notice('封面设置已更新，请点击"重新渲染"按钮查看效果');
+            new Notice('封面设置已应用');
             
             this.close();
         });
     }
 
     private createControls(container: HTMLElement) {
+        const imageGroup = container.createDiv({ cls: 'cover-control-card cover-image-card' });
         // 图片上传和清除按钮
-        new Setting(container)
+        new Setting(imageGroup)
             .setName(i18n.t('COVER_IMAGE') || '封面图片')
             .addButton(button => button
                 .setButtonText(i18n.t('SELECT_IMAGE') || '选择图片')
@@ -166,7 +185,7 @@ export class CoverSettingModal extends Modal {
                 .onClick(() => this.handleClearImage()));
         if (this.imageUrl) {
             // 缩放控制和重置按钮（同一行）
-            new Setting(container)
+            new Setting(imageGroup)
                 .setName(i18n.t('SCALE') || '缩放')
                 .addButton(button => button
                     .setIcon('rotate-ccw') // 使用重置图标
@@ -184,7 +203,7 @@ export class CoverSettingModal extends Modal {
                     }));
 
             // 图片位置说明
-            const positionDesc = container.createEl('div', {
+            const positionDesc = imageGroup.createEl('div', {
                 cls: 'setting-item-description',
                 text: '拖拽图片调整位置，或点击重置到中心'
             });
@@ -193,129 +212,33 @@ export class CoverSettingModal extends Modal {
             positionDesc.style.fontSize = '0.9em';
             positionDesc.style.color = 'var(--text-muted)';
         }
-        // 书名输入框和样式控制（同一行）
-        new Setting(container)
-            .setName('书名')
-            .addText(text => text
-                .setPlaceholder('输入书名')
-                .setValue(this.customTitle)
-                .onChange(value => {
-                    this.customTitle = value;
-                    this.updatePreview();
-                }))
-            .addSlider(slider => slider
-                .setLimits(8, 72, 1)
-                .setValue(this.titleStyleConfig.fontSize)
-                .setDynamicTooltip()
-                .onChange(value => {
-                    this.titleStyleConfig.fontSize = value;
-                    this.updatePreview();
-                }))
-            .addColorPicker(color => color
-                .setValue(this.titleStyleConfig.color)
-                .onChange(value => {
-                    this.titleStyleConfig.color = value;
-                    this.updatePreview();
-                }))
-            .addDropdown(dropdown => dropdown
-                .addOption('normal', '正常')
-                .addOption('bold', '加粗')
-                .setValue(this.titleStyleConfig.fontWeight)
-                .onChange(value => {
-                    this.titleStyleConfig.fontWeight = value as 'normal' | 'bold';
-                    this.updatePreview();
-                }))
-            .addDropdown(dropdown => dropdown
-                .addOption('normal', '正常')
-                .addOption('italic', '倾斜')
-                .setValue(this.titleStyleConfig.fontStyle)
-                .onChange(value => {
-                    this.titleStyleConfig.fontStyle = value as 'normal' | 'italic';
-                    this.updatePreview();
-                }));
+        const textSections: Array<{
+            title: string;
+            value: string;
+            style: TextStyleConfig;
+            onChange: (value: string) => void;
+        }> = [
+            { title: '书名', value: this.customTitle, style: this.titleStyleConfig,
+                onChange: value => { this.customTitle = value; } },
+            { title: '副标题', value: this.customSubtitle, style: this.subtitleStyleConfig,
+                onChange: value => { this.customSubtitle = value; } },
+            { title: '作者', value: this.customAuthor, style: this.authorStyleConfig,
+                onChange: value => { this.customAuthor = value; } }
+        ];
 
-        // 副标题输入框和样式控制（同一行）
-        new Setting(container)
-            .setName('副标题')
-            .addText(text => text
-                .setPlaceholder('输入副标题')
-                .setValue(this.customSubtitle)
-                .onChange(value => {
-                    this.customSubtitle = value;
-                    this.updatePreview();
-                }))
-            .addSlider(slider => slider
-                .setLimits(8, 72, 1)
-                .setValue(this.subtitleStyleConfig.fontSize)
-                .setDynamicTooltip()
-                .onChange(value => {
-                    this.subtitleStyleConfig.fontSize = value;
-                    this.updatePreview();
-                }))
-            .addColorPicker(color => color
-                .setValue(this.subtitleStyleConfig.color)
-                .onChange(value => {
-                    this.subtitleStyleConfig.color = value;
-                    this.updatePreview();
-                }))
-            .addDropdown(dropdown => dropdown
-                .addOption('normal', '正常')
-                .addOption('bold', '加粗')
-                .setValue(this.subtitleStyleConfig.fontWeight)
-                .onChange(value => {
-                    this.subtitleStyleConfig.fontWeight = value as 'normal' | 'bold';
-                    this.updatePreview();
-                }))
-            .addDropdown(dropdown => dropdown
-                .addOption('normal', '正常')
-                .addOption('italic', '倾斜')
-                .setValue(this.subtitleStyleConfig.fontStyle)
-                .onChange(value => {
-                    this.subtitleStyleConfig.fontStyle = value as 'normal' | 'italic';
-                    this.updatePreview();
-                }));
-
-        // 作者输入框和样式控制（同一行）
-        new Setting(container)
-            .setName('作者')
-            .addText(text => text
-                .setPlaceholder('输入作者')
-                .setValue(this.customAuthor)
-                .onChange(value => {
-                    this.customAuthor = value;
-                    this.updatePreview();
-                }))
-            .addSlider(slider => slider
-                .setLimits(8, 72, 1)
-                .setValue(this.authorStyleConfig.fontSize)
-                .setDynamicTooltip()
-                .onChange(value => {
-                    this.authorStyleConfig.fontSize = value;
-                    this.updatePreview();
-                }))
-            .addColorPicker(color => color
-                .setValue(this.authorStyleConfig.color)
-                .onChange(value => {
-                    this.authorStyleConfig.color = value;
-                    this.updatePreview();
-                }))
-            .addDropdown(dropdown => dropdown
-                .addOption('normal', '正常')
-                .addOption('bold', '加粗')
-                .setValue(this.authorStyleConfig.fontWeight)
-                .onChange(value => {
-                    this.authorStyleConfig.fontWeight = value as 'normal' | 'bold';
-                    this.updatePreview();
-                }))
-            .addDropdown(dropdown => dropdown
-                .addOption('normal', '正常')
-                .addOption('italic', '倾斜')
-                .setValue(this.authorStyleConfig.fontStyle)
-                .onChange(value => {
-                    this.authorStyleConfig.fontStyle = value as 'normal' | 'italic';
-                    this.updatePreview();
-                }));
-
+        textSections.forEach(section => {
+            const card = container.createDiv({ cls: 'cover-control-card' });
+            new Setting(card)
+                .setName(section.title)
+                .addText(text => text
+                    .setPlaceholder(`输入${section.title}`)
+                    .setValue(section.value)
+                    .onChange(value => {
+                        section.onChange(value);
+                        this.updatePreview();
+                    }));
+            this.createTextStyleControls(card, section.style, () => this.updatePreview());
+        });
     }
 
     private handleImageUpload() {
@@ -358,10 +281,9 @@ export class CoverSettingModal extends Modal {
         }
     }
 
-    private createTextStyleControls(container: HTMLElement, title: string, styleConfig: TextStyleConfig, onUpdate: () => void) {
+    private createTextStyleControls(container: HTMLElement, styleConfig: TextStyleConfig, onUpdate: () => void) {
         // 创建样式控制组
         const styleGroup = container.createEl('div', { cls: 'text-style-group' });
-        styleGroup.createEl('h4', { text: title, cls: 'style-group-title' });
 
         // 字体大小
         new Setting(styleGroup)

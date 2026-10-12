@@ -188,6 +188,7 @@ export class ChapterTree {
 
         const countChapters = (nodeList: ChapterNode[]) => {
             for (const node of nodeList) {
+                if (node.exclude) continue;
                 if (node.type === 'file') {
                     totalChapters++;
                     if (node.default_status === 'done') {

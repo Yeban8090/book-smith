@@ -71,7 +71,8 @@ export interface BookStats {
     progress_by_chapter: number; // 章节完成进度
     
     // 写作统计
-    daily_words: Record<string, number>;  // 每日写作字数记录
+    daily_words: Record<string, number>;  // 本地自然日内，各次正文保存的正向字数增量之和
+    chapter_words?: Record<string, number>; // 按章节 ID 保存的字数基线，不计入写作量
     writing_days: number;        // 总写作天数
     average_daily_words: number; // 平均每日字数
     last_writing_date: string;   // 上次写作日期
