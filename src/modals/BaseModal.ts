@@ -1,46 +1,28 @@
-import { Notice } from "obsidian";
+import { Modal, Notice } from 'obsidian';
+import type { App } from 'obsidian';
+import { initializeDialog, finishDialog } from './dialogLayout';
 
-export class BaseModal {
+export class BaseModal extends Modal {
     protected element: HTMLElement;
 
-    constructor(protected container: HTMLElement, protected title: string) {
-        this.element = container.createDiv({ cls: 'book-smith-modal vertical' });
-        const closeBtn = this.element.createDiv({ cls: 'modal-close' });
-        closeBtn.addEventListener('click', () => this.close());
+    constructor(app: App, protected title: string) {
+        super(app);
+        this.element = this.contentEl;
     }
 
-    open() {
-        // 创建遮罩层
-        const overlay = this.container.createDiv({ cls: 'book-smith-modal-overlay' });
-        overlay.addEventListener('click', () => this.close());
-        
-        // 创建标题
-        this.createHeader();
-        
-        // 创建内容 (由子类实现)
+    onOpen() {
+        initializeDialog(this);
+        this.titleEl.setText(this.title);
         this.createContent();
+        finishDialog(this);
     }
 
-    protected createHeader() {
-        const header = this.element.createDiv({ cls: 'book-smith-modal-header' });
-        header.createEl('h2', { text: this.title });
-    }
+    protected createContent() {}
 
-    protected createContent() {
-        // 由子类实现
-    }
-
-    protected showNotice(message: string, duration: number = 3000) {
+    protected showNotice(message: string, duration = 3000) {
         new Notice(message, duration);
     }
 
-    close() {
-        const overlay = this.container.querySelector('.book-smith-modal-overlay');
-        overlay?.remove();
-        this.element.remove();
-    }
-
-    remove() {
-        this.close();
-    }
+    onClose() { this.contentEl.empty(); }
+    remove() { this.close(); }
 }

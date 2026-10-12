@@ -1,3 +1,4 @@
+import type { App } from 'obsidian';
 import { BaseModal } from "./BaseModal";
 
 export class InspirationModal extends BaseModal {
@@ -33,8 +34,8 @@ export class InspirationModal extends BaseModal {
         "为你的故事设计一个令人满意的结局"
     ];
 
-    constructor(container: HTMLElement) {
-        super(container, '创作灵感');
+    constructor(app: App) {
+        super(app, '创作灵感');
     }
 
     protected createContent() {

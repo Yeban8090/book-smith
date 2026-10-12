@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal } from 'obsidian';
 import { i18n } from '../i18n/i18n';
 
@@ -14,6 +15,7 @@ export class ConfirmModal extends Modal {
     }
 
     onOpen() {
+        initializeDialog(this, 'small');
         const { contentEl, titleEl } = this;
         
         // 设置标题
@@ -38,6 +40,7 @@ export class ConfirmModal extends Modal {
             this.confirmed = true;
             this.close();
         });
+        finishDialog(this);
     }
 
     onClose() {

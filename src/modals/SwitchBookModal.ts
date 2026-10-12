@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Setting } from 'obsidian';
 import { Book } from '../types/book';
 import { i18n } from '../i18n/i18n';
@@ -15,6 +16,7 @@ export class SwitchBookModal extends Modal {
     private bookList: HTMLDivElement;
 
     onOpen() {
+        initializeDialog(this, 'large');
         const { contentEl } = this;
         contentEl.addClass('book-smith-switch-book-modal');
         contentEl.createEl('h2', { text: i18n.t('SWITCH_BOOK_TITLE') });
@@ -37,6 +39,7 @@ export class SwitchBookModal extends Modal {
         // 创建书籍列表容器
         this.bookList = contentEl.createDiv({ cls: 'book-smith-book-list' });
         this.renderBooks(this.books);
+        finishDialog(this);
     }
 
     private filterBooks(books: Book[]): Book[] {

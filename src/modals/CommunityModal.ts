@@ -1,9 +1,10 @@
+import type { App } from 'obsidian';
 import { BaseModal } from "./BaseModal";
 import { i18n } from '../i18n/i18n';
 
 export class CommunityModal extends BaseModal {
-    constructor(container: HTMLElement) {
-        super(container, i18n.t('COMMUNITY_TITLE'));
+    constructor(app: App) {
+        super(app, i18n.t('COMMUNITY_TITLE'));
     }
 
     protected createContent() {

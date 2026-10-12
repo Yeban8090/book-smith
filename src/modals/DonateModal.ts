@@ -1,3 +1,4 @@
+import type { App } from 'obsidian';
 import { BaseModal } from "./BaseModal";
 import { WechatQRCode } from '../assets/wechat-qrcode';
 import { AlipayQRCode } from '../assets/alipay-qrcode';
@@ -5,8 +6,8 @@ import { i18n } from '../i18n/i18n';
 import { kofiImage } from '../assets/kofi3';
 
 export class DonateModal extends BaseModal {
-    constructor(container: HTMLElement) {
-        super(container, i18n.t('DONATE_MODAL_TITLE'));
+    constructor(app: App) {
+        super(app, i18n.t('DONATE_MODAL_TITLE'));
     }
 
     protected createContent() {

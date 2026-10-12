@@ -1,0 +1,157 @@
+/* 插件弹框共用尺寸、标题、正文及操作区，仅作用于 Book Smith。 */
+.modal.book-smith-dialog {
+    --book-smith-dialog-width: 640px;
+    width: var(--book-smith-dialog-width);
+    max-width: 94vw;
+    max-height: 86vh;
+    padding: 24px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal.book-smith-dialog-small { --book-smith-dialog-width: 420px; }
+.modal.book-smith-dialog-large { --book-smith-dialog-width: 760px; }
+.modal.book-smith-dialog-wide { --book-smith-dialog-width: 1040px; }
+.book-smith-dialog .modal-title {
+    flex-shrink: 0;
+    margin: 0 32px 20px 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: left;
+}
+.book-smith-dialog .modal-content {
+    flex: 1 1 auto;
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 100%;
+    max-width: none;
+}
+.book-smith-dialog .book-smith-dialog-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+}
+.book-smith-dialog .book-smith-dialog-body > h3,
+.book-smith-dialog .settings-section > h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+}
+.book-smith-dialog .setting-item {
+    padding: 12px 0;
+    gap: 20px;
+    border-color: var(--background-modifier-border);
+}
+.book-smith-dialog .setting-item-info { min-width: 0; }
+.book-smith-dialog .setting-item-description {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.book-smith-dialog .setting-item-control { gap: 8px; }
+.book-smith-dialog .setting-item-control input[type="text"],
+.book-smith-dialog .setting-item-control textarea {
+    width: 100%;
+    min-width: 0;
+}
+.book-smith-dialog input[type="text"],
+.book-smith-dialog textarea,
+.book-smith-dialog select { border-radius: 6px; }
+.book-smith-dialog textarea { min-height: 96px; resize: vertical; }
+.book-smith-dialog .book-smith-dialog-actions {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+.book-smith-dialog-actions > .setting-item {
+    width: 100%;
+    padding: 0;
+    border: 0;
+}
+.book-smith-dialog-actions .setting-item-info { display: none; }
+.book-smith-dialog-actions .setting-item-control { justify-content: flex-end; }
+.book-smith-dialog .setting-item.book-smith-dialog-actions {
+    margin-top: 20px;
+    padding-top: 16px;
+}
+.book-smith-dialog .book-smith-dialog-actions button {
+    min-width: 80px;
+    height: 34px;
+    margin: 0;
+    border-radius: 6px;
+}
+.book-smith-dialog .book-smith-dialog-actions button.mod-cta {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+.book-smith-dialog .header-footer-toc-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+}
+.book-smith-dialog .controls-container,
+.book-smith-dialog .preview-container { min-width: 0; }
+.book-smith-dialog .settings-section {
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+}
+.book-smith-dialog .book-smith-manage-book-list,
+.book-smith-dialog .book-smith-book-list,
+.book-smith-dialog .book-smith-unimported-list {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+}
+.book-smith-dialog .book-selection-list { max-height: none; overflow: visible; }
+.book-smith-dialog .book-smith-create-book-modal,
+.book-smith-dialog .book-smith-template-modal { max-height: none; }
+.book-smith-dialog .book-smith-template-structure { max-height: none; overflow: visible; }
+.book-smith-dialog .book-smith-template-form { margin-bottom: 20px; }
+/* 导出弹框沿用专用两栏，但与其他弹框保持相同标题和操作区规格。 */
+.modal.book-smith-export-dialog {
+    width: 1200px;
+    max-width: 94vw;
+    height: 86vh;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 12px;
+}
+.book-smith-export-dialog .export-modal {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+.book-smith-export-dialog .export-modal-header {
+    flex-shrink: 0;
+    padding: 24px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.book-smith-export-dialog .export-modal-title { margin: 0; font-size: 20px; text-align: left; }
+.book-smith-export-dialog .export-modal-main { flex: 1; min-height: 0; height: auto; max-height: none; padding: 20px 24px; }
+.book-smith-export-dialog .export-preview-panel { margin: 0; }
+.book-smith-export-dialog .export-settings-panel { padding: 0; }
+.book-smith-export-dialog .export-modal-footer { flex-shrink: 0; padding: 16px 24px; }
+.book-smith-export-dialog .export-button-group { gap: 8px; }
+.book-smith-export-dialog .export-btn { min-width: 80px; padding: 8px 16px; border-radius: 6px; }
+.book-smith-export-dialog .export-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); }
+.book-smith-export-dialog .export-format-card,
+.book-smith-export-dialog .export-book-card,
+.book-smith-export-dialog .export-btn { transform: none; }

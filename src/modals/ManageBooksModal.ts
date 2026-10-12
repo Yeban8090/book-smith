@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Setting, Notice, TFolder } from 'obsidian';
 import { EditBookModal } from './EditBookModal';
 import { ConfirmModal } from './ConfirmModal';
@@ -20,6 +21,7 @@ export class ManageBooksModal extends Modal {
     private books: Book[] = [];
 
     async onOpen() {
+        initializeDialog(this, 'large');
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('book-smith-manage-books-modal');
@@ -55,6 +57,7 @@ export class ManageBooksModal extends Modal {
         // 加载并渲染书籍
         this.books = await this.plugin.bookManager.getAllBooks();
         this.renderBooks(this.books);
+        finishDialog(this);
     }
 
     private renderBooks(books: Book[]) {

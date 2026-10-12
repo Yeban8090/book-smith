@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Setting } from 'obsidian';
 import { i18n } from '../i18n/i18n';
 
@@ -17,6 +18,7 @@ export class NamePromptModal extends Modal {
     }
 
     onOpen() {
+        initializeDialog(this, 'small');
         const { contentEl } = this;
 
         contentEl.createEl('h2', { text: this.placeholder });
@@ -53,6 +55,7 @@ export class NamePromptModal extends Modal {
                         this.close();
                         this.onSubmit(null);
                     }));
+        finishDialog(this);
     }
 
     onClose() {

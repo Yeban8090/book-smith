@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Setting, Notice } from 'obsidian';
 import { BookBasicInfo, Book } from '../types/book';
 import BookSmithPlugin from '../main';
@@ -22,6 +23,7 @@ export class CreateBookModal extends Modal {
     }
 
     onOpen() {
+        initializeDialog(this, 'standard');
         const { contentEl } = this;
         contentEl.addClass('book-smith-create-book-modal');
         contentEl.createEl('h2', { text: i18n.t('CREATE_BOOK_TITLE') });
@@ -145,6 +147,7 @@ export class CreateBookModal extends Modal {
                         new Notice(i18n.t('CREATE_FAILED') + error.message);
                     }
                 }));
+        finishDialog(this);
     }
 
     private validateBookInfo(): boolean {

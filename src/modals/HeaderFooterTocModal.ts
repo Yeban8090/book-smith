@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { Modal, Setting } from 'obsidian';
 import BookSmithPlugin from '../main';
 
@@ -80,6 +81,7 @@ export class HeaderFooterTocModal extends Modal {
     }
 
     onOpen() {
+        initializeDialog(this, 'wide');
         const { contentEl } = this;
         contentEl.empty();
         
@@ -100,6 +102,7 @@ export class HeaderFooterTocModal extends Modal {
         
         // 创建底部按钮
         this.createButtons(contentEl);
+        finishDialog(this);
     }
 
     private createControls(container: HTMLElement) {
@@ -468,10 +471,9 @@ export class HeaderFooterTocModal extends Modal {
 
     private createButtons(container: HTMLElement) {
         const buttonContainer = container.createEl('div', { cls: 'modal-button-container' });
-        buttonContainer.style.cssText = 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;';
         
         // 取消按钮
-        const cancelButton = buttonContainer.createEl('button', { text: '取消', cls: 'mod-cta' });
+        const cancelButton = buttonContainer.createEl('button', { text: '取消' });
         cancelButton.addEventListener('click', () => this.close());
         
         // 确定按钮

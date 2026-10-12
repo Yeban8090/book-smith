@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Setting, setIcon, Menu, Notice } from 'obsidian';
 import { ChapterTree, ChapterNode } from '../types/book';
 import BookSmithPlugin from '../main';
@@ -34,6 +35,7 @@ export class TemplateEditModal extends Modal {
     }
 
     onOpen() {
+        initializeDialog(this, 'large');
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('book-smith-template-modal');
@@ -100,6 +102,7 @@ export class TemplateEditModal extends Modal {
             .addButton(btn => btn
                 .setButtonText(i18n.t('CANCEL'))
                 .onClick(() => this.close()));
+        finishDialog(this);
     }
 
     private createNodeSetting(container: HTMLElement, node: ChapterNode, index: number) {

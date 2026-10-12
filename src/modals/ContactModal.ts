@@ -1,10 +1,11 @@
+import type { App } from 'obsidian';
 import { BaseModal } from "./BaseModal";
 import { setIcon } from "obsidian";
 import { i18n } from '../i18n/i18n';
 
 export class ContactModal extends BaseModal {
-    constructor(container: HTMLElement) {
-        super(container, i18n.t('ABOUT_AUTHOR'));
+    constructor(app: App) {
+        super(app, i18n.t('ABOUT_AUTHOR'));
     }
 
     protected createContent() {
