@@ -11,7 +11,7 @@ export class FileEventManager {
 
     async handleBookModify(file: TFile | TFolder, currentBook: Book, oldPath?: string) {
         const bookPath = `${this.plugin.settings.defaultBookPath}/${currentBook.basic.title}`;
-        if (file.path.startsWith(bookPath)) {
+        if (file.path.startsWith(bookPath + '/')) {
             const updateNode = (nodes: ChapterNode[]): boolean => {
                 for (const node of nodes) {
                     if (node.type === 'file' && file instanceof TFile) {
@@ -26,7 +26,15 @@ export class FileEventManager {
                     if (node.type === 'group' && node.children) {
                         const oldNodePath = `${bookPath}/${node.path}`;
                         if (oldPath && oldNodePath === oldPath || oldNodePath === file.path) {
+                            const previousPath = node.path;
                             node.path = file.path.replace(bookPath + '/', '');
+                            const updateChildren = (children: ChapterNode[]) => {
+                                for (const child of children) {
+                                    child.path = node.path + child.path.slice(previousPath.length);
+                                    if (child.children) updateChildren(child.children);
+                                }
+                            };
+                            updateChildren(node.children);
                             node.title = file instanceof TFile ? file.basename : file.name;
                             node.last_modified = new Date().toISOString();
                             return true;
@@ -37,10 +45,9 @@ export class FileEventManager {
                 return false;
             };
             if (updateNode(currentBook.structure.tree)) {
-                await this.plugin.bookManager.updateBook(currentBook.basic.uuid, currentBook);
-                // 更新完配置后再更新统计
-                await this.plugin.statsManager.updateStatsForFile();
-                return currentBook;
+                return await this.plugin.bookManager.updateBook(currentBook.basic.uuid, {
+                    structure: currentBook.structure
+                });
             }
         }
         return null;

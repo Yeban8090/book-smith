@@ -11,7 +11,7 @@ import { PDFDocument } from 'pdf-lib';
 
 // 导出设置接口，定义了导出过程中需要的各种配置项
 export interface ExportSettings {
-    format: string;            // 导出格式（pdf、txt、docx）
+    format: string;            // 导出格式（当前仅 PDF）
     bookSize: string;          // 开本大小（A4、A5等）
     cover?: CoverSettings;     // 封面设置（可选）
     headerFooterToc?: HeaderFooterTocSettings;  // 页眉页脚和目录设置（可选）
@@ -229,6 +229,7 @@ export class ExportModal extends Modal {
 
         // 创建封面预览内部容器
         const coverContainer = this.coverPreviewElement.createDiv({ cls: 'cover-container' });
+        coverContainer.style.backgroundColor = '#ffffff';
         
         // 应用开本大小样式
         this.applyBookSizeStyles(coverContainer, this.exportSettings.bookSize || 'A4');
@@ -619,7 +620,7 @@ export class ExportModal extends Modal {
         }
     }
 
-    // 创建导出格式选择区域（PDF、TXT、DOCX）
+    // 只展示已实现的导出格式
     private createFormatSelection(container: HTMLElement) {
         const formatSection = container.createDiv({ cls: 'export-format-section' });
 
@@ -631,9 +632,7 @@ export class ExportModal extends Modal {
         const formatGrid = formatSection.createDiv({ cls: 'export-format-grid' });
 
         const formats = [
-            { key: 'pdf', label: 'PDF', icon: '📄', desc: '便携文档格式' },
-            // { key: 'txt', label: 'TXT', icon: '📝', desc: '纯文本格式' },
-            { key: 'docx', label: 'DOCX', icon: '📋', desc: 'Word文档格式' }
+            { key: 'pdf', label: 'PDF', icon: '📄', desc: '便携文档格式' }
         ];
 
         formats.forEach(format => {
@@ -721,16 +720,12 @@ export class ExportModal extends Modal {
 
         if (this.selectedFormat === 'pdf') {
             this.createPdfSettings(settingsGrid);
-        } else if (this.selectedFormat === 'html') {
-            this.createHtmlSettings(settingsGrid);
-        } else if (this.selectedFormat === 'docx') {
-            this.createDocxSettings(settingsGrid);
         }
     }
 
     // 创建通用设置（如开本大小）
     private createCommonSettings(container: HTMLElement) {
-        if (['pdf', 'docx'].includes(this.selectedFormat!)) {
+        if (this.selectedFormat === 'pdf') {
             // 开本大小设置
             const sizeCard = container.createDiv({ cls: 'export-setting-card' });
 
@@ -863,16 +858,6 @@ export class ExportModal extends Modal {
             );
             headerFooterTocModal.open();
         });
-    }
-
-    // 创建 HTML 特定设置（占位符）
-    private createHtmlSettings(container: HTMLElement) {
-        // HTML 特定设置
-    }
-
-    // 创建 DOCX 特定设置（占位符）
-    private createDocxSettings(container: HTMLElement) {
-        // DOCX 特定设置
     }
 
     // 显示保存文件对话框
@@ -1402,18 +1387,6 @@ export class ExportModal extends Modal {
             .replace('{{date}}', new Date().toLocaleDateString());
     }
 
-    // 导出为 TXT（开发中）
-    private async exportToTxt() {
-        // TXT 导出逻辑
-        new Notice('TXT 导出功能开发中...');
-    }
-
-    // 导出为 DOCX（开发中）
-    private async exportToDocx() {
-        // DOCX 导出逻辑
-        new Notice('DOCX 导出功能开发中...');
-    }
-
     // 根据选择的格式调用相应的导出方法
     private async handleExport() {
         if (!this.selectedFormat) {
@@ -1424,12 +1397,6 @@ export class ExportModal extends Modal {
         switch (this.selectedFormat) {
             case 'pdf':
                 await this.exportToPdf();
-                break;
-            case 'txt':
-                await this.exportToTxt();
-                break;
-            case 'docx':
-                await this.exportToDocx();
                 break;
             default:
                 new Notice('不支持的导出格式');

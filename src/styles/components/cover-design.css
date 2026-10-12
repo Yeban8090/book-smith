@@ -76,61 +76,175 @@
 }
 
 /* 封面设计模态框样式 */
-.book-smith-cover-modal {
-    max-width: 90vw;
+.modal.book-smith-cover-dialog {
+    width: 960px;
+    max-width: 92vw;
+    height: 760px;
+    max-height: 86vh;
+    padding: 0;
+    overflow: hidden;
 }
 
-.cover-settings-container {
+.book-smith-cover-modal {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
 }
 
-.cover-preview-area {
-    width: 100%;
-    max-width: 300px; /* 限制最大宽度 */
-    margin: 0 auto 20px auto; /* 居中显示 */
+.book-smith-cover-modal .cover-dialog-header {
+    flex-shrink: 0;
+    padding: 24px 28px 18px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.book-smith-cover-modal .cover-dialog-header h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.book-smith-cover-modal .cover-dialog-header p,
+.book-smith-cover-modal .cover-preview-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.book-smith-cover-modal .cover-settings-container {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.book-smith-cover-modal .cover-preview-area {
+    padding: 24px;
+    background: var(--background-secondary);
+    border-right: 1px solid var(--background-modifier-border);
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    gap: 20px;
+    overflow-y: auto;
 }
 
-.cover-preview {
+.book-smith-cover-modal .cover-preview-label {
+    align-self: flex-start;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.book-smith-cover-modal .cover-preview {
     width: 100%;
-    height: auto; /* 改为自动高度 */
-    border-radius: 8px;
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-radius: 4px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    /* aspect-ratio 将通过 JavaScript 动态设置 */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.cover-controls {
+.book-smith-cover-modal .cover-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
+    padding: 20px 24px;
+    min-width: 0;
+    overflow-y: auto;
 }
 
-.cover-button-container {
+.book-smith-cover-modal .cover-control-card {
+    padding: 12px 16px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    background: var(--background-primary);
+}
+
+.book-smith-cover-dialog .book-smith-cover-modal .cover-control-card .setting-item {
+    padding: 6px 0;
+    border: none;
+    margin: 0;
+    gap: 12px;
+    min-width: 0;
+}
+
+.book-smith-cover-modal .setting-item-info {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.book-smith-cover-modal .setting-item-name {
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.book-smith-cover-modal .setting-item-control {
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+}
+
+.book-smith-cover-modal input[type="text"] {
+    width: 100%;
+    min-width: 0;
+}
+
+.book-smith-cover-modal .text-style-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 20px;
+    padding-top: 6px;
+    margin-top: 8px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.book-smith-cover-dialog .book-smith-cover-modal .text-style-group .setting-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.book-smith-cover-modal .text-style-group .setting-item-name {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.book-smith-cover-modal .text-style-group .setting-item-control {
+    justify-content: flex-start;
+    min-height: 28px;
+}
+
+.book-smith-cover-modal .text-style-group input[type="range"],
+.book-smith-cover-modal .text-style-group select {
+    width: 100%;
+    min-width: 0;
+}
+
+.book-smith-cover-modal .cover-button-container {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 20px;
+    flex-shrink: 0;
+    padding: 16px 28px;
+    border-top: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
 }
 
-.cover-cancel-button,
-.cover-apply-button {
+.book-smith-cover-modal .cover-cancel-button,
+.book-smith-cover-modal .cover-apply-button {
     padding: 8px 16px;
-    border-radius: 4px;
+    min-width: 80px;
+    border-radius: 6px;
     cursor: pointer;
 }
 
-.cover-cancel-button {
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-}
-
-.cover-apply-button {
+.book-smith-cover-modal .cover-apply-button {
     background-color: var(--interactive-accent);
     color: var(--text-on-accent);
     border: none;

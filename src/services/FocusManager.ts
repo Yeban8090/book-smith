@@ -1,6 +1,7 @@
 import { MarkdownView, Notice } from 'obsidian';
 import BookSmithPlugin from '../main';
 import { i18n } from '../i18n/i18n';
+import { getLocalDateKey } from '../utils/dateUtils';
 
 export interface FocusStats {
     interruptions: number;     // 中断次数
@@ -115,7 +116,7 @@ export class FocusManager {
     }
 
     private loadTodayStats(): void {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateKey();
         const dailyStats = this.plugin.settings.focus.stats?.dailyStats[today];
         
         this.stats = dailyStats ? { ...dailyStats } : {
@@ -126,7 +127,7 @@ export class FocusManager {
     }
 
     private saveStats(): void {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalDateKey();
         if (!this.plugin.settings.focus.stats) {
             this.plugin.settings.focus.stats = { dailyStats: {} };
         }

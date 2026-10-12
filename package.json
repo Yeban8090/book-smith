@@ -1,12 +1,14 @@
 {
   "name": "book-smith",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "一个用于书籍写作管理的 Obsidian 插件",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "version": "node version-bump.mjs && git add manifest.json versions.json"
+    "version": "node version-bump.mjs",
+    "test": "node tests/run.mjs",
+    "check:release": "node scripts/check-release.mjs"
   },
   "keywords": [
     "obsidian",

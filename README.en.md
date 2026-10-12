@@ -30,7 +30,7 @@ Book Smith is a writing management plugin designed for Obsidian, helping authors
 - 📊 Writing Statistics
   - Real-time word count
   - Writing progress tracking
-  - Daily writing volume statistics
+  - Positive word-count changes on manuscript saves, grouped by local date; deletions do not subtract from the daily total
   - Goal completion analysis
 - 🎯 Focus Writing
   - Pomodoro technique
@@ -42,7 +42,7 @@ Book Smith is a writing management plugin designed for Obsidian, helping authors
   - Automatic numbering system
   - Bibliography generation
   - Reference search
-- 📤 Export: Support multiple formats
+- 📤 Export: Desktop PDF preview and export with customizable cover, headers, footers, and table of contents
 
 ## Usage
 
@@ -106,16 +106,16 @@ Book Smith is a writing management plugin designed for Obsidian, helping authors
 - Regularly backup your book data
 - Use statistics to set daily writing goals
 - Use reference features to manage research materials
-- Try different export formats for various publishing needs
+- Preview the PDF layout and adjust the cover, headers, footers, and table of contents before exporting
 - Use drag-and-drop to organize chapter structure
 - Use chapter status markers to track progress
 - Improve writing efficiency with focus mode
 
-## Cross-platform Support
-- Full desktop support
-- Optimized mobile experience
-- Automatic data synchronization
-- Consistent user experience
+## Platform Support
+- This version supports desktop Obsidian only; PDF preview and export require Electron
+- Books and chapters are stored in your vault; cross-device synchronization depends on your vault sync setup
+- Creating, copying, deleting, excluding, or restoring chapters recalculates totals without counting those operations as daily writing
+- Rewrites with the same word count do not count as additions; historical date keys and net-change records are preserved
 
 ## Supported Languages
 The plugin interface currently supports:

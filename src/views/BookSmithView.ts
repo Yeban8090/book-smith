@@ -9,6 +9,7 @@ import { ChapterTree } from '../components/ChapterTree';
 import { FileEventManager } from '../services/FileEventManager';
 import { ReferenceManager } from '../services/ReferenceManager';
 import { i18n } from '../i18n/i18n';
+import { getLocalDateKey } from '../utils/dateUtils';
 
 // === 视图类定义 ===
 export class BookSmithView extends ItemView {
@@ -16,7 +17,6 @@ export class BookSmithView extends ItemView {
     private currentBook: Book | null = null;
     private fileEventManager: FileEventManager;
     private referenceManager: ReferenceManager;
-    private isRenamingFile: boolean = false;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -33,7 +33,7 @@ export class BookSmithView extends ItemView {
         this.registerFileEvents();
         this.referenceManager.registerEditorMenu();  // 注册右键菜单
         // 注册统计变化监听
-        this.registerEvent(
+        this.register(
             this.plugin.statsManager.onStatsChange(() => {
                 this.renderStats(this.containerEl.children[1] as HTMLElement);
             })
@@ -53,35 +53,15 @@ export class BookSmithView extends ItemView {
 
     // === 文件事件监听 ===
     private registerFileEvents() {        
-        // 监听文件内容修改
-        this.registerEvent(
-            this.app.vault.on('modify', async (file: TAbstractFile) => {
-                if (this.isRenamingFile) return; // 避免重命名时触发
-                if (file instanceof TFile && this.currentBook) {
-                    // 跳过配置文件的监听
-                    if (file.path.endsWith('book-config.json')) return;
-                    const bookPath = `${this.plugin.settings.defaultBookPath}/${this.currentBook.basic.title}`;
-                    if (file.path.startsWith(bookPath)) {
-                        const result = await this.fileEventManager.handleBookModify(file, this.currentBook);
-                        if (result) {
-                            await this.refreshView();
-                        }
-                    }
-                }
-            })
-        );
-
         // 监听文件或文件夹重命名
         this.registerEvent(
             this.app.vault.on('rename', async (file: TAbstractFile, oldPath: string) => {
-                this.isRenamingFile = true;
                 if ((file instanceof TFile || file instanceof TFolder) && this.currentBook) {
                     const updatedBook = await this.fileEventManager.handleBookModify(file, this.currentBook, oldPath);
                     if (updatedBook) {
                         await this.refreshView();
                     }
                 }
-                this.isRenamingFile = false;
             })
         );
     }
@@ -91,6 +71,9 @@ export class BookSmithView extends ItemView {
         const bookId = this.plugin.settings.lastBookId;
         if (bookId) {
             this.currentBook = await this.plugin.bookManager.getBookById(bookId);
+            if (this.currentBook) {
+                this.currentBook = await this.plugin.bookManager.updateBook(bookId, {});
+            }
             this.plugin.statsManager.setCurrentBook(this.currentBook);
         } else {
             this.currentBook = null;
@@ -271,18 +254,19 @@ export class BookSmithView extends ItemView {
     }
 
     private renderStats(container: HTMLElement) {
+        container.querySelector('.book-smith-stats')?.remove();
         const statsContainer = container.createDiv({ cls: 'book-smith-stats' });
         if (!this.currentBook) return;
 
         // 当日字数
-        const today = new Date().toISOString().split('T')[0];  // 获取今天的日期 (YYYY-MM-DD)
+        const today = getLocalDateKey();
         const todayWords = statsContainer.createDiv({ cls: 'book-smith-stat-item' });
         const todayWordsLabel = todayWords.createSpan();
         setIcon(todayWordsLabel, 'pencil');
         todayWordsLabel.appendChild(createSpan({ text: ` ${i18n.t('TODAY_WORDS')}` }));
         todayWords.createEl('span', {
             cls: 'book-smith-stat-value',
-            text: `${this.currentBook.stats.daily_words[today] || 0}${i18n.t('WORD_UNIT')}`
+            text: `${Math.max(0, this.currentBook.stats.daily_words[today] || 0)}${i18n.t('WORD_UNIT')}`
         });
 
         // 总字数统计

@@ -1,4 +1,4 @@
-import { Plugin, Notice } from 'obsidian';
+import { Plugin, TFile } from 'obsidian';
 import { BookSmithView } from './views/BookSmithView';
 import { ToolView } from './views/ToolsView';
 import { BookSmithSettingTab } from './settings/SettingTab';
@@ -8,15 +8,12 @@ import { BookManager } from './services/BookManager';
 import { TemplateManager } from './services/TemplateManager';
 import { BookStatsManager } from './services/BookStatsManager';
 import { i18n } from './i18n/i18n';
-import { ImgTemplateManager } from './services/ImgTemplateManager';
-import { ThemeManager } from './services/ThemeManager';
+import { getIncludedChapters } from './utils/bookStats';
 
 export default class BookSmithPlugin extends Plugin {
     settings: BookSmithSettings;
     bookManager: BookManager;
     templateManager: TemplateManager;
-    imgTemplateManager: ImgTemplateManager;
-    themeManager: ThemeManager;
     statsManager: BookStatsManager;
 
     async onload() {
@@ -24,6 +21,18 @@ export default class BookSmithPlugin extends Plugin {
         // 初始化所有管理器
         this.bookManager = new BookManager(this.app, this.settings);
         this.statsManager = new BookStatsManager(this.app, this, this.bookManager);
+
+        // 升级旧书籍时先建立章节基线，已有内容不计入当天写作量。
+        for (const book of await this.bookManager.getAllBooks()) {
+            await this.bookManager.updateBook(book.basic.uuid, {});
+        }
+        this.register(this.bookManager.onBookSaved(book => this.statsManager.notifyBookSaved(book)));
+        this.registerEvent(this.app.vault.on('modify', file => {
+            if (file instanceof TFile && file.extension === 'md' &&
+                file.path.startsWith(`${this.settings.defaultBookPath}/`)) {
+                void this.updateWritingStats(file.path).catch(error => console.error('Failed to update writing statistics:', error));
+            }
+        }));
 
         // 注册视图
         this.registerView(
@@ -68,16 +77,23 @@ export default class BookSmithPlugin extends Plugin {
         });
     }
 
+    private async updateWritingStats(filePath: string) {
+        const books = await this.bookManager.getAllBooks();
+        const book = books.find(candidate => filePath.startsWith(`${this.settings.defaultBookPath}/${candidate.basic.title}/`));
+        if (!book) return;
+        const bookPath = `${this.settings.defaultBookPath}/${book.basic.title}/`;
+        if (getIncludedChapters(book.structure.tree).some(chapter => bookPath + chapter.path === filePath)) {
+            await this.bookManager.updateBook(book.basic.uuid, {}, filePath);
+        }
+    }
+
     onunload() {
         // 卸载插件时的清理工作
     }
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-        this.bookManager = new BookManager(this.app, this.settings);
         this.templateManager = new TemplateManager(this.settings);
-        this.themeManager = new ThemeManager(this.app, this.settings);
-        this.imgTemplateManager = new ImgTemplateManager(this.app, this.themeManager);
     }
 
     async saveSettings() {
