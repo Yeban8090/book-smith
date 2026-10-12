@@ -1,13 +1,14 @@
-import { Notice, App, Modal } from "obsidian";
+import { Notice, App, Modal, Platform } from "obsidian";
 import { BookRenderService, RenderConfig } from "../services/BookRenderService";
 import { Book, CoverSettings } from "../types/book";
 import { HeaderFooterTocModal, HeaderFooterTocSettings } from "./HeaderFooterTocModal";
 import { CoverSettingModal } from "./CoverSettingModal";
+import { ConfirmModal } from './ConfirmModal';
 import BookSmithPlugin from "../main";
-import * as fs from "fs/promises";
-import * as electron from "electron";
+import type * as electron from "electron";
 import { CoverManager } from "src/services/CoverManager";
 import { PDFDocument } from 'pdf-lib';
+import { escapeHtml, matchHeadingPages, readOutlinePages } from '../utils/pdfExport';
 
 // 导出设置接口，定义了导出过程中需要的各种配置项
 export interface ExportSettings {
@@ -31,6 +32,7 @@ export class ExportModal extends Modal {
 
     // 状态标志
     private isRendering: boolean = false;
+    private isExporting = false;
     private abortController: AbortController | null = null;
     private webview: electron.WebviewTag | null = null;
     private webviewReady: boolean = false;
@@ -98,13 +100,17 @@ export class ExportModal extends Modal {
 
     // 模态框打开时初始化 UI
     onOpen() {
+        if (!Platform.isDesktop) {
+            new Notice('PDF 排版与导出仅支持桌面端，请在电脑上打开书籍导出。');
+            this.close();
+            return;
+        }
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('export-modal');
+        this.modalEl.addClass('book-smith-export-dialog');
 
         // 调整模态框尺寸
-        this.containerEl.style.setProperty('--dialog-width', '50vw');
-        this.containerEl.style.setProperty('--dialog-height', '70vh');
 
         this.createHeader();
         this.createMainContent();
@@ -193,6 +199,8 @@ export class ExportModal extends Modal {
         // 创建标题和按钮的容器，使用 flex 布局
         const headerContent = previewHeader.createDiv({ cls: 'preview-header-content' });
         headerContent.createEl('h3', { text: 'PDF导出预览', cls: 'preview-title' });
+        headerContent.createEl('button', { text: '刷新预览', cls: 'preview-render-btn' })
+            .addEventListener('click', () => { if (!this.isExporting) void this.startRenderPreview(); });
         // 创建一个包含封面和内容的滚动容器
         const scrollContainer = this.previewContainer.createDiv({ cls: 'preview-scroll-container' });
 
@@ -347,7 +355,7 @@ export class ExportModal extends Modal {
                 const error = previewContent.createDiv({ cls: 'preview-error' });
                 error.innerHTML = `
                     <div class="preview-error-icon">❌</div>
-                    <div class="preview-error-text">${errorMessage || '渲染失败，请重试'}</div>
+                    <div class="preview-error-text">${escapeHtml(errorMessage || '渲染失败，请重试')}</div>
                     <button class="preview-retry-btn">重新渲染</button>
                 `;
 
@@ -385,6 +393,7 @@ export class ExportModal extends Modal {
 
     // 开始渲染预览，这是渲染预览的核心方法
     private async startRenderPreview() {
+        if (this.isExporting) return;
         if (this.isRendering) {
             new Notice('渲染进行中，请稍候...');
             return;
@@ -396,11 +405,8 @@ export class ExportModal extends Modal {
         this.cleanupWebview();
 
         // 显示加载状态
+        if (!this.previewContainer.querySelector('.preview-content')) this.createPreviewArea();
         const previewContent = this.previewContainer.querySelector('.preview-content') as HTMLElement;
-        if (!previewContent) {
-            this.createPreviewArea(); // 确保预览区域已创建
-        }
-
         previewContent.empty();
 
         // 添加加载指示器
@@ -419,13 +425,18 @@ export class ExportModal extends Modal {
         this.updateFormatButtonsState();
 
         // 创建中止控制器
-        this.abortController = new AbortController();
+        const controller = new AbortController();
+        this.abortController = controller;
 
         try {
+            const latestBook = await this.plugin.bookManager.getBookById(this.selectedBook.basic.uuid);
+            if (controller.signal.aborted || this.abortController !== controller) return;
+            if (!latestBook) throw new Error('书籍已不存在，请重新选择书籍。');
+            this.selectedBook = latestBook;
             // 创建 webview 并立即添加到 DOM（但设为隐藏）
             this.webview = this.createWebview();
+            const renderingWebview = this.webview;
             this.webview.style.opacity = '0';
-            previewContent.appendChild(this.webview);
 
             // 渲染配置
             const renderConfig: RenderConfig = {
@@ -437,22 +448,26 @@ export class ExportModal extends Modal {
                 headerFooterToc: this.exportSettings.headerFooterToc,
                 showCover: this.exportSettings.showCover,
                 coverSettings: this.exportSettings.cover,
-                abortSignal: this.abortController?.signal,
+                abortSignal: controller.signal,
                 onProgress: (current: number, total: number, fileName: string) => {
-                    this.updateRenderProgress(current, total, fileName);
+                    if (this.abortController === controller) this.updateRenderProgress(current, total, fileName);
                 }
             };
 
             // 执行渲染 - 现在 webview 已在 DOM 中，dom-ready 事件会正常触发
-            await this.bookRenderService.renderToWebview(
-                this.webview,
+            this.bookRenderService = new BookRenderService(this.app);
+            const rendering = this.bookRenderService.renderToWebview(
+                renderingWebview,
                 this.selectedBook,
                 this.plugin.settings.defaultBookPath,
                 renderConfig
             );
+            previewContent.appendChild(renderingWebview);
+            await rendering;
+            if (controller.signal.aborted || this.webview !== renderingWebview) return;
 
             // 渲染成功
-            if (!this.abortController.signal.aborted) {
+            if (!controller.signal.aborted) {
                 this.webviewReady = true;
 
                 // 移除加载指示器并显示 webview
@@ -475,7 +490,7 @@ export class ExportModal extends Modal {
             }
 
         } catch (error) {
-            if (this.abortController?.signal.aborted || error.message === 'Render aborted') {
+            if (controller.signal.aborted || this.abortController !== controller || error.message === 'Render aborted') {
                 console.log('Rendering was aborted');
                 return;
             }
@@ -489,7 +504,7 @@ export class ExportModal extends Modal {
                 const errorEl = previewContent.createDiv({ cls: 'preview-error' });
                 errorEl.innerHTML = `
                     <div class="preview-error-icon">❌</div>
-                    <div class="preview-error-text">${error.message || '渲染失败，请重试'}</div>
+                    <div class="preview-error-text">${escapeHtml(error.message || '渲染失败，请重试')}</div>
                     <button class="preview-retry-btn">重新渲染</button>
                 `;
 
@@ -502,13 +517,11 @@ export class ExportModal extends Modal {
                 new Notice('渲染失败，请检查控制台错误信息');
             }
         } finally {
-            if (!this.abortController?.signal.aborted) {
+            if (this.abortController === controller && !controller.signal.aborted) {
                 this.isRendering = false;
                 this.updateFormatButtonsState();
 
-                setTimeout(() => {
-                    this.updateExportButtonState();
-                }, 100);
+                this.updateExportButtonState();
             }
         }
     }
@@ -553,8 +566,8 @@ export class ExportModal extends Modal {
                 canExport = !!this.selectedFormat && !this.isRendering;
             }
 
-            this.exportBtn.disabled = !canExport;
-            this.exportBtn.textContent = this.isRendering ? '渲染中...' : '导出';
+            this.exportBtn.disabled = !canExport || this.isExporting;
+            this.exportBtn.textContent = this.isExporting ? '导出中...' : this.isRendering ? '渲染中...' : '导出';
         }
     }
 
@@ -749,6 +762,7 @@ export class ExportModal extends Modal {
 
             sizeSelect.addEventListener('change', () => {
                 this.exportSettings.bookSize = sizeSelect.value;
+                this.exportSettings.coverImageData = undefined;
                 
                 // 更新封面预览
                 if (this.exportSettings.showCover && this.webviewReady) {
@@ -810,6 +824,7 @@ export class ExportModal extends Modal {
                     // 保存封面设置
                     this.exportSettings.cover = settings;
 
+                    this.exportSettings.coverImageData = undefined;
                     // 更新封面预览
                     this.updateCoverPreview();
                 },
@@ -854,6 +869,7 @@ export class ExportModal extends Modal {
                     // 更新渲染设置
                     this.renderSettings.displayHeader = settings.headerEnabled;
                     this.renderSettings.displayFooter = settings.footerEnabled;
+                    void this.startRenderPreview();
                 }
             );
             headerFooterTocModal.open();
@@ -863,6 +879,7 @@ export class ExportModal extends Modal {
     // 显示保存文件对话框
     private async getOutputFile(filename: string): Promise<string | undefined> {
         try {
+            const electron = require('electron') as typeof import('electron');
             // @ts-ignore
             const result = await electron.remote.dialog.showSaveDialog({
                 title: '导出 PDF',
@@ -887,12 +904,19 @@ export class ExportModal extends Modal {
 
     // 导出为 PDF
     private async exportToPdf() {
+        if (!Platform.isDesktop) return;
+        if (this.isExporting) return;
         if (!this.webview || !this.webviewReady) {
             new Notice('PDF 预览未准备就绪，请稍候');
             return;
         }
 
+        this.isExporting = true;
+        this.updateExportButtonState();
+        this.contentEl.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>('input, select, button')
+            .forEach(control => control.disabled = true);
         try {
+            await this.assertPreviewCurrent();
             const filename = this.selectedBook.basic.title || 'exported-book';
             const outputFile = await this.getOutputFile(filename);
 
@@ -919,36 +943,35 @@ export class ExportModal extends Modal {
                 <div style="font-size: ${this.exportSettings.headerFooterToc.footerFontSize || 15}px; color: ${this.exportSettings.headerFooterToc.footerColor || '#000000'}; width: 100%; display: flex; justify-content: space-between; padding: 10px 50px;  box-sizing: border-box; border-top: 1px solid #ddd;">
                 <span style="flex: 1; text-align: left;">${this.processVariables(this.exportSettings.headerFooterToc.footerLeft || '')}</span>
                 <span style="flex: 1; text-align: center;">${this.processVariables(this.exportSettings.headerFooterToc.footerCenter || '')}</span>
-                <span style="flex: 1; text-align: right;">${this.processVariables(this.exportSettings.headerFooterToc.footerRight || '').replace('{{pageNumber}}', '<span class="pageNumber"></span>').replace('{{totalPages}}', '<span class="totalPages"></span>')}</span>
+                    <span style="flex: 1; text-align: right;">${this.processVariables(this.exportSettings.headerFooterToc.footerRight || '')}</span>
                 </div>
             `;
-            }
-
-            // 更新目录页码
-            if (this.exportSettings.headerFooterToc?.tocEnabled) {
-                await this.updateTocPageNumbers();
             }
 
             // PDF 导出选项
             const printOptions: electron.PrintToPDFOptions = {
                 pageSize: this.exportSettings.bookSize as any || 'A4',
-                printBackground: false,
+                printBackground: true,
                 landscape: false,
                 scale: this.renderSettings.scale / 100,
                 margins: {
                     top: 1,      // 加大页眉区域空间
                     bottom: 1,
                     left: 0.6,
-                    right: 0
+                    right: 0.6
                 },
-                displayHeaderFooter: this.renderSettings.displayHeader || this.renderSettings.displayFooter,
+                displayHeaderFooter: !!((this.renderSettings.displayHeader && this.exportSettings.headerFooterToc?.headerEnabled) ||
+                    (this.renderSettings.displayFooter && this.exportSettings.headerFooterToc?.footerEnabled)),
                 headerTemplate: headerTemplate,
                 footerTemplate: footerTemplate,
                 generateDocumentOutline: true
             };
 
-            // 使用 webview 生成 PDF
-            const pdfBuffer = await this.webview.printToPDF(printOptions);
+            // 字体、图片完成后才打印；目录使用同一组打印参数做两次分页核对。
+            await this.waitForPrintResources();
+            const pdfBuffer = this.exportSettings.headerFooterToc?.tocEnabled
+                ? await this.printWithToc(printOptions)
+                : await this.webview.printToPDF(printOptions);
 
             // 如果启用了封面，生成并合并封面
             let finalPdfBuffer: Buffer | Uint8Array = pdfBuffer;
@@ -956,90 +979,102 @@ export class ExportModal extends Modal {
                 // 直接使用预览区域的封面元素
                 const coverContainer = this.coverPreviewElement.querySelector('.cover-container');
                 if (!coverContainer) {
-                    console.warn('未找到封面容器元素');
-                    return null;
+                    throw new Error('未找到封面预览，请重新渲染后导出。');
                 }
                 const coverImageData = await this.convertCoverToImage(coverContainer as HTMLElement);
-                if (coverImageData) {
-                    // 将封面图片数据保存到导出设置中
-                    this.exportSettings.coverImageData = coverImageData;
-                    // 合并封面
-                    finalPdfBuffer = Buffer.from(await this.generateAndMergeCover(Buffer.from(pdfBuffer)));
-                } else {
-                    // 如果无法从预览区域获取封面图片，使用原有方法
-                    finalPdfBuffer = await this.generateAndMergeCover(Buffer.from(pdfBuffer));
-                }
+                if (!coverImageData) throw new Error('封面图片生成失败，请检查背景资源后重试。');
+                this.exportSettings.coverImageData = coverImageData;
+                finalPdfBuffer = await this.generateAndMergeCover(Buffer.from(pdfBuffer));
             } else if (this.exportSettings.showCover && this.exportSettings.cover) {
                 finalPdfBuffer = await this.generateAndMergeCover(Buffer.from(pdfBuffer));
             }
 
             // 保存文件
+            if (!this.webview) throw new Error('导出窗口已关闭，本次导出已取消。');
+            await this.assertPreviewCurrent();
+            const result = await PDFDocument.load(finalPdfBuffer);
+            if (result.getPageCount() === 0) throw new Error('生成的 PDF 没有页面。');
+            const fs = require('fs/promises') as typeof import('fs/promises');
             await fs.writeFile(outputFile, finalPdfBuffer);
 
             new Notice('PDF 导出成功！');
 
             // 询问是否打开文件
-            const shouldOpen = confirm('PDF 导出成功！是否打开文件？');
-            if (shouldOpen) {
+            new ConfirmModal(this.app, 'PDF 导出成功', '是否打开导出的 PDF 文件？', () => {
+                const electron = require('electron') as typeof import('electron');
                 // @ts-ignore
                 electron.remote.shell.openPath(outputFile);
-            }
+            }).open();
 
             this.close();
         } catch (error) {
             console.error('PDF export failed:', error);
             new Notice('PDF 导出失败: ' + error.message);
+        } finally {
+            this.isExporting = false;
+            this.contentEl.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>('input, select, button')
+                .forEach(control => control.disabled = false);
+            this.updateExportButtonState();
         }
     }
 
-    /**
-     * 更新目录页码
-     */
-    private async updateTocPageNumbers(): Promise<void> {
-        try {
-            // 注入脚本计算每个标题的页码
-            const script = `
-                (function() {
-                     // 创建一个映射，存储每个标题ID对应的页码
-                    const headingPageMap = {};
-                    
-                    // 获取所有标题元素
-                    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-                    
-                    // 计算每个标题所在的页码
-                    headings.forEach(heading => {
-                        if (!heading.id) return;
-                        
-                        // 获取元素的位置信息
-                        const rect = heading.getBoundingClientRect();
-                        
-                        // 计算页码（基于A4纸张和默认边距）
-                        // 这里的计算是近似的，实际页码可能会有差异
-                        const pageHeight = 1122; // A4纸张高度（点）
-                        const pageNumber = Math.floor(rect.top / pageHeight) + 1;
-                        
-                        headingPageMap[heading.id] = pageNumber;
-                    });
-                    
-                    // 更新目录中的页码
-                    const tocPageElements = document.querySelectorAll('.toc-page');
-                    tocPageElements.forEach(pageEl => {
-                        const headingId = pageEl.getAttribute('data-heading-id');
-                        if (headingId && headingPageMap[headingId]) {
-                            pageEl.textContent = headingPageMap[headingId];
-                        }
-                    });
-                    
-                    return true;
-                })();
-            `;
-
-            if (this.webview) {
-                await this.webview.executeJavaScript(script);
-            }
-        } catch (error) {
-            console.error('Failed to update TOC page numbers:', error);
+    private async assertPreviewCurrent() {
+        this.bookRenderService.assertSourceUnchanged();
+        const current = await this.plugin.bookManager.getBookById(this.selectedBook.basic.uuid);
+        if (!current || JSON.stringify(current.structure) !== JSON.stringify(this.selectedBook.structure) ||
+            JSON.stringify(current.basic) !== JSON.stringify(this.selectedBook.basic)) {
+            throw new Error('书籍信息或章节结构已变化，请刷新预览后导出。');
         }
+    }
+
+    private async waitForPrintResources(): Promise<void> {
+        if (!this.webview) throw new Error('预览已关闭');
+        await this.webview.executeJavaScript(`(async () => {
+            const ready = async () => {
+                await document.fonts.ready;
+                await Promise.all(Array.from(document.images).map(async image => {
+                    image.loading = 'eager';
+                    try { await image.decode(); }
+                    catch { throw new Error('图片加载失败：' + image.src); }
+                }));
+            };
+            let timer;
+            try {
+                await Promise.race([ready(), new Promise((_, reject) => {
+                    timer = setTimeout(() => reject(new Error('字体或图片加载超时，请检查资源后重试。')), 30000);
+                })]);
+            } finally { clearTimeout(timer); }
+        })()`);
+    }
+
+    private async printWithToc(options: electron.PrintToPDFOptions): Promise<Uint8Array> {
+        const webview = this.webview;
+        if (!webview) throw new Error('预览已关闭');
+        const headings: Array<{ id: string; text: string }> = await webview.executeJavaScript(`
+            Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+                .filter(el => !el.closest('.table-of-contents') && getComputedStyle(el).display !== 'none')
+                .map(el => ({ id: el.id, text: el.textContent.trim() }))
+        `);
+        const tocIds: string[] = await webview.executeJavaScript(`
+            Array.from(document.querySelectorAll('.toc-page')).map(el => el.dataset.headingId)
+        `);
+        if (tocIds.length === 0) return webview.printToPDF(options);
+        let pdf = await webview.printToPDF(options);
+        let previous: Record<string, number> | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const mapping = matchHeadingPages(headings, await readOutlinePages(pdf));
+            if (previous && tocIds.every(id => mapping[id] === previous![id])) return pdf;
+            previous = mapping;
+            await webview.executeJavaScript(`(() => {
+                const mapping = JSON.parse(${JSON.stringify(JSON.stringify(mapping))});
+                document.querySelectorAll('.toc-page').forEach(el => {
+                    if (!mapping[el.dataset.headingId]) throw new Error('目录目标不存在');
+                    el.textContent = String(mapping[el.dataset.headingId]);
+                });
+            })()`);
+            pdf = await webview.printToPDF(options);
+        }
+        throw new Error('目录分页未稳定，请关闭目录后重试。');
     }
 
     /**
@@ -1085,49 +1120,30 @@ export class ExportModal extends Modal {
                 // 加载内容PDF
                 const contentPdfDoc = await PDFDocument.load(contentPdfBuffer);
 
-                // 创建最终的PDF文档
-                const finalPdfDoc = await PDFDocument.create();
-
-                // 复制封面页到最终文档
-                const [coverPageCopy] = await finalPdfDoc.copyPages(coverPdfDoc, [0]);
-                finalPdfDoc.addPage(coverPageCopy);
-
-                // 复制内容页到最终文档
-                const contentPages = await finalPdfDoc.copyPages(
-                    contentPdfDoc,
-                    contentPdfDoc.getPageIndices()
-                );
-                contentPages.forEach(page => finalPdfDoc.addPage(page));
-
-                // 保存最终文档
-                return Buffer.from(await finalPdfDoc.save());
+                // 插入封面时保留正文原始对象及大纲/目录链接目标。
+                const [coverPageCopy] = await contentPdfDoc.copyPages(coverPdfDoc, [0]);
+                contentPdfDoc.insertPage(0, coverPageCopy);
+                return Buffer.from(await contentPdfDoc.save());
             } else {
-                // 如果没有封面图片数据，使用原有方法生成封面
-                // 创建一个临时的HTML元素来生成封面
+                // 没有预览图时在明确尺寸的临时容器内生成封面。
                 const coverContainer = document.createElement('div');
                 coverContainer.style.position = 'fixed';
                 coverContainer.style.top = '-9999px';
                 coverContainer.style.left = '-9999px';
-                document.body.appendChild(coverContainer);
-
-                // 使用generateCoverHTML方法生成封面HTML
-                if (this.exportSettings.cover) {
+                coverContainer.style.width = '794px';
+                this.contentEl.ownerDocument.body.appendChild(coverContainer);
+                let coverImageData: string | null;
+                try {
+                    if (!this.exportSettings.cover) throw new Error('缺少封面设置。');
                     const coverHTML = this.generateCoverHTML(this.exportSettings.cover, this.selectedBook);
                     coverContainer.innerHTML = coverHTML;
+                    coverImageData = await this.convertCoverToImage(coverContainer.firstElementChild as HTMLElement);
+                } finally {
+                    coverContainer.remove();
                 }
 
-                // 等待图片加载完成
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // 将封面转换为图片
-                let coverImageData = await this.convertCoverToImage(coverContainer);
-
-                // 清理临时元素
-                document.body.removeChild(coverContainer);
-
-                // 如果无法生成封面图片，使用简单的文本封面
                 if (!coverImageData) {
-                    return this.createSimpleCoverAndMerge(contentPdfBuffer);
+                    throw new Error('封面生成失败，请检查图片资源或关闭封面后重试。');
                 }
 
                 // 保存封面图片数据
@@ -1138,8 +1154,7 @@ export class ExportModal extends Modal {
             }
         } catch (error) {
             console.error('Failed to generate and merge cover:', error);
-            // 如果封面生成失败，返回原始内容PDF
-            return contentPdfBuffer;
+            throw new Error('封面生成失败：' + error.message);
         }
     }
 
@@ -1156,7 +1171,8 @@ export class ExportModal extends Modal {
         tempContainer.style.pageBreakAfter = 'always';
         tempContainer.style.breakAfter = 'page';
         // 设置开本大小样式
-        this.applyBookSizeStyles(tempContainer, settings.bookSize || this.exportSettings.bookSize || 'A4');
+        tempContainer.style.backgroundColor = '#ffffff';
+        this.applyBookSizeStyles(tempContainer, this.exportSettings.bookSize || 'A4');
 
         // 设置背景图片
         if (settings.imageUrl) {
@@ -1211,7 +1227,7 @@ export class ExportModal extends Modal {
             if (settings.subtitleStyleConfig) {
                 subtitleStyle = this.buildStyleString(settings.subtitleStyleConfig);
             } else {
-                subtitleStyle = 'font-size: 18px; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);';
+                subtitleStyle = 'font-size: 18px; color: #333333;';
             }
             subtitleEl.setAttribute('style', subtitleStyle + `position: absolute; left: ${settings.subtitlePosition?.x || 50}%; top: ${settings.subtitlePosition?.y || 50}%; transform: translate(-50%, -50%); z-index: 10;`);
             contentContainer.appendChild(subtitleEl);
@@ -1267,9 +1283,33 @@ export class ExportModal extends Modal {
      * 将封面HTML转换为图片
      */
     private async convertCoverToImage(coverElement: HTMLElement): Promise<string | null> {
+        const originalBackground = coverElement.style.backgroundImage;
         try {
-            // 确保浏览器完成重绘并等待资源加载
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await coverElement.ownerDocument.fonts.ready;
+            // 先读取并校验背景；html-to-image 会吞掉背景资源下载错误。
+            const backgroundUrl = this.exportSettings.cover?.imageUrl;
+            if (backgroundUrl) {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 30000);
+                let blob: Blob;
+                try {
+                    const response = await fetch(backgroundUrl, { signal: controller.signal });
+                    if (!response.ok) throw new Error('封面背景图片加载失败。');
+                    blob = await response.blob();
+                } finally {
+                    clearTimeout(timeout);
+                }
+                const backgroundData = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = () => reject(new Error('封面背景图片读取失败。'));
+                    reader.readAsDataURL(blob);
+                });
+                const image = coverElement.ownerDocument.createElement('img');
+                image.src = backgroundData;
+                await image.decode();
+                coverElement.style.backgroundImage = `url("${backgroundData}")`;
+            }
 
             // 导入 html-to-image 库
             const htmlToImage = require('html-to-image');
@@ -1278,7 +1318,7 @@ export class ExportModal extends Modal {
             const exportConfig = {
                 quality: 1,
                 pixelRatio: 2, // 提高分辨率
-                backgroundColor: '#333333', // 默认背景色
+                backgroundColor: '#ffffff', // 默认背景色
                 style: {
                     transform: 'scale(1)',
                     transformOrigin: 'top left'
@@ -1299,92 +1339,21 @@ export class ExportModal extends Modal {
         } catch (error) {
             console.error('封面转图片失败:', error);
             return null;
+        } finally {
+            coverElement.style.backgroundImage = originalBackground;
         }
-    }
-
-    /**
-     * 创建简单的文本封面并合并
-     */
-    private async createSimpleCoverAndMerge(contentPdfBuffer: Buffer): Promise<Buffer> {
-        // 创建一个新的PDF文档作为封面
-        const coverPdfDoc = await PDFDocument.create();
-
-        // 根据选择的开本大小设置页面尺寸
-        const pageSizes = {
-            'A4': [595.28, 841.89],
-            'A5': [419.53, 595.28],
-            'A3': [841.89, 1190.55],
-            'Letter': [612, 792],
-            'Legal': [612, 1008],
-            'Tabloid': [792, 1224]
-        };
-
-        const pageSize = pageSizes[this.exportSettings.bookSize as keyof typeof pageSizes] || pageSizes['A4'];
-        const coverPage = coverPdfDoc.addPage([pageSize[0], pageSize[1]]);
-
-        // 如果没有封面图片，创建一个简单的文本封面
-        const { rgb } = require('pdf-lib');
-
-        // 添加标题
-        coverPage.drawText(this.selectedBook.basic.title || 'Book Title', {
-            x: 50,
-            y: coverPage.getHeight() - 150,
-            size: 24,
-            color: rgb(0, 0, 0)
-        });
-
-        // 添加副标题（如果有）
-        if (this.selectedBook.basic.subtitle) {
-            coverPage.drawText(this.selectedBook.basic.subtitle, {
-                x: 50,
-                y: coverPage.getHeight() - 200,
-                size: 18,
-                color: rgb(0.3, 0.3, 0.3)
-            });
-        }
-
-        // 添加作者（如果有）
-        if (this.selectedBook.basic.author && this.selectedBook.basic.author.length > 0) {
-            coverPage.drawText(this.selectedBook.basic.author.join(', '), {
-                x: 50,
-                y: coverPage.getHeight() - 250,
-                size: 16,
-                color: rgb(0.5, 0.5, 0.5)
-            });
-        }
-
-        // 将封面保存为Buffer
-        const coverPdfBytes = await coverPdfDoc.save();
-
-        // 加载内容PDF
-        const contentPdfDoc = await PDFDocument.load(contentPdfBuffer);
-
-        // 创建最终的PDF文档
-        const finalPdfDoc = await PDFDocument.create();
-
-        // 复制封面页到最终文档
-        const [coverPageCopy] = await finalPdfDoc.copyPages(coverPdfDoc, [0]);
-        finalPdfDoc.addPage(coverPageCopy);
-
-        // 复制内容页到最终文档
-        const contentPages = await finalPdfDoc.copyPages(
-            contentPdfDoc,
-            contentPdfDoc.getPageIndices()
-        );
-        contentPages.forEach(page => finalPdfDoc.addPage(page));
-
-        // 保存最终文档
-        return Buffer.from(await finalPdfDoc.save());
     }
 
     // 处理页眉页脚模板中的变量（如 {{title}}、{{author}}、{{date}}）
     private processVariables(text: string): string {
         if (!text) return '';
 
-        return text
-            .replace('{{title}}', this.selectedBook.basic.title || '')
-            .replace('{{author}}', Array.isArray(this.selectedBook.basic.author) ? this.selectedBook.basic.author.join(', ') : (this.selectedBook.basic.author || ''))
-            .replace('{{date}}', new Date().toLocaleDateString());
+        return escapeHtml(text
+            .replace(/\{\{title\}\}/g, () => this.selectedBook.basic.title || '')
+            .replace(/\{\{author\}\}/g, () => this.selectedBook.basic.author.join(', '))
+            .replace(/\{\{date\}\}/g, () => new Date().toLocaleDateString()))
+            .replace(/\{\{pageNumber\}\}/g, '<span class="pageNumber"></span>')
+            .replace(/\{\{totalPages\}\}/g, '<span class="totalPages"></span>');
     }
 
     // 根据选择的格式调用相应的导出方法

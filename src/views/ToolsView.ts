@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, setIcon, Menu, Notice } from 'obsidian';
+import { ItemView, WorkspaceLeaf, setIcon, Menu, Notice, Platform } from 'obsidian';
 import { FocusToolView } from '../components/FocusToolView';
 import { DonateModal } from '../modals/DonateModal';
 import { InspirationModal } from '../modals/InspirationModal';
@@ -27,7 +27,7 @@ export class ToolView extends ItemView {
         // 修改为监听 document 上的事件，而不是 containerEl
         document.addEventListener('open-donate-modal', () => {
             console.log('Received open-donate-modal event');
-            new DonateModal(this.containerEl).open();
+            new DonateModal(this.app).open();
         });
     }
 
@@ -85,7 +85,7 @@ export class ToolView extends ItemView {
                 {
                     icon: 'brain',
                     text: i18n.t('CREATIVE_INSPIRATION'),
-                    onClick: () => new InspirationModal(this.containerEl).open()
+                    onClick: () => new InspirationModal(this.app).open()
                 },
                 {
                     icon: 'file-text',
@@ -105,7 +105,7 @@ export class ToolView extends ItemView {
         }
 
         // 导出发布工具组
-        if (this.plugin.settings.tools.export) {
+        if (this.plugin.settings.tools.export && Platform.isDesktop) {
             this.createToolGroup(container, i18n.t('EXPORT_PUBLISH'), [
                 { 
                     icon: 'book', 
@@ -129,17 +129,17 @@ export class ToolView extends ItemView {
                     icon: 'users', 
                     text: i18n.t('CREATIVE_COMMUNITY'), 
                     extra: '',
-                    onClick: () => new CommunityModal(this.containerEl).open()
+                    onClick: () => new CommunityModal(this.app).open()
                 },
                 { 
                     icon: 'message-square', 
                     text: i18n.t('CONTACT_AUTHOR'),
-                    onClick: () => new ContactModal(this.containerEl).open()
+                    onClick: () => new ContactModal(this.app).open()
                 },
                 { 
                     icon: 'heart', 
                     text: i18n.t('DONATE_SUPPORT'),
-                    onClick: () => new DonateModal(this.containerEl).open()
+                    onClick: () => new DonateModal(this.app).open()
                 }
             ]);
         }
@@ -229,6 +229,7 @@ export class ToolView extends ItemView {
 
     // 添加进入排版模式的方法
     private enterTypographyMode() {
+        if (!Platform.isDesktop) return;
         new BookSelectionModal(this.app, this.plugin).open();
     }
 

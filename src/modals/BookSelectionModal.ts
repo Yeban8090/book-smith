@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Notice, ButtonComponent } from 'obsidian';
 import { BookManager } from '../services/BookManager';
 import { ExportModal } from './ExportModal';
@@ -18,6 +19,7 @@ export class BookSelectionModal extends Modal {
     }
 
     async onOpen() {
+        initializeDialog(this, 'large');
         const { contentEl } = this;
         contentEl.empty();
 
@@ -48,6 +50,7 @@ export class BookSelectionModal extends Modal {
             .onClick(() => {
                 this.handleExport();
             });
+        finishDialog(this);
     }
 
     private async loadBooks() {

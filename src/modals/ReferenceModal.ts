@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, Setting } from 'obsidian';
 import { i18n } from '../i18n/i18n';
 
@@ -16,6 +17,7 @@ export class ReferenceModal extends Modal {
     }
 
     onOpen() {
+        initializeDialog(this, 'standard');
         const { contentEl } = this;
         contentEl.createEl('h3', { text: i18n.t('REFERENCE_MODAL_TITLE') });
 
@@ -39,6 +41,7 @@ export class ReferenceModal extends Modal {
                         this.onSubmit(this.result);
                         this.close();
                     }));
+        finishDialog(this);
     }
 
     onClose() {

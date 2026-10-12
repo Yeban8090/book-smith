@@ -1,3 +1,4 @@
+import { initializeDialog, finishDialog } from './dialogLayout';
 import { App, Modal, setIcon } from 'obsidian';
 import { i18n } from '../i18n/i18n';
 
@@ -14,6 +15,7 @@ export class UnimportedBooksModal extends Modal {
     }
     
     onOpen() {
+        initializeDialog(this, 'large');
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('book-smith-unimported-books-modal');
@@ -37,6 +39,7 @@ export class UnimportedBooksModal extends Modal {
                 this.onChoose(null);
             });
             
+            finishDialog(this);
             return;
         }
         
@@ -135,6 +138,7 @@ export class UnimportedBooksModal extends Modal {
             this.close();
             this.onChoose(this.result);
         });
+        finishDialog(this);
     }
     
     onClose() {

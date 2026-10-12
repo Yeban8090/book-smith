@@ -1,7 +1,8 @@
-import { App, Component, MarkdownRenderer, MarkdownView, TFile } from 'obsidian';
+import { App, Component, MarkdownRenderer, TFile } from 'obsidian';
 import { Book, ChapterNode, CoverSettings } from '../types/book';
 import { HeaderFooterTocSettings } from '../modals/HeaderFooterTocModal';
-import * as electron from 'electron';
+import type * as electron from 'electron';
+import { escapeHtml } from '../utils/pdfExport';
 
 export interface RenderConfig {
     showTitle: boolean;
@@ -38,6 +39,16 @@ export interface ParamType {
 export class BookRenderService {
     private docs: DocType[] = [];
     private scale = 1;
+    private sourceFiles = new Map<string, { mtime: number; size: number }>();
+
+    assertSourceUnchanged() {
+        for (const [path, snapshot] of this.sourceFiles) {
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (!(file instanceof TFile) || file.stat.mtime !== snapshot.mtime || file.stat.size !== snapshot.size) {
+                throw new Error(`章节已修改：${path}。请刷新预览后导出。`);
+            }
+        }
+    }
 
     constructor(private app: App) { }
 
@@ -50,19 +61,30 @@ export class BookRenderService {
         rootPath: string,
         config: RenderConfig
     ): Promise<void> {
+        this.docs = [];
+        this.sourceFiles.clear();
         return new Promise<void>((resolve, reject) => {
+            const cleanup = () => {
+                clearTimeout(timeout);
+                webview.removeEventListener('dom-ready', onReady);
+                config.abortSignal?.removeEventListener('abort', abort);
+            };
             const timeout = setTimeout(() => {
+                cleanup();
                 reject(new Error('Webview setup timeout'));
             }, 10000);
 
-
-            webview.addEventListener('dom-ready', async () => {
+            const abort = () => { cleanup(); reject(new Error('Render aborted')); };
+            const onReady = async () => {
+                webview.removeEventListener('dom-ready', onReady);
                 try {
                     clearTimeout(timeout);
 
+                    if (config.abortSignal?.aborted) throw new Error('Render aborted');
                     // 1. 收集所有文件并渲染为文档
                     const { data, docs } = await this.getAllFiles(book, rootPath, config);
                     await this.renderFiles(data, docs, config);
+                    if (config.abortSignal?.aborted) throw new Error('Render aborted');
 
                     // 2. 如果启用了目录，生成目录 HTML
                     let tocHtml = '';
@@ -106,12 +128,18 @@ export class BookRenderService {
                         await webview.insertCSS(css);
                     }
 
+                    if (config.abortSignal?.aborted) throw new Error('Render aborted');
                     resolve();
                 } catch (error) {
                     clearTimeout(timeout);
                     reject(error);
+                } finally {
+                    cleanup();
                 }
-            });
+            };
+            if (config.abortSignal?.aborted) { abort(); return; }
+            config.abortSignal?.addEventListener('abort', abort, { once: true });
+            webview.addEventListener('dom-ready', onReady);
         });
     }
 
@@ -120,17 +148,12 @@ export class BookRenderService {
      */
     private async getAllFiles(book: Book, rootPath: string, config: RenderConfig): Promise<{ data: ParamType[], docs: DocType[] }> {
         const fileNodes = this.collectFileNodes(book.structure.tree);
-        const data: ParamType[] = fileNodes.map(node => ({
-            app: this.app,
-            file: this.getFileFromNode(node, book, rootPath),
-            config,
-            book,
-            rootPath,
-            extra: {
-                title: node.title,
-                id: node.id
-            }
-        })).filter(param => param.file !== null) as ParamType[];
+        if (fileNodes.length === 0) throw new Error('没有可导出的章节，请检查章节排除设置。');
+        const data: ParamType[] = fileNodes.map(node => {
+            const file = this.getFileFromNode(node, book, rootPath);
+            if (!file) throw new Error(`章节文件不存在：${node.path}。请修复章节路径后重试。`);
+            return { app: this.app, file, config, book, rootPath, extra: { title: node.title, id: node.id } };
+        });
 
         return { data, docs: [] };
     }
@@ -145,40 +168,27 @@ export class BookRenderService {
     ): Promise<void> {
         const totalFiles = data.length;
 
-        // 并发渲染所有文件
-        const inputs = data.map((param, i) =>
-            this.renderMarkdown(param).then(res => {
-                config.onProgress?.(i + 1, totalFiles, param.file.basename);
-                return res;
-            })
-        );
-
-        let _docs = [...docs, ...(await Promise.all(inputs))];
+        // 按章节顺序渲染，避免长文同时打开大量临时视图和占用内存。
+        let _docs = [...docs];
+        for (let index = 0; index < data.length; index++) {
+            if (config.abortSignal?.aborted) throw new Error('Render aborted');
+            _docs.push(await this.renderMarkdown(data[index]));
+            config.onProgress?.(index + 1, totalFiles, data[index].file.basename);
+        }
 
         // 合并所有文档为一个完整的书籍文档
         _docs = this.mergeDoc(_docs);
 
-        // 修复文档
-        this.docs = _docs.map(({ doc, ...rest }) => {
-            return { ...rest, doc: this.fixDoc(doc, doc.title) };
-        });
+        this.docs = _docs;
     }
 
     /**
      * 渲染单个Markdown文件 - 基于 render.ts 的 renderMarkdown
      */
     private async renderMarkdown({ app, file, config, book, extra }: ParamType): Promise<DocType> {
-        const startTime = new Date().getTime();
-
-        // 检查中断信号
-        if (config.abortSignal?.aborted) {
-            throw new Error('Render aborted');
-        }
-
-        const leaf = app.workspace.getLeaf(true);
-        await leaf.openFile(file);
-        const view = leaf.view as MarkdownView;
-        const data: string = view?.data || await app.vault.cachedRead(file);
+        if (config.abortSignal?.aborted) throw new Error('Render aborted');
+        this.sourceFiles.set(file.path, { mtime: file.stat.mtime, size: file.stat.size });
+        const data = await app.vault.read(file);
 
         const frontMatter = this.getFrontMatter(file);
         const cssclasses = this.extractCssClasses(frontMatter);
@@ -186,8 +196,8 @@ export class BookRenderService {
         const comp = new Component();
         comp.load();
 
+        const printEl = document.body.createDiv('print');
         try {
-            const printEl = document.body.createDiv('print');
             const viewEl = printEl.createDiv({
                 cls: 'markdown-preview-view markdown-rendered ' + cssclasses.join(' '),
             });
@@ -209,51 +219,16 @@ export class BookRenderService {
             // 处理块引用
             const processedData = this.processBlockReferences(data || '', file);
 
-            // 渲染markdown - 使用 better-export-pdf 的方式
-            const fragment = this.createRenderFragment();
-            const promises: Array<() => Promise<unknown>> = [];
-
-            try {
-                await MarkdownRenderer.render(app, processedData, fragment, file.path, comp);
-            } catch (error) {
-                // 预期的错误，用于避免postProcess
-            }
-
-            // 添加渲染内容到viewEl
-            const el = createFragment();
-            Array.from(fragment.children).forEach((item) => {
-                el.createDiv({}, (t) => {
-                    //@ts-ignore
-                    return t.appendChild(item);
-                });
-            });
-            viewEl.appendChild(el);
-
-            // 后处理
-            // @ts-ignore
-            await MarkdownRenderer.postProcess(app, {
-                docId: this.generateDocId(16),
-                sourcePath: file.path,
-                frontmatter: {},
-                promises,
-                addChild: function (e: Component) {
-                    return comp.addChild(e);
-                },
-                getSectionInfo: function () {
-                    return null;
-                },
-                containerEl: viewEl,
-                el: viewEl,
-                displayMode: true,
-            });
-
-            await Promise.all(promises);
+            // 使用公开渲染 API，不再借助抛异常截取渲染结果。
+            const rendered = viewEl.createDiv();
+            await MarkdownRenderer.render(app, processedData, rendered, file.path, comp);
+            if (config.abortSignal?.aborted) throw new Error('Render aborted');
 
             // 修复内部链接
             this.fixInternalLinks(printEl, file);
 
             // 等待动态内容渲染
-            await this.fixWaitRender(data || '', viewEl);
+            await this.fixWaitRender(data || '', viewEl, config.abortSignal);
 
             // 修复canvas为图片
             this.fixCanvasToImage(viewEl);
@@ -263,14 +238,10 @@ export class BookRenderService {
             doc.body.appendChild(printEl.cloneNode(true));
             doc.title = title;
 
-            // 清理
-            printEl.detach();
-            printEl.remove();
-            leaf.detach();
-
             return { doc, frontMatter, file, title };
 
         } finally {
+            printEl.remove();
             comp.unload();
         }
     }
@@ -322,7 +293,7 @@ export class BookRenderService {
     private async appendWebview(webview: electron.WebviewTag, docData: DocType): Promise<void> {
         const { doc } = docData;
 
-        // 使用 better-export-pdf 的安全注入方式
+        // 作为字符串传输完整 HTML，避免正文中的字符被当成脚本。
         const webviewJs = this.makeWebviewJs(doc);
 
         try {
@@ -337,34 +308,14 @@ export class BookRenderService {
      * 生成webview注入脚本 - 对应 modal.ts 的 makeWebviewJs
      */
     private makeWebviewJs(doc: Document): string {
-        // 使用更安全的方式传输HTML内容
-        const bodyContent = doc.body.innerHTML;
-        const headContent = doc.head.innerHTML;
-        const docTitle = doc.title;
-
         return `
             try {
-                // 安全地设置内容
-                document.body.innerHTML = decodeURIComponent(\`${encodeURIComponent(bodyContent)}\`);
-                document.head.innerHTML = decodeURIComponent(\`${encodeURIComponent(headContent)}\`);
-                
-                // 递归解码嵌入内容
-                function decodeAndReplaceEmbed(element) {
-                    if (!element || !element.innerHTML) return;
-                    try {
-                        element.innerHTML = decodeURIComponent(element.innerHTML);
-                        const newEmbeds = element.querySelectorAll("span.markdown-embed");
-                        newEmbeds.forEach(decodeAndReplaceEmbed);
-                    } catch (e) {
-                        console.warn('Failed to decode embed:', e);
-                    }
-                }
-                
-                document.querySelectorAll("span.markdown-embed").forEach(decodeAndReplaceEmbed);
+                document.body.innerHTML = ${JSON.stringify(doc.body.innerHTML)};
+                document.head.innerHTML = ${JSON.stringify(doc.head.innerHTML)};
                 
                 // 应用主题类名
-                const currentBodyClasses = "${Array.from(document.body.classList).join(' ')}";
-                const currentHtmlClasses = "${Array.from(document.documentElement.classList).join(' ')}";
+                const currentBodyClasses = ${JSON.stringify(document.body.className)};
+                const currentHtmlClasses = ${JSON.stringify(document.documentElement.className)};
                 
                 if (currentBodyClasses) {
                     document.body.className = currentBodyClasses;
@@ -374,39 +325,21 @@ export class BookRenderService {
                 }
                 
                 // 设置主题相关属性
-                const themeAttr = "${document.documentElement.getAttribute('data-theme') || ''}";
-                const modeAttr = "${document.documentElement.getAttribute('data-mode') || ''}";
+                const themeAttr = ${JSON.stringify(document.documentElement.getAttribute('data-theme') || '')};
+                const modeAttr = ${JSON.stringify(document.documentElement.getAttribute('data-mode') || '')};
                 
                 if (themeAttr) document.documentElement.setAttribute('data-theme', themeAttr);
                 if (modeAttr) document.documentElement.setAttribute('data-mode', modeAttr);
                 
-                document.body.addClass("theme-light");
-                document.body.removeClass("theme-dark");
-                document.title = \`${docTitle.replace(/[`\\]/g, '\\$&')}\`;
+                document.body.classList.add("theme-light");
+                document.body.classList.remove("theme-dark");
+                document.title = ${JSON.stringify(doc.title)};
                 
             } catch (error) {
                 console.error('Error in webview script:', error);
                 throw error;
             }
         `;
-    }
-
-    /**
-     * 修复文档 - 对应 render.ts 的 fixDoc
-     */
-    private fixDoc(doc: Document, title: string): Document {
-        this.encodeEmbeds(doc);
-        return doc;
-    }
-
-    /**
-     * 编码嵌入内容 - 对应 render.ts 的 encodeEmbeds
-     */
-    private encodeEmbeds(doc: Document): void {
-        const spans = Array.from(doc.querySelectorAll('span.markdown-embed')).reverse();
-        spans.forEach((span: HTMLElement) => {
-            span.innerHTML = encodeURIComponent(span.innerHTML);
-        });
     }
 
     /**
@@ -424,7 +357,7 @@ export class BookRenderService {
     private collectFileNodes(nodes: ChapterNode[]): ChapterNode[] {
         const fileNodes: ChapterNode[] = [];
 
-        for (const node of nodes) {
+        for (const node of [...nodes].sort((a, b) => a.order - b.order)) {
             if (node.exclude) continue;
 
             if (node.type === 'file') {
@@ -434,7 +367,7 @@ export class BookRenderService {
             }
         }
 
-        return fileNodes.sort((a, b) => a.order - b.order);
+        return fileNodes;
     }
 
     /**
@@ -489,19 +422,6 @@ export class BookRenderService {
     }
 
     /**
-     * 创建渲染片段
-     */
-    private createRenderFragment(): any {
-        return {
-            children: undefined,
-            appendChild(e: DocumentFragment) {
-                this.children = e?.children;
-                throw new Error('exit');
-            },
-        } as unknown as HTMLElement;
-    }
-
-    /**
      * 修复内部链接
      */
     private fixInternalLinks(printEl: HTMLElement, file: TFile): void {
@@ -517,15 +437,9 @@ export class BookRenderService {
     /**
      * 等待动态内容渲染
      */
-    private async fixWaitRender(data: string, viewEl: HTMLElement): Promise<void> {
-        if (data.includes('```dataview') || data.includes('```gEvent') || data.includes('![[')) {
-            await this.sleep(2000);
-        }
-        try {
-            await this.waitForDomChange(viewEl);
-        } catch (error) {
-            await this.sleep(1000);
-        }
+    private async fixWaitRender(data: string, viewEl: HTMLElement, signal?: AbortSignal): Promise<void> {
+        const dynamic = data.includes('```dataview') || data.includes('```gEvent') || data.includes('![[');
+        await this.waitForDomChange(viewEl, dynamic ? 2000 : 200, signal);
     }
 
     /**
@@ -583,9 +497,20 @@ export class BookRenderService {
             }
             
             @media print {
-                .print .markdown-preview-view {
+                .print, .print .markdown-preview-view, .print .markdown-preview-sizer {
                     height: auto !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                    contain: none !important;
                 }
+                .print h1, .print h2, .print h3, .print h4 { break-after: avoid; }
+                .print img, .print table, .print pre { max-width: 100%; }
+                .print pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+                .print table { table-layout: fixed; overflow-wrap: anywhere; }
+                .print thead { display: table-header-group; }
+                .print img { height: auto; object-fit: contain; }
+                .toc-item { break-inside: avoid; }
+                .toc-page { min-width: 6ch; text-align: right; font-variant-numeric: tabular-nums; }
                 
                 .md-print-anchor, .blockid {
                     white-space: pre !important;
@@ -619,36 +544,30 @@ export class BookRenderService {
     /**
      * 工具方法
      */
-    private generateDocId(n: number): string {
-        return Array.from({ length: n }, () => ((16 * Math.random()) | 0).toString(16)).join('');
-    }
-
-    private sleep(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    private waitForDomChange(target: HTMLElement, timeout = 2000, interval = 200): Promise<boolean> {
+    private waitForDomChange(target: HTMLElement, minimumWait: number, signal?: AbortSignal): Promise<void> {
         return new Promise((resolve, reject) => {
-            let timer: NodeJS.Timeout;
+            const started = Date.now();
+            let timer: ReturnType<typeof setTimeout>;
+            const cleanup = () => {
+                clearTimeout(timer);
+                clearTimeout(deadline);
+                observer.disconnect();
+                signal?.removeEventListener('abort', abort);
+            };
+            const finish = () => { cleanup(); resolve(); };
+            const abort = () => { cleanup(); reject(new Error('Render aborted')); };
             const observer = new MutationObserver(() => {
                 clearTimeout(timer);
-                timer = setTimeout(() => {
-                    observer.disconnect();
-                    resolve(true);
-                }, interval);
+                timer = setTimeout(finish, Math.max(200, minimumWait - (Date.now() - started)));
             });
-
-            observer.observe(target, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                characterData: true
-            });
-
-            setTimeout(() => {
-                observer.disconnect();
-                reject(new Error(`timeout ${timeout}ms`));
-            }, timeout);
+            const deadline = setTimeout(() => {
+                cleanup();
+                reject(new Error('章节动态内容持续更新，无法完成渲染，请暂停更新后重试。'));
+            }, 10000);
+            if (signal?.aborted) { abort(); return; }
+            signal?.addEventListener('abort', abort, { once: true });
+            observer.observe(target, { childList: true, subtree: true, attributes: true, characterData: true });
+            timer = setTimeout(finish, minimumWait);
         });
     }
 
@@ -675,7 +594,7 @@ export class BookRenderService {
                 margin: 20px 0;
                 line-height: ${settings.tocLineHeight};
             ">
-                <h1 style="text-align: center; margin-bottom: 30px;">${settings.tocTitle}</h1>
+                <div style="text-align: center; margin-bottom: 30px; font-size: 2em; font-weight: bold;">${escapeHtml(settings.tocTitle || '目录')}</div>
                 <div class="toc-content">
         `;
 
@@ -690,7 +609,7 @@ export class BookRenderService {
                         justify-content: space-between;
                         align-items: baseline;
                     ">
-                        <span class="toc-text">${heading.text}</span>
+                        <a class="toc-text" href="#${escapeHtml(heading.id)}">${escapeHtml(heading.text)}</a>
                         <span class="toc-dots" style="
                             flex: 1;
                             border-bottom: 1px dotted #ccc;
@@ -698,7 +617,7 @@ export class BookRenderService {
                             height: 1px;
                             align-self: center;
                         "></span>
-                        <span class="toc-page" data-heading-id="${heading.id}">?</span>
+                        <span class="toc-page" data-heading-id="${escapeHtml(heading.id)}">000000</span>
                     </div>
                 `;
             }
@@ -725,14 +644,18 @@ export class BookRenderService {
         const headings: Heading[] = [];
 
         // 遍历所有文档
+        const usedIds = new Set<string>();
         this.docs.forEach(docData => {
             const { doc } = docData;
             const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
 
             headingElements.forEach((el, index) => {
+                if ((el as HTMLElement).style.display === 'none') return;
                 const level = parseInt(el.tagName.substring(1));
-                const id = el.id || `heading-${index}`;
-                if (!el.id) el.id = id;
+                let id = el.id || `book-smith-heading-${index}`;
+                while (usedIds.has(id)) id += '-next';
+                usedIds.add(id);
+                el.id = id;
 
                 headings.push({
                     level,
