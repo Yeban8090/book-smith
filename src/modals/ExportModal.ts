@@ -8,7 +8,8 @@ import BookSmithPlugin from "../main";
 import type * as electron from "electron";
 import { CoverManager } from "src/services/CoverManager";
 import { PDFDocument } from 'pdf-lib';
-import { escapeHtml, matchHeadingPages, readOutlinePages } from '../utils/pdfExport';
+import { escapeHtml, matchHeadingPages, readHeadingPages } from '../utils/pdfExport';
+import { VaultImageService } from '../services/VaultImageService';
 
 // 导出设置接口，定义了导出过程中需要的各种配置项
 export interface ExportSettings {
@@ -244,7 +245,7 @@ export class ExportModal extends Modal {
 
         // 设置背景图片
         if (this.exportSettings.cover.imageUrl) {
-            coverContainer.style.backgroundImage = `url(${this.exportSettings.cover.imageUrl})`;
+            coverContainer.style.backgroundImage = `url(${JSON.stringify(this.exportSettings.cover.imageUrl)})`;
             coverContainer.style.backgroundSize = `${this.exportSettings.cover.scale * 100}%`;
             coverContainer.style.backgroundPosition = `${this.exportSettings.cover.position.x}px ${this.exportSettings.cover.position.y}px`;
         }
@@ -1034,8 +1035,11 @@ export class ExportModal extends Modal {
                 await document.fonts.ready;
                 await Promise.all(Array.from(document.images).map(async image => {
                     image.loading = 'eager';
+                    if (image.complete && image.naturalWidth > 0) return;
                     try { await image.decode(); }
-                    catch { throw new Error('图片加载失败：' + image.src); }
+                    catch {
+                        if (!image.complete || !image.naturalWidth) throw new Error('图片加载失败：' + (image.dataset.exportSource || image.src));
+                    }
                 }));
             };
             let timer;
@@ -1059,10 +1063,29 @@ export class ExportModal extends Modal {
             Array.from(document.querySelectorAll('.toc-page')).map(el => el.dataset.headingId)
         `);
         if (tocIds.length === 0) return webview.printToPDF(options);
+        await webview.executeJavaScript(`
+            document.querySelectorAll('.toc-page, .toc-dots').forEach(el => el.style.display = '');
+            document.querySelectorAll('.toc-text').forEach(el => el.removeAttribute('href'));
+            document.querySelectorAll('.toc-page').forEach(el => el.textContent = '000000');
+        `);
         let pdf = await webview.printToPDF(options);
         let previous: Record<string, number> | null = null;
         for (let attempt = 0; attempt < 3; attempt++) {
-            const mapping = matchHeadingPages(headings, await readOutlinePages(pdf));
+            let pages: Awaited<ReturnType<typeof readHeadingPages>>;
+            try { pages = await readHeadingPages(pdf); }
+            catch (error) {
+                console.warn('无法读取 PDF 目录目标，保留无页码目录', error);
+                return this.printTocWithoutPageNumbers(options);
+            }
+            const mapping = matchHeadingPages(headings, pages.outline);
+            for (const id of tocIds) {
+                if (pages.named[id]) mapping[id] = pages.named[id];
+            }
+            // 优先用目录链接本身的目标，避免依赖可选大纲和标题文字匹配。
+            if (pages.links.length >= tocIds.length && pages.links.slice(0, tocIds.length).every(page => page > 0)) {
+                tocIds.forEach((id, index) => mapping[id] = pages.links[index]);
+            }
+            if (tocIds.some(id => !mapping[id])) return this.printTocWithoutPageNumbers(options);
             if (previous && tocIds.every(id => mapping[id] === previous![id])) return pdf;
             previous = mapping;
             await webview.executeJavaScript(`(() => {
@@ -1074,7 +1097,18 @@ export class ExportModal extends Modal {
             })()`);
             pdf = await webview.printToPDF(options);
         }
-        throw new Error('目录分页未稳定，请关闭目录后重试。');
+        return this.printTocWithoutPageNumbers(options);
+    }
+
+    // 旧客户端未生成标题目标时保留目录与正文，明确告知未输出目录页码。
+    private async printTocWithoutPageNumbers(options: electron.PrintToPDFOptions): Promise<Uint8Array> {
+        if (!this.webview) throw new Error('预览已关闭');
+        await this.webview.executeJavaScript(`
+            document.querySelectorAll('.toc-page, .toc-dots').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.toc-text').forEach(el => el.setAttribute('href', '#' + el.dataset.headingId));
+        `);
+        new Notice('当前客户端无法读取完整目录页码，本次保留目录链接，省略目录页码；正文页脚页码正常输出。', 10000);
+        return this.webview.printToPDF(options);
     }
 
     /**
@@ -1176,7 +1210,7 @@ export class ExportModal extends Modal {
 
         // 设置背景图片
         if (settings.imageUrl) {
-            tempContainer.style.backgroundImage = `url(${settings.imageUrl})`;
+            tempContainer.style.backgroundImage = `url(${JSON.stringify(settings.imageUrl)})`;
             tempContainer.style.backgroundSize = `${settings.scale * 100}%`;
             tempContainer.style.backgroundPosition = `${settings.position.x}px ${settings.position.y}px`;
             tempContainer.style.backgroundRepeat = 'no-repeat';
@@ -1286,25 +1320,29 @@ export class ExportModal extends Modal {
         const originalBackground = coverElement.style.backgroundImage;
         try {
             await coverElement.ownerDocument.fonts.ready;
-            // 先读取并校验背景；html-to-image 会吞掉背景资源下载错误。
+            // 仓库图片通过 Vault API 读取，避免 fetch(app://...) 的权限差异。
             const backgroundUrl = this.exportSettings.cover?.imageUrl;
             if (backgroundUrl) {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 30000);
-                let blob: Blob;
-                try {
-                    const response = await fetch(backgroundUrl, { signal: controller.signal });
-                    if (!response.ok) throw new Error('封面背景图片加载失败。');
-                    blob = await response.blob();
-                } finally {
-                    clearTimeout(timeout);
+                const resolved = await new VaultImageService(this.app).resolve(backgroundUrl);
+                let backgroundData = resolved;
+                if (!resolved.startsWith('data:')) {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 30000);
+                    let blob: Blob;
+                    try {
+                        const response = await fetch(resolved, { signal: controller.signal });
+                        if (!response.ok) throw new Error('封面背景图片加载失败。');
+                        blob = await response.blob();
+                    } finally {
+                        clearTimeout(timeout);
+                    }
+                    backgroundData = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = () => reject(new Error('封面背景图片读取失败。'));
+                        reader.readAsDataURL(blob);
+                    });
                 }
-                const backgroundData = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.onerror = () => reject(new Error('封面背景图片读取失败。'));
-                    reader.readAsDataURL(blob);
-                });
                 const image = coverElement.ownerDocument.createElement('img');
                 image.src = backgroundData;
                 await image.decode();
